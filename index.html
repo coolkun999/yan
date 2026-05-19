@@ -3,913 +3,1529 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>言 - 首页</title>
+<title>言 - 社交平台</title>
 <style>
-  * { margin: 0; padding: 0; box-sizing: border-box; }
-  :root {
-    --bg: #000;
-    --bg2: #16181c;
-    --bg3: #1e2732;
-    --text: #e7e9ea;
-    --text2: #71767b;
-    --text3: #1d9bf0;
-    --border: #2f3336;
-    --hover: #080808;
-    --accent: #1d9bf0;
-    --accent-hover: #1a8cd8;
-    --btn-bg: #eff3f4;
-    --btn-text: #0f1419;
-    --radius: 9999px;
-  }
-  body {
-    background: var(--bg);
-    color: var(--text);
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-    min-height: 100vh;
-    display: flex;
-    justify-content: center;
-  }
-  .layout {
-    display: flex;
-    width: 100%;
-    max-width: 1280px;
-    min-height: 100vh;
-  }
+*{margin:0;padding:0;box-sizing:border-box;scrollbar-width:none}
+:root{
+  --bg:#000;--bg2:#16181c;--bg3:#1e2732;--bg4:#2f3336;
+  --text:#e7e9ea;--text2:#71767b;--text3:#1d9bf0;
+  --border:#2f3336;--hover:#080808;
+  --accent:#1d9bf0;--ah:#1a8cd8;
+  --green:#00ba7c;--pink:#f91880;
+  --r:9999px;
+}
+html{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;min-height:100vh}
+body{min-height:100vh;overflow-x:hidden}
+::-webkit-scrollbar{width:0}
+a{text-decoration:none;color:inherit}
+button{font-family:inherit;cursor:pointer;border:none;outline:none}
+textarea,input{font-family:inherit;outline:none;border:none;background:transparent;color:var(--text)}
 
-  /* ===== LEFT SIDEBAR ===== */
-  .sidebar-left {
-    width: 275px;
-    position: sticky;
-    top: 0;
-    height: 100vh;
-    display: flex;
-    flex-direction: column;
-    padding: 0 12px;
-    border-right: 1px solid var(--border);
-    flex-shrink: 0;
-  }
-  .logo {
-    padding: 12px;
-    margin-bottom: 4px;
-    cursor: pointer;
-    border-radius: var(--radius);
-    width: 52px;
-    height: 52px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 26px;
-    font-weight: 900;
-    color: var(--text);
-    transition: background 0.2s;
-    margin-top: 4px;
-  }
-  .logo:hover { background: rgba(231,233,234,0.1); }
-  .nav-item {
-    display: flex;
-    align-items: center;
-    gap: 20px;
-    padding: 12px;
-    border-radius: var(--radius);
-    cursor: pointer;
-    transition: background 0.2s;
-    font-size: 20px;
-    font-weight: 400;
-    color: var(--text);
-    text-decoration: none;
-    margin-bottom: 2px;
-    width: fit-content;
-    min-width: 52px;
-    max-width: 100%;
-  }
-  .nav-item:hover { background: rgba(231,233,234,0.1); }
-  .nav-item.active { font-weight: 700; }
-  .nav-icon {
-    width: 26px;
-    height: 26px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
-    position: relative;
-  }
-  .nav-icon svg { width: 26px; height: 26px; fill: var(--text); }
-  .nav-badge {
-    position: absolute;
-    top: -4px;
-    right: -4px;
-    background: var(--accent);
-    color: #fff;
-    font-size: 11px;
-    font-weight: 700;
-    border-radius: 99px;
-    padding: 1px 4px;
-    min-width: 18px;
-    text-align: center;
-  }
-  .nav-label { white-space: nowrap; }
-  .post-btn {
-    background: var(--accent);
-    color: #fff;
-    border: none;
-    border-radius: var(--radius);
-    padding: 17px 32px;
-    font-size: 17px;
-    font-weight: 700;
-    cursor: pointer;
-    width: 230px;
-    margin-top: 16px;
-    transition: background 0.2s;
-  }
-  .post-btn:hover { background: var(--accent-hover); }
-  .user-info {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    padding: 12px;
-    border-radius: var(--radius);
-    cursor: pointer;
-    transition: background 0.2s;
-    margin-top: auto;
-    margin-bottom: 12px;
-  }
-  .user-info:hover { background: rgba(231,233,234,0.1); }
-  .avatar {
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    background: linear-gradient(135deg, #667eea, #764ba2);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-weight: 700;
-    font-size: 16px;
-    color: #fff;
-    flex-shrink: 0;
-  }
-  .user-names { flex: 1; }
-  .user-names .name { font-weight: 700; font-size: 15px; }
-  .user-names .handle { color: var(--text2); font-size: 15px; }
-  .dots-icon { color: var(--text2); font-size: 18px; }
+/* ===== LAYOUT ===== */
+.layout{display:flex;max-width:1280px;margin:0 auto;min-height:100vh}
 
-  /* ===== MAIN FEED ===== */
-  .main {
-    flex: 1;
-    border-right: 1px solid var(--border);
-    max-width: 600px;
-    min-width: 0;
-  }
-  .feed-header {
-    position: sticky;
-    top: 0;
-    background: rgba(0,0,0,0.85);
-    backdrop-filter: blur(12px);
-    z-index: 10;
-    border-bottom: 1px solid var(--border);
-  }
-  .feed-tabs {
-    display: flex;
-  }
-  .feed-tab {
-    flex: 1;
-    padding: 16px 0;
-    text-align: center;
-    font-size: 15px;
-    font-weight: 500;
-    color: var(--text2);
-    cursor: pointer;
-    position: relative;
-    transition: background 0.2s;
-  }
-  .feed-tab:hover { background: rgba(231,233,234,0.05); }
-  .feed-tab.active {
-    color: var(--text);
-    font-weight: 700;
-  }
-  .feed-tab.active::after {
-    content: '';
-    position: absolute;
-    bottom: 0;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 56px;
-    height: 4px;
-    background: var(--accent);
-    border-radius: 9999px;
-  }
+/* ===== LEFT SIDEBAR ===== */
+.sidebar{width:275px;position:sticky;top:0;height:100vh;display:flex;flex-direction:column;padding:0 12px;border-right:1px solid var(--border);flex-shrink:0;overflow-y:auto}
+.logo{padding:12px;width:52px;height:52px;display:flex;align-items:center;justify-content:center;font-size:26px;font-weight:900;border-radius:var(--r);cursor:pointer;transition:background .2s;margin-top:4px;flex-shrink:0}
+.logo:hover,.nav-item:hover{background:rgba(231,233,234,.1)}
+.nav{display:flex;flex-direction:column;gap:2px;flex:1}
+.nav-item{display:flex;align-items:center;gap:20px;padding:12px;border-radius:var(--r);cursor:pointer;font-size:20px;min-width:52px;max-width:100%;transition:background .2s;color:var(--text)}
+.nav-item.active{font-weight:700}
+.nav-item svg{width:26px;height:26px;fill:var(--text);flex-shrink:0}
+.nav-label{white-space:nowrap}
+.nav-badge{position:relative}
+.nav-badge .b{position:absolute;top:-4px;right:-4px;background:var(--accent);color:#fff;font-size:11px;font-weight:700;border-radius:99px;padding:1px 4px;min-width:18px;text-align:center;display:none}
+.nav-badge.has .b{display:block}
+.post-btn{background:var(--accent);color:#fff;border-radius:var(--r);padding:16px 32px;font-size:17px;font-weight:700;cursor:pointer;width:230px;margin:16px 0;transition:background .2s}
+.post-btn:hover{background:var(--ah)}
+.user-menu{margin-bottom:12px;display:flex;align-items:center;gap:12px;padding:12px;border-radius:var(--r);cursor:pointer;transition:background .2s}
+.user-menu:hover{background:rgba(231,233,234,.1)}
+.av{width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,#667eea,#764ba2);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:16px;color:#fff;flex-shrink:0;position:relative;overflow:hidden}
+.un{font-weight:700;font-size:15px}
+.uh{color:var(--text2);font-size:14px}
+.dots{color:var(--text2);font-size:18px;margin-left:auto}
 
-  /* Compose box */
-  .compose-area {
-    display: flex;
-    gap: 12px;
-    padding: 12px 16px;
-    border-bottom: 1px solid var(--border);
-  }
-  .compose-input-area { flex: 1; }
-  .compose-input {
-    width: 100%;
-    background: transparent;
-    border: none;
-    outline: none;
-    color: var(--text);
-    font-size: 20px;
-    resize: none;
-    font-family: inherit;
-    padding: 8px 0;
-    min-height: 52px;
-  }
-  .compose-input::placeholder { color: var(--text2); }
-  .compose-toolbar {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding-top: 8px;
-    border-top: 1px solid var(--border);
-    margin-top: 4px;
-  }
-  .compose-tools { display: flex; gap: 4px; }
-  .tool-btn {
-    width: 36px;
-    height: 36px;
-    border-radius: var(--radius);
-    background: transparent;
-    border: none;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: var(--accent);
-    transition: background 0.2s;
-  }
-  .tool-btn:hover { background: rgba(29,155,240,0.1); }
-  .tool-btn svg { width: 20px; height: 20px; fill: var(--accent); }
-  .post-small-btn {
-    background: var(--accent);
-    color: #fff;
-    border: none;
-    border-radius: var(--radius);
-    padding: 8px 20px;
-    font-size: 15px;
-    font-weight: 700;
-    cursor: pointer;
-    transition: background 0.2s;
-  }
-  .post-small-btn:hover { background: var(--accent-hover); }
-  .post-small-btn:disabled { opacity: 0.5; cursor: default; }
+/* ===== MAIN ===== */
+.main{flex:1;border-right:1px solid var(--border);max-width:600px;min-width:0;min-height:100vh}
+.main-header{position:sticky;top:0;background:rgba(0,0,0,.9);backdrop-filter:blur(12px);z-index:10;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:20px;padding:12px 16px}
+.back-btn{display:none;width:36px;height:36px;border-radius:50%;background:transparent;border:none;cursor:pointer;color:var(--text);display:flex;align-items:center;justify-content:center;transition:background .2s}
+.back-btn:hover{background:rgba(231,233,234,.1)}
+.back-btn svg{width:20px;height:20px;fill:var(--text)}
+.page-title{font-size:20px;font-weight:800}
+.tab-row{display:flex;border-bottom:1px solid var(--border)}
+.tab{flex:1;padding:16px;text-align:center;font-size:15px;font-weight:500;color:var(--text2);cursor:pointer;position:relative;transition:background .2s}
+.tab:hover{background:rgba(231,233,234,.05)}
+.tab.active{color:var(--text);font-weight:700}
+.tab.active::after{content:'';position:absolute;bottom:0;left:50%;transform:translateX(-50%);width:56px;height:4px;background:var(--accent);border-radius:9999px}
 
-  /* Tweet / Post cards */
-  .tweet {
-    display: flex;
-    gap: 12px;
-    padding: 12px 16px;
-    border-bottom: 1px solid var(--border);
-    cursor: pointer;
-    transition: background 0.2s;
-  }
-  .tweet:hover { background: var(--hover); }
-  .tweet-avatar {
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    flex-shrink: 0;
-    overflow: hidden;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-weight: 700;
-    font-size: 16px;
-    color: #fff;
-  }
-  .tweet-body { flex: 1; min-width: 0; }
-  .tweet-header {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    flex-wrap: wrap;
-  }
-  .tweet-name { font-weight: 700; font-size: 15px; }
-  .tweet-handle { color: var(--text2); font-size: 15px; }
-  .tweet-time { color: var(--text2); font-size: 15px; }
-  .verified-badge {
-    color: var(--accent);
-    display: inline-flex;
-    align-items: center;
-  }
-  .verified-badge svg { width: 18px; height: 18px; fill: var(--accent); }
-  .tweet-text {
-    margin-top: 4px;
-    font-size: 15px;
-    line-height: 1.6;
-    word-break: break-word;
-  }
-  .tweet-link { color: var(--accent); text-decoration: none; }
-  .tweet-link:hover { text-decoration: underline; }
-  .tweet-media {
-    margin-top: 12px;
-    border-radius: 16px;
-    overflow: hidden;
-    border: 1px solid var(--border);
-  }
-  .tweet-media img {
-    width: 100%;
-    display: block;
-    max-height: 360px;
-    object-fit: cover;
-  }
-  .tweet-actions {
-    display: flex;
-    margin-top: 12px;
-    gap: 4px;
-    max-width: 425px;
-  }
-  .action-btn {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    color: var(--text2);
-    cursor: pointer;
-    border-radius: var(--radius);
-    padding: 6px;
-    transition: color 0.2s, background 0.2s;
-    font-size: 13px;
-    flex: 1;
-    background: transparent;
-    border: none;
-  }
-  .action-btn svg { width: 18px; height: 18px; fill: var(--text2); }
-  .action-btn:hover { color: var(--accent); background: rgba(29,155,240,0.1); }
-  .action-btn:hover svg { fill: var(--accent); }
-  .action-btn.like:hover { color: #f91880; background: rgba(249,24,128,0.1); }
-  .action-btn.like:hover svg { fill: #f91880; }
-  .action-btn.retweet:hover { color: #00ba7c; background: rgba(0,186,124,0.1); }
-  .action-btn.retweet:hover svg { fill: #00ba7c; }
-  .action-btn.liked { color: #f91880; }
-  .action-btn.liked svg { fill: #f91880; }
-  .action-count { font-size: 13px; }
+/* ===== COMPOSE ===== */
+.compose{display:flex;gap:12px;padding:12px 16px;border-bottom:1px solid var(--border)}
+.ca{flex:1}
+.cin{width:100%;background:transparent;border:none;outline:none;color:var(--text);font-size:20px;resize:none;padding:8px 0;min-height:52px;font-family:inherit;line-height:1.5}
+.cin::placeholder{color:var(--text2)}
+.ct{position:sticky;top:0;background:var(--bg)}
+.ctb{display:flex;align-items:center;justify-content:space-between;padding-top:8px;border-top:1px solid var(--border);margin-top:4px}
+.ctools{display:flex;gap:2px}
+.tb{width:36px;height:36px;border-radius:var(--r);background:transparent;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--accent);transition:background .2s}
+.tb:hover{background:rgba(29,155,240,.1)}
+.tb svg{width:20px;height:20px;fill:var(--accent)}
+.tb.disabled{opacity:.4;pointer-events:none}
+.pb{background:var(--accent);color:#fff;border-radius:var(--r);padding:8px 20px;font-size:15px;font-weight:700;cursor:pointer;transition:background .2s;border:none}
+.pb:hover{background:var(--ah)}
+.pb:disabled{opacity:.5;cursor:default}
 
-  /* ===== RIGHT SIDEBAR ===== */
-  .sidebar-right {
-    width: 350px;
-    padding: 12px 16px;
-    flex-shrink: 0;
-    display: flex;
-    flex-direction: column;
-    gap: 16px;
-  }
-  .search-box {
-    position: sticky;
-    top: 0;
-    padding-top: 4px;
-    padding-bottom: 8px;
-    background: var(--bg);
-    z-index: 5;
-  }
-  .search-input-wrap {
-    display: flex;
-    align-items: center;
-    background: var(--bg2);
-    border-radius: var(--radius);
-    border: 1px solid transparent;
-    padding: 0 16px;
-    gap: 12px;
-    transition: border-color 0.2s, background 0.2s;
-  }
-  .search-input-wrap:focus-within {
-    background: var(--bg);
-    border-color: var(--accent);
-  }
-  .search-input-wrap svg { width: 18px; height: 18px; fill: var(--text2); flex-shrink: 0; }
-  .search-input {
-    flex: 1;
-    background: transparent;
-    border: none;
-    outline: none;
-    color: var(--text);
-    font-size: 15px;
-    padding: 12px 0;
-    font-family: inherit;
-  }
-  .search-input::placeholder { color: var(--text2); }
+/* ===== TWEET CARD ===== */
+.tweet{display:flex;gap:12px;padding:12px 16px;border-bottom:1px solid var(--border);cursor:pointer;transition:background .2s}
+.tweet:hover{background:var(--hover)}
+.ta{width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,#667eea,#764ba2);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:16px;color:#fff;flex-shrink:0;cursor:pointer;overflow:hidden}
+.ta img{width:100%;height:100%;object-fit:cover}
+.tbdy{flex:1;min-width:0}
+.th{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.tn{font-weight:700;font-size:15px;cursor:pointer}
+.tn:hover{text-decoration:underline}
+.thandle{color:var(--text2);font-size:15px;cursor:pointer}
+.tt{color:var(--text2);font-size:15px}
+.vb{color:var(--accent)}
+.vb svg{width:18px;height:18px;fill:var(--accent)}
+.ttxt{margin-top:4px;font-size:15px;line-height:1.6;word-break:break-word}
+.ttxt a{color:var(--accent)}
+.ttxt a:hover{text-decoration:underline}
+.ttxt img{max-width:100%;border-radius:16px;margin-top:12px;display:block;max-height:360px;object-fit:cover;border:1px solid var(--border)}
+.tmedia{margin-top:12px;border-radius:16px;overflow:hidden;border:1px solid var(--border)}
+.tmedia img,.tmedia video{width:100%;display:block;max-height:360px;object-fit:cover}
+.tpoll{margin-top:12px;background:transparent;border:1px solid var(--border);border-radius:16px;overflow:hidden}
+.poll-opt{display:flex;align-items:center;gap:12px;padding:12px 16px;border-bottom:1px solid var(--border);cursor:pointer;transition:background .2s}
+.poll-opt:last-child{border-bottom:none}
+.poll-opt:hover{background:rgba(231,233,234,.05)}
+.poll-pct{font-size:14px;font-weight:700;min-width:40px;text-align:right}
+.poll-label{font-size:15px}
+.tactions{display:flex;margin-top:12px;max-width:425px;gap:4px}
+.ab{display:flex;align-items:center;gap:6px;color:var(--text2);cursor:pointer;border-radius:var(--r);padding:6px;transition:color .2s,background .2s;font-size:13px;flex:1;border:none;background:transparent}
+.ab svg{width:18px;height:18px;fill:var(--text2);flex-shrink:0}
+.ab:hover{background:rgba(29,155,240,.1);color:var(--accent)}
+.ab:hover svg{fill:var(--accent)}
+.ab.like:hover{background:rgba(249,24,128,.1);color:var(--pink)}
+.ab.like:hover svg{fill:var(--pink)}
+.ab.rt:hover{background:rgba(0,186,124,.1);color:var(--green)}
+.ab.rt:hover svg{fill:var(--green)}
+.ab.liked{color:var(--pink)}
+.ab.liked svg{fill:var(--pink)}
+.ab.retweeted{color:var(--green)}
+.ab.retweeted svg{fill:var(--green)}
+.ac{font-size:13px}
+.more-btn{margin-left:auto;color:var(--text2);cursor:pointer;width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;transition:background .2s,color .2s;flex-shrink:0;background:transparent;border:none}
+.more-btn:hover{background:rgba(29,155,240,.1);color:var(--accent)}
+.more-btn svg{width:18px;height:18px;fill:currentColor}
+.tlink{display:flex;gap:12px;padding:12px 16px;border:1px solid var(--border);border-radius:16px;margin-top:12px;cursor:pointer;transition:background .2s}
+.tlink:hover{background:rgba(231,233,234,.05)}
+.tlink-icon{width:48px;height:48px;border-radius:12px;overflow:hidden;flex-shrink:0;background:var(--bg3);display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:900;color:var(--text2)}
+.tlink-body{flex:1;min-width:0}
+.tlink-title{font-size:14px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tlink-desc{font-size:14px;color:var(--text2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:2px}
+.tlink-url{font-size:12px;color:var(--text2);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 
-  .widget-box {
-    background: var(--bg2);
-    border-radius: 16px;
-    overflow: hidden;
-  }
-  .widget-title {
-    font-size: 20px;
-    font-weight: 800;
-    padding: 12px 16px;
-  }
-  .trend-item {
-    padding: 12px 16px;
-    cursor: pointer;
-    transition: background 0.2s;
-  }
-  .trend-item:hover { background: rgba(231,233,234,0.05); }
-  .trend-meta { color: var(--text2); font-size: 13px; }
-  .trend-name { font-weight: 700; font-size: 15px; margin: 2px 0; }
-  .trend-count { color: var(--text2); font-size: 13px; }
-  .show-more {
-    padding: 16px;
-    color: var(--accent);
-    font-size: 15px;
-    cursor: pointer;
-    display: block;
-    transition: background 0.2s;
-  }
-  .show-more:hover { background: rgba(231,233,234,0.05); }
+/* ===== RIGHT SIDEBAR ===== */
+.sidebar-right{width:350px;padding:12px 16px;flex-shrink:0;display:flex;flex-direction:column;gap:16px;position:sticky;top:0;height:100vh;overflow-y:auto}
+.search-box{position:sticky;top:0;padding-top:4px;padding-bottom:8px;background:var(--bg);z-index:5}
+.sbw{display:flex;align-items:center;background:var(--bg2);border-radius:var(--r);border:1px solid transparent;padding:0 16px;gap:12px;transition:border-color .2s,background .2s}
+.sbw:focus-within{background:var(--bg);border-color:var(--accent)}
+.sbw svg{width:18px;height:18px;fill:var(--text2);flex-shrink:0}
+.sin{flex:1;background:transparent;border:none;outline:none;color:var(--text);font-size:15px;padding:12px 0;font-family:inherit}
+.sin::placeholder{color:var(--text2)}
+.widget{background:var(--bg2);border-radius:16px;overflow:hidden}
+.wt{font-size:20px;font-weight:800;padding:12px 16px}
+.trend-item{padding:12px 16px;cursor:pointer;transition:background .2s}
+.trend-item:hover{background:rgba(231,233,234,.05)}
+.tm{color:var(--text2);font-size:13px}
+.tn2{font-weight:700;font-size:15px;margin:2px 0}
+.tc{color:var(--text2);font-size:13px}
+.fi{display:flex;align-items:center;gap:12px;padding:12px 16px;cursor:pointer;transition:background .2s}
+.fi:hover{background:rgba(231,233,234,.05)}
+.fa{width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:16px;color:#fff;flex-shrink:0;overflow:hidden}
+.fa img{width:100%;height:100%;object-fit:cover}
+.fi-info{flex:1;min-width:0}
+.fi-name{font-weight:700;font-size:15px;display:flex;align-items:center;gap:4px}
+.fi-handle{color:var(--text2);font-size:13px}
+.fbtn{background:var(--text);color:var(--bg);border-radius:var(--r);padding:7px 18px;font-size:14px;font-weight:700;cursor:pointer;flex-shrink:0;transition:background .2s}
+.fbtn:hover{background:#d7dbdc}
+.fbtn.following{background:transparent;color:var(--text);border:1px solid var(--border)}
+.fbtn.following:hover{background:rgba(223,27,27,.1);color:#f4212e;border-color:#f4212e}
+.show-more{padding:16px;color:var(--accent);font-size:15px;cursor:pointer;display:block;transition:background .2s}
+.show-more:hover{background:rgba(231,233,234,.05)}
+.footer-links{display:flex;flex-wrap:wrap;gap:8px;padding:8px 16px;font-size:13px;color:var(--text2)}
+.footer-links a{color:var(--text2);text-decoration:none}
+.footer-links a:hover{text-decoration:underline}
 
-  .follow-item {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    padding: 12px 16px;
-    cursor: pointer;
-    transition: background 0.2s;
-  }
-  .follow-item:hover { background: rgba(231,233,234,0.05); }
-  .follow-avatar {
-    width: 44px;
-    height: 44px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-weight: 700;
-    font-size: 16px;
-    color: #fff;
-    flex-shrink: 0;
-  }
-  .follow-info { flex: 1; min-width: 0; }
-  .follow-name { font-weight: 700; font-size: 15px; display: flex; align-items: center; gap: 4px; }
-  .follow-handle { color: var(--text2); font-size: 13px; }
-  .follow-btn {
-    background: var(--text);
-    color: var(--bg);
-    border: none;
-    border-radius: var(--radius);
-    padding: 7px 18px;
-    font-size: 14px;
-    font-weight: 700;
-    cursor: pointer;
-    flex-shrink: 0;
-    transition: background 0.2s;
-  }
-  .follow-btn:hover { background: #d7dbdc; }
+/* ===== PAGE VIEWS ===== */
+.page{display:none;min-height:100vh}
+.page.active{display:block}
 
-  .footer-links {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-    padding: 8px 16px;
-    font-size: 13px;
-    color: var(--text2);
-  }
-  .footer-links a { color: var(--text2); text-decoration: none; }
-  .footer-links a:hover { text-decoration: underline; }
+/* ===== AUTH PAGE ===== */
+.auth-page{display:flex;align-items:center;justify-content:center;min-height:100vh;background:var(--bg)}
+.auth-card{width:400px;max-width:95vw;padding:32px}
+.auth-logo{font-size:32px;font-weight:900;text-align:center;margin-bottom:32px}
+.auth-title{font-size:28px;font-weight:800;margin-bottom:8px}
+.auth-sub{color:var(--text2);font-size:15px;margin-bottom:32px}
+.auth-inputs{display:flex;flex-direction:column;gap:16px}
+.ail{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:16px;font-size:15px;transition:border-color .2s}
+.ail:focus-within{border-color:var(--accent)}
+.ail label{display:block;font-size:13px;color:var(--text2);margin-bottom:4px;font-weight:600}
+.ail input{width:100%;background:transparent;border:none;outline:none;color:var(--text);font-size:15px;font-family:inherit;padding:4px 0}
+.abtn{background:var(--text);color:var(--bg);border-radius:var(--r);padding:14px;width:100%;font-size:17px;font-weight:700;cursor:pointer;margin-top:8px;transition:opacity .2s}
+.abtn:hover{opacity:.85}
+.auth-divider{display:flex;align-items:center;gap:12px;margin:24px 0;color:var(--text2);font-size:14px}
+.auth-divider::before,.auth-divider::after{content:'';flex:1;height:1px;background:var(--border)}
+.auth-switch{text-align:center;color:var(--accent);font-size:15px;cursor:pointer;margin-top:16px}
+.auth-switch:hover{text-decoration:underline}
+.auth-err{color:#f4212e;font-size:13px;margin-top:8px;display:none}
 
-  /* Scrollbar */
-  ::-webkit-scrollbar { width: 0px; }
-  .main { overflow-y: auto; height: 100vh; }
-  .sidebar-right { overflow-y: auto; height: 100vh; }
+/* ===== PROFILE PAGE ===== */
+.profile-cover{height:200px;background:linear-gradient(135deg,#1d9bf0,##f5576c,#a855f7);position:relative;cursor:pointer}
+.profile-avatar{width:133px;height:133px;border-radius:50%;border:4px solid var(--bg);background:linear-gradient(135deg,#667eea,#764ba2);display:flex;align-items:center;justify-content:center;font-size:48px;font-weight:900;color:#fff;position:absolute;bottom:-66px;left:16px;cursor:pointer}
+.profile-info{padding:16px;padding-top:72px}
+.pi-row{display:flex;align-items:flex-start;justify-content:space-between}
+.pi-name{font-size:20px;font-weight:800}
+.pi-handle{color:var(--text2);font-size:15px;margin-top:2px}
+.pi-bio{font-size:15px;margin-top:12px;line-height:1.5}
+.pi-stats{display:flex;gap:20px;margin-top:12px}
+.ps{font-size:14px;cursor:pointer}
+.ps:hover{text-decoration:underline}
+.ps span{font-weight:700}
+.profile-tabs{display:flex;border-bottom:1px solid var(--border);margin-top:16px}
+.profile-tab{flex:1;padding:16px;text-align:center;font-size:15px;color:var(--text2);cursor:pointer;position:relative;font-weight:500;transition:background .2s}
+.profile-tab:hover{background:rgba(231,233,234,.05)}
+.profile-tab.active{color:var(--text);font-weight:700}
+.profile-tab.active::after{content:'';position:absolute;bottom:0;left:0;right:0;height:4px;background:var(--accent);border-radius:9999px 9999px 0 0}
 
-  /* More menu dot */
-  .tweet-more {
-    margin-left: auto;
-    color: var(--text2);
-    cursor: pointer;
-    width: 34px;
-    height: 34px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: background 0.2s, color 0.2s;
-    flex-shrink: 0;
-  }
-  .tweet-more:hover { background: rgba(29,155,240,0.1); color: var(--accent); }
-  .tweet-more svg { width: 18px; height: 18px; fill: currentColor; }
+/* ===== POST DETAIL ===== */
+.reply-input{display:flex;gap:12px;padding:12px 16px;border-bottom:1px solid var(--border)}
+.ri-textarea{flex:1;background:transparent;border:none;outline:none;color:var(--text);font-size:16px;resize:none;min-height:80px;padding:8px 0;font-family:inherit;line-height:1.6}
+.ri-textarea::placeholder{color:var(--text2)}
+.reply-item{display:flex;gap:12px;padding:12px 16px;border-bottom:1px solid var(--border);transition:background .2s}
+.reply-item:hover{background:var(--hover)}
+.indent{border-left:2px solid var(--border);margin-left:20px;padding-left:0}
+.thread-line{border-left:2px solid var(--accent);margin-left:20px}
 
-  /* Media placeholder */
-  .media-placeholder {
-    width: 100%;
-    height: 300px;
-    background: var(--bg3);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: var(--text2);
-    font-size: 15px;
-  }
+/* ===== NOTIFICATIONS ===== */
+.notif{display:flex;gap:12px;padding:12px 16px;border-bottom:1px solid var(--border);cursor:pointer;transition:background .2s;position:relative}
+.notif:hover{background:var(--hover)}
+.notif.unread::before{content:'';position:absolute;left:0;top:0;bottom:0;width:2px;background:var(--accent)}
+.nicon{width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.nicon svg{width:20px;height:20px}
+.nbody{flex:1;min-width:0}
+.ntext{font-size:15px;margin-top:2px;line-height:1.5}
+.ntext strong{font-weight:700}
+.ntime{color:var(--text2);font-size:13px;margin-top:2px}
 
-  @media (max-width: 1100px) {
-    .sidebar-right { display: none; }
-  }
-  @media (max-width: 700px) {
-    .sidebar-left { width: 68px; }
-    .nav-label { display: none; }
-    .post-btn { display: none; }
-    .nav-item { justify-content: center; padding: 12px; }
-    .user-names { display: none; }
-    .dots-icon { display: none; }
-  }
+/* ===== MESSAGES ===== */
+.msg-layout{display:flex;height:100vh}
+.msg-list{flex:1;border-right:1px solid var(--border);overflow-y:auto;min-width:350px}
+.msg-list-header{padding:16px;border-bottom:1px solid var(--border);font-size:20px;font-weight:800;display:flex;align-items:center;justify-content:space-between}
+.msg-search{padding:8px 12px;border-bottom:1px solid var(--border)}
+.msg-item{display:flex;align-items:center;gap:12px;padding:12px 16px;border-bottom:1px solid var(--border);cursor:pointer;transition:background .2s}
+.msg-item:hover{background:var(--hover)}
+.msg-item.active{background:var(--bg2)}
+.msg-av{width:48px;height:48px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:18px;color:#fff;flex-shrink:0}
+.msg-info{flex:1;min-width:0}
+.msg-name{font-weight:700;font-size:15px;display:flex;justify-content:space-between;align-items:center}
+.msg-time{font-size:12px;color:var(--text2)}
+.msg-preview{font-size:14px;color:var(--text2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:2px}
+.msg-unread{width:8px;height:8px;border-radius:50%;background:var(--accent);flex-shrink:0}
+.msg-chat{flex:1;display:flex;flex-direction:column;min-width:0}
+.msg-chat-header{display:flex;align-items:center;gap:12px;padding:12px 16px;border-bottom:1px solid var(--border)}
+.msg-chat-name{font-weight:700;font-size:16px;flex:1}
+.chat-body{flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:8px}
+.chat-bubble{max-width:70%;padding:10px 16px;border-radius:18px;font-size:15px;line-height:1.5;word-break:break-word}
+.chat-bubble.sent{background:var(--accent);color:#fff;align-self:flex-end;border-bottom-right-radius:4px}
+.chat-bubble.received{background:var(--bg2);align-self:flex-start;border-bottom-left-radius:4px}
+.chat-time{font-size:11px;color:var(--text2);margin-top:2px;text-align:right}
+.msg-chat-input{display:flex;gap:8px;padding:12px 16px;border-top:1px solid var(--border);align-items:flex-end}
+.chat-textarea{flex:1;background:var(--bg2);border-radius:20px;padding:10px 16px;font-size:15px;resize:none;min-height:42px;max-height:120px;border:1px solid transparent;transition:border-color .2s;line-height:1.5;font-family:inherit}
+.chat-textarea:focus{border-color:var(--accent)}
+.chat-send{background:var(--accent);color:#fff;border-radius:var(--r);padding:8px 20px;font-size:15px;font-weight:700;cursor:pointer;transition:background .2s;white-space:nowrap;border:none}
+.chat-send:hover{background:var(--ah)}
+.chat-send:disabled{opacity:.5;cursor:default}
+.chat-date{text-align:center;font-size:12px;color:var(--text2);margin:8px 0}
+
+/* ===== EXPLORE ===== */
+.explore-search{padding:12px 16px;border-bottom:1px solid var(--border)}
+.es-input{display:flex;align-items:center;background:var(--bg2);border-radius:var(--r);padding:0 16px;gap:12px}
+.es-input svg{width:18px;height:18px;fill:var(--text2)}
+.es-input input{flex:1;background:transparent;border:none;outline:none;color:var(--text);font-size:15px;padding:12px 0;font-family:inherit}
+.es-input input::placeholder{color:var(--text2)}
+.explore-filters{display:flex;gap:8px;padding:12px 16px;overflow-x:auto;border-bottom:1px solid var(--border)}
+.explore-filter{padding:6px 16px;border-radius:var(--r);font-size:14px;font-weight:600;cursor:pointer;white-space:nowrap;border:1px solid var(--border);transition:all .2s;color:var(--text)}
+.explore-filter.active,.explore-filter:hover{background:var(--text);color:var(--bg);border-color:var(--text)}
+.explore-grid{display:grid;grid-template-columns:1fr 1fr;gap:2px;padding:2px}
+.explore-grid-item{position:relative;cursor:pointer;overflow:hidden;border-radius:0}
+.explore-grid-item:first-child{grid-column:1/-1}
+.ei-img{width:100%;display:block;aspect-ratio:16/9;object-fit:cover;min-height:120px;transition:opacity .2s}
+.explore-grid-item:first-child .ei-img{aspect-ratio:16/7}
+.ei-overlay{position:absolute;inset:0;background:rgba(0,0,0,.3);opacity:0;transition:opacity .2s;display:flex;align-items:flex-end;padding:12px;gap:16px;color:#fff;font-size:14px;font-weight:700}
+.explore-grid-item:hover .ei-overlay{opacity:1}
+.ei-item{position:relative;overflow:hidden;border-radius:0}
+.ei-item:first-child{grid-column:1/-1}
+
+/* ===== SETTINGS ===== */
+.settings-list{max-width:600px;margin:0 auto;padding:16px}
+.settings-section{margin-bottom:32px}
+.settings-section-title{font-size:13px;font-weight:700;color:var(--text2);padding:8px 0;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px}
+.settings-item{display:flex;align-items:center;justify-content:space-between;padding:16px;background:var(--bg2);border-radius:12px;margin-bottom:8px;cursor:pointer;transition:background .2s}
+.settings-item:hover{background:var(--bg3)}
+.settings-item-info h3{font-size:16px;font-weight:600}
+.settings-item-info p{font-size:13px;color:var(--text2);margin-top:2px}
+.settings-toggle{width:44px;height:24px;border-radius:12px;background:var(--border);position:relative;cursor:pointer;transition:background .2s;border:none}
+.settings-toggle.on{background:var(--accent)}
+.settings-toggle::after{content:'';position:absolute;top:2px;left:2px;width:20px;height:20px;border-radius:50%;background:#fff;transition:transform .2s}
+.settings-toggle.on::after{transform:translateX(20px)}
+.theme-options{display:flex;gap:8px;padding:8px 0}
+.theme-opt{width:48px;height:48px;border-radius:12px;cursor:pointer;border:2px solid transparent;transition:border-color .2s}
+.theme-opt.active{border-color:var(--accent)}
+.theme-opt.dark{background:#000;border:2px solid var(--border)}
+.theme-opt.light{background:#fff;border:2px solid #ccc}
+.theme-opt.dim{background:#15202b;border:2px solid var(--border)}
+
+/* ===== MODAL / DROPDOWN ===== */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:1000;display:none;align-items:center;justify-content:center}
+.modal-overlay.active{display:flex}
+.modal{background:var(--bg2);border-radius:20px;width:90%;max-width:560px;max-height:85vh;overflow:hidden;display:flex;flex-direction:column}
+.modal-header{display:flex;align-items:center;gap:16px;padding:12px 16px;border-bottom:1px solid var(--border)}
+.modal-close{width:36px;height:36px;border-radius:50%;background:transparent;border:none;cursor:pointer;color:var(--text);display:flex;align-items:center;justify-content:center;transition:background .2s}
+.modal-close:hover{background:rgba(231,233,234,.1)}
+.modal-close svg{width:20px;height:20px;fill:var(--text)}
+.modal-title{font-size:17px;font-weight:700;flex:1}
+.modal-body{flex:1;overflow-y:auto;padding:16px}
+.modal-footer{padding:12px 16px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:8px}
+.modal-btn{padding:8px 20px;border-radius:var(--r);font-size:15px;font-weight:700;cursor:pointer;border:1px solid var(--border);background:transparent;color:var(--text);transition:all .2s}
+.modal-btn:hover{background:rgba(231,233,234,.1)}
+.modal-btn.primary{background:var(--accent);color:#fff;border-color:var(--accent)}
+.modal-btn.primary:hover{background:var(--ah)}
+
+/* Dropdown menu */
+.dropdown{position:absolute;background:var(--bg2);border:1px solid var(--border);border-radius:12px;box-shadow:0 8px 30px rgba(0,0,0,.3);z-index:100;min-width:180px;overflow:hidden;display:none}
+.dropdown.active{display:block}
+.d-item{padding:12px 16px;font-size:15px;cursor:pointer;display:flex;align-items:center;gap:12px;transition:background .2s}
+.d-item:hover{background:rgba(231,233,234,.05)}
+.d-item svg{width:18px;height:18px;fill:var(--text)}
+.d-item.danger:hover{background:rgba(249,24,128,.1);color:var(--pink)}
+.d-item.danger:hover svg{fill:var(--pink)}
+.d-divider{height:1px;background:var(--border);margin:4px 0}
+
+/* Emoji picker */
+.emoji-picker{position:absolute;background:var(--bg2);border:1px solid var(--border);border-radius:16px;padding:12px;z-index:200;display:none;width:300px;flex-wrap:wrap;gap:4px}
+.emoji-picker.active{display:flex}
+.emoji-btn{font-size:22px;cursor:pointer;padding:4px;border-radius:6px;transition:background .2s}
+.emoji-btn:hover{background:rgba(231,233,234,.1);transform:scale(1.2)}
+
+/* ===== LIKERS LIST ===== */
+.likers-list{display:flex;flex-direction:column}
+.liker-item{display:flex;align-items:center;gap:12px;padding:12px 16px;border-bottom:1px solid var(--border);cursor:pointer;transition:background .2s}
+.liker-item:hover{background:var(--hover)}
+
+/* ===== EMPTY STATE ===== */
+.empty-state{padding:60px 20px;text-align:center}
+.empty-state svg{width:48px;height:48px;fill:var(--text2);margin-bottom:16px}
+.empty-state h3{font-size:20px;font-weight:800;margin-bottom:8px}
+.empty-state p{color:var(--text2);font-size:15px}
+
+/* ===== LOADING ===== */
+.loading{padding:40px;text-align:center;color:var(--text2)}
+
+/* ===== SHARE MODAL ===== */
+.share-url{display:flex;align-items:center;gap:8px;background:var(--bg);border:1px solid var(--border);border-radius:12px;padding:12px 16px;font-size:14px;color:var(--text2);margin-top:12px;overflow:hidden}
+.share-url span{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.copy-btn{background:var(--accent);color:#fff;border:none;border-radius:var(--r);padding:6px 16px;font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap;flex-shrink:0;transition:background .2s}
+.copy-btn:hover{background:var(--ah)}
+
+/* ===== RESPONSIVE ===== */
+@media(max-width:1100px){.sidebar-right{display:none}}
+@media(max-width:700px){
+  .sidebar{width:68px;padding:0 4px}
+  .nav-label,.post-btn,.un,.uh,.dots{display:none !important}
+  .nav-item{justify-content:center;padding:12px}
+  .logo{margin:0 auto}
+  .user-menu{justify-content:center}
+  .main{max-width:100%;border-right:none}
+  .layout{gap:0}
+  .profile-avatar{width:100px;height:100px;bottom:-50px}
+  .profile-info{padding-top:56px}
+  .msg-layout{flex-direction:column}
+  .msg-list{min-width:100%;border-right:none;border-bottom:1px solid var(--border);max-height:40vh}
+  .msg-chat{flex:1}
+  .explore-grid{grid-template-columns:1fr}
+  .explore-grid-item:first-child{grid-column:1}
+  .ei-img{aspect-ratio:4/3 !important}
+}
+
+/* ===== DARK/LIGHT THEME ===== */
+.theme-light{--bg:#fff;--bg2:#f7f9f9;--bg3:#eff3f4;--bg4:#cfd9de;--text:#0f1419;--text2:#536471;--border:#eff3f4;--hover:#f7f9f9}
+.theme-dim{--bg:#15202b;--bg2:#192734;--bg3:#22303c;--bg4:#2f3f50;--border:#2f3336;--hover:#192734}
 </style>
 </head>
 <body>
-<div class="layout">
+<div class="layout" id="app">
 
   <!-- LEFT SIDEBAR -->
-  <aside class="sidebar-left">
-    <div class="logo">言</div>
-
-    <nav>
-      <a class="nav-item active" href="#">
-        <span class="nav-icon">
-          <svg viewBox="0 0 24 24"><path d="M12 1.696L.622 8.807l1.06 1.696L3 9.679V19.5C3 20.881 4.119 22 5.5 22h4a1 1 0 001-1v-6h3v6a1 1 0 001 1h4c1.381 0 2.5-1.119 2.5-2.5V9.679l1.318.824 1.06-1.696L12 1.696zM17 20h-3v-6H10v6H7V8.429l5-3.125 5 3.125V20z"/></svg>
-        </span>
+  <aside class="sidebar" id="sidebar" style="display:none">
+    <div class="logo" onclick="navigate('home')">言</div>
+    <nav class="nav">
+      <a class="nav-item active" id="nav-home" onclick="navigate('home')">
+        <svg viewBox="0 0 24 24"><path d="M12 1.696L.622 8.807l1.06 1.696L3 9.679V19.5C3 20.881 4.119 22 5.5 22h4a1 1 0 001-1v-6h3v6a1 1 0 001 1h4c1.381 0 2.5-1.119 2.5-2.5V9.679l1.318.824 1.06-1.696L12 1.696z"/></svg>
         <span class="nav-label">主页</span>
       </a>
-      <a class="nav-item" href="#">
-        <span class="nav-icon">
-          <svg viewBox="0 0 24 24"><path d="M10.25 3.75c-3.59 0-6.5 2.91-6.5 6.5s2.91 6.5 6.5 6.5c1.795 0 3.419-.726 4.596-1.904 1.178-1.177 1.904-2.801 1.904-4.596 0-3.59-2.91-6.5-6.5-6.5zm-8.5 6.5c0-4.694 3.806-8.5 8.5-8.5s8.5 3.806 8.5 8.5c0 1.986-.682 3.815-1.814 5.272l4.521 4.521-1.414 1.414-4.521-4.521A8.465 8.465 0 0110.25 18.75c-4.694 0-8.5-3.806-8.5-8.5z"/></svg>
-        </span>
+      <a class="nav-item" id="nav-explore" onclick="navigate('explore')">
+        <svg viewBox="0 0 24 24"><path d="M10.25 3.75c-3.59 0-6.5 2.91-6.5 6.5s2.91 6.5 6.5 6.5c1.795 0 3.419-.726 4.596-1.904 1.178-1.177 1.904-2.801 1.904-4.596 0-3.59-2.91-6.5-6.5-6.5z"/></svg>
         <span class="nav-label">探索</span>
       </a>
-      <a class="nav-item" href="#">
-        <span class="nav-icon">
-          <svg viewBox="0 0 24 24"><path d="M19.993 9.042C19.48 5.017 16.054 2 11.996 2s-7.49 3.021-7.999 7.051L2.866 18H7.1c.463 2.282 2.481 4 4.9 4s4.437-1.718 4.9-4h4.236l-1.143-8.958zM12 20c-1.306 0-2.417-.835-2.829-2h5.658c-.412 1.165-1.523 2-2.829 2zm-6.866-4l.847-6.698C6.364 6.272 8.941 4 11.996 4s5.627 2.268 6.013 5.295L18.864 16H5.134z"/></svg>
-          <span class="nav-badge">3</span>
+      <a class="nav-item" id="nav-notif" onclick="navigate('notifications')">
+        <span class="nav-badge" id="notif-badge"><span class="b">3</span>
+          <svg viewBox="0 0 24 24"><path d="M19.993 9.042C19.48 5.017 16.054 2 11.996 2s-7.49 3.021-7.999 7.051L2.866 18H7.1c.463 2.282 2.481 4 4.9 4s4.437-1.718 4.9-4h4.236l-1.143-8.958z"/></svg>
         </span>
         <span class="nav-label">通知</span>
       </a>
-      <a class="nav-item" href="#">
-        <span class="nav-icon">
-          <svg viewBox="0 0 24 24"><path d="M1.998 5.5c0-1.381 1.119-2.5 2.5-2.5h15c1.381 0 2.5 1.119 2.5 2.5v13c0 1.381-1.119 2.5-2.5 2.5h-15c-1.381 0-2.5-1.119-2.5-2.5v-13zm2.5-.5c-.276 0-.5.224-.5.5v2.764l8 3.638 8-3.638V5.5c0-.276-.224-.5-.5-.5h-15zm15.5 5.463l-8 3.638-8-3.638V18.5c0 .276.224.5.5.5h15c.276 0 .5-.224.5-.5v-8.037z"/></svg>
-        </span>
+      <a class="nav-item" id="nav-messages" onclick="navigate('messages')">
+        <svg viewBox="0 0 24 24"><path d="M1.998 5.5c0-1.381 1.119-2.5 2.5-2.5h15c1.381 0 2.5 1.119 2.5 2.5v13c0 1.381-1.119 2.5-2.5 2.5h-15c-1.381 0-2.5-1.119-2.5-2.5v-13zM5.5 7c-.276 0-.5.224-.5.5v2.764l8 3.638 8-3.638V7.5c0-.276-.224-.5-.5-.5h-15z"/></svg>
         <span class="nav-label">消息</span>
       </a>
-      <a class="nav-item" href="#">
-        <span class="nav-icon">
-          <svg viewBox="0 0 24 24"><path d="M4 4.5C4 3.12 5.119 2 6.5 2h11C18.881 2 20 3.12 20 4.5v18.44l-8-5.71-8 5.71V4.5zM6.5 4c-.276 0-.5.22-.5.5v14.56l6-4.29 6 4.29V4.5c0-.28-.224-.5-.5-.5h-11z"/></svg>
-        </span>
+      <a class="nav-item" id="nav-bookmarks" onclick="navigate('bookmarks')">
+        <svg viewBox="0 0 24 24"><path d="M4 4.5C4 3.12 5.119 2 6.5 2h11C18.881 2 20 3.12 20 4.5v18.44l-8-5.71-8 5.71V4.5z"/></svg>
         <span class="nav-label">书签</span>
       </a>
-      <a class="nav-item" href="#">
-        <span class="nav-icon">
-          <svg viewBox="0 0 24 24"><path d="M5.651 19h12.698c-.337-1.8-1.023-3.21-1.945-4.19C15.318 13.65 13.838 13 12 13s-3.317.65-4.404 1.81c-.922.98-1.608 2.39-1.945 4.19zm.486-5.56C7.627 11.85 9.648 11 12 11s4.373.85 5.863 2.44c1.477 1.58 2.366 3.8 2.632 6.46l.11 1.1H3.395l.11-1.1c.266-2.66 1.155-4.88 2.632-6.46zM12 4c-1.105 0-2 .9-2 2s.895 2 2 2 2-.9 2-2-.895-2-2-2zM8 6c0-2.21 1.791-4 4-4s4 1.79 4 4-1.791 4-4 4-4-1.79-4-4z"/></svg>
-        </span>
+      <a class="nav-item" id="nav-profile" onclick="navigate('profile')">
+        <svg viewBox="0 0 24 24"><path d="M5.651 19h12.698c-.337-1.8-1.023-3.21-1.945-4.19C15.318 13.65 13.838 13 12 13s-3.317.65-4.404 1.81c-.922.98-1.608 2.39-1.945 4.19z"/></svg>
         <span class="nav-label">个人资料</span>
       </a>
-      <a class="nav-item" href="#">
-        <span class="nav-icon">
-          <svg viewBox="0 0 24 24"><path d="M3.75 12c0-.966.783-1.75 1.75-1.75s1.75.784 1.75 1.75-.783 1.75-1.75 1.75S3.75 12.966 3.75 12zm8.25 0c0-.966.783-1.75 1.75-1.75s1.75.784 1.75 1.75-.783 1.75-1.75 1.75S12 12.966 12 12zm8.25 0c0-.966.783-1.75 1.75-1.75s1.75.784 1.75 1.75-.783 1.75-1.75 1.75S20.25 12.966 20.25 12z"/></svg>
-        </span>
+      <a class="nav-item" id="nav-settings" onclick="navigate('settings')">
+        <svg viewBox="0 0 24 24"><path d="M12 8.25c-.914 0-1.674.746-1.674 1.664S11.086 11.578 12 11.578s1.674-.746 1.674-1.664S12.914 8.25 12 8.25zM3 17.25V16.5c0-.414.336-.75.75-.75h.472c.414 0 .75-.336.75-.75v-.75c0-.414-.336-.75-.75-.75H3.75C3.336 14.25 3 14.586 3 15v.75zm9-6.75h.472c.414 0 .75-.336.75-.75V9c0-.414-.336-.75-.75-.75H12c-.414 0-.75.336-.75.75v.75c0 .414.336.75.75.75zm-4.5 3c0-.414-.336-.75-.75-.75H5.472c-.414 0-.75.336-.75.75v.75c0 .414.336.75.75.75H6.75c.414 0 .75-.336.75-.75V13.5zm1.5-4.5v-.75c0-.414-.336-.75-.75-.75H6c-.414 0-.75.336-.75.75v.75c0 .414.336.75.75.75h.75c.414 0 .75-.336.75-.75z"/></svg>
+        <span class="nav-label">设置</span>
+      </a>
+      <a class="nav-item" onclick="toggleDropdown('more-menu')">
+        <svg viewBox="0 0 24 24"><path d="M3.75 12c0-.966.783-1.75 1.75-1.75s1.75.784 1.75 1.75-.783 1.75-1.75 1.75S3.75 12.966 3.75 12zm8.25 0c0-.966.783-1.75 1.75-1.75s1.75.784 1.75 1.75-.783 1.75-1.75 1.75-1.75-.784-1.75-1.75zm8.25 0c0-.966.783-1.75 1.75-1.75s1.75.784 1.75 1.75-.783 1.75-1.75 1.75-1.75-.784-1.75-1.75z"/></svg>
         <span class="nav-label">更多</span>
       </a>
     </nav>
-
-    <button class="post-btn" onclick="document.querySelector('.compose-input').focus()">发帖</button>
-
-    <div class="user-info">
-      <div class="avatar">王</div>
-      <div class="user-names">
-        <div class="name">王坤</div>
-        <div class="handle">@wngkn5393218313</div>
+    <button class="post-btn" onclick="openPostModal()">发帖</button>
+    <div class="user-menu" onclick="navigate('profile')">
+      <div class="av">王</div>
+      <div>
+        <div class="un">王坤</div>
+        <div class="uh">@wngkn5393218313</div>
       </div>
-      <div class="dots-icon">···</div>
+      <span class="dots">···</span>
     </div>
   </aside>
 
-  <!-- MAIN FEED -->
-  <main class="main">
-    <div class="feed-header">
-      <div class="feed-tabs">
-        <div class="feed-tab active" onclick="switchTab(this)">为你推荐</div>
-        <div class="feed-tab" onclick="switchTab(this)">正在关注</div>
-      </div>
-    </div>
-
-    <!-- Compose -->
-    <div class="compose-area">
-      <div class="avatar">王</div>
-      <div class="compose-input-area">
-        <textarea class="compose-input" placeholder="有什么新鲜事？" rows="2" id="composeText" oninput="updatePostBtn()"></textarea>
-        <div class="compose-toolbar">
-          <div class="compose-tools">
-            <button class="tool-btn" title="图片">
-              <svg viewBox="0 0 24 24"><path d="M3 5.5C3 4.119 4.119 3 5.5 3h13C19.881 3 21 4.119 21 5.5v13c0 1.381-1.119 2.5-2.5 2.5h-13C4.119 21 3 19.881 3 18.5v-13zM5.5 5c-.276 0-.5.224-.5.5v9.086l3-3 3 3 5-5 3 3V5.5c0-.276-.224-.5-.5-.5h-13zM19 17.914l-3-3-5 5H18.5c.276 0 .5-.224.5-.5v-1.5zM9.586 15L7 17.586V18.5c0 .124.023.243.065.352L11.586 14l-2-2zM8 10a1 1 0 110-2 1 1 0 010 2z"/></svg>
-            </button>
-            <button class="tool-btn" title="视频">
-              <svg viewBox="0 0 24 24"><path d="M3 5.5C3 4.119 4.119 3 5.5 3h13C19.881 3 21 4.119 21 5.5v13c0 1.381-1.119 2.5-2.5 2.5h-13C4.119 21 3 19.881 3 18.5v-13zM5.5 5c-.276 0-.5.224-.5.5v13c0 .276.224.5.5.5h13c.276 0 .5-.224.5-.5v-13c0-.276-.224-.5-.5-.5h-13zM10 15l5-3-5-3v6z"/></svg>
-            </button>
-            <button class="tool-btn" title="表情">
-              <svg viewBox="0 0 24 24"><path d="M8 9.5C8 8.119 8.672 7 9.5 7S11 8.119 11 9.5 10.328 12 9.5 12 8 10.881 8 9.5zm6.5 0c0-1.381.672-2.5 1.5-2.5s1.5 1.119 1.5 2.5-.672 2.5-1.5 2.5-1.5-1.119-1.5-2.5zM12 16c-2.224 0-3.021-2.227-3.051-2.316l-1.897.633C7.143 14.614 8.528 18 12 18s4.857-3.386 4.948-3.683l-1.897-.633C14.821 14.277 14.187 16 12 16zm-.001-14C6.477 2 2 6.477 2 12s4.477 10 9.999 10C17.523 22 22 17.523 22 12S17.523 2 11.999 2zM12 20c-4.411 0-8-3.589-8-8s3.589-8 8-8 8 3.589 8 8-3.589 8-8 8z"/></svg>
-            </button>
-            <button class="tool-btn" title="位置">
-              <svg viewBox="0 0 24 24"><path d="M12 7c-1.381 0-2.5 1.119-2.5 2.5S10.619 12 12 12s2.5-1.119 2.5-2.5S13.381 7 12 7zm0 3c-.276 0-.5-.224-.5-.5S11.724 9 12 9s.5.224.5.5-.224.5-.5.5zm0-8c-4.418 0-8 3.582-8 8 0 5.25 7.111 13.246 7.411 13.589.192.217.469.343.759.343s.567-.126.759-.343C13.229 22.995 20 14.999 20 10c0-4.418-3.582-8-8-8zm0 19.187C9.534 18.044 6 12.979 6 10c0-3.309 2.691-6 6-6s6 2.691 6 6c0 2.971-3.525 8.024-6 12.187z"/></svg>
-            </button>
-          </div>
-          <button class="post-small-btn" id="postBtn" disabled onclick="postTweet()">发帖</button>
-        </div>
-      </div>
-    </div>
-
-    <!-- Tweets -->
-    <div id="feed"></div>
+  <!-- MAIN CONTENT -->
+  <main class="main" id="mainContent">
+    <!-- content injected by JS -->
   </main>
 
   <!-- RIGHT SIDEBAR -->
-  <aside class="sidebar-right">
+  <aside class="sidebar-right" id="sidebarRight" style="display:none">
     <div class="search-box">
-      <div class="search-input-wrap">
-        <svg viewBox="0 0 24 24"><path d="M10.25 3.75c-3.59 0-6.5 2.91-6.5 6.5s2.91 6.5 6.5 6.5c1.795 0 3.419-.726 4.596-1.904 1.178-1.177 1.904-2.801 1.904-4.596 0-3.59-2.91-6.5-6.5-6.5zm-8.5 6.5c0-4.694 3.806-8.5 8.5-8.5s8.5 3.806 8.5 8.5c0 1.986-.682 3.815-1.814 5.272l4.521 4.521-1.414 1.414-4.521-4.521A8.465 8.465 0 0110.25 18.75c-4.694 0-8.5-3.806-8.5-8.5z"/></svg>
-        <input class="search-input" type="text" placeholder="搜索">
+      <div class="sbw" onclick="navigate('search')">
+        <svg viewBox="0 0 24 24"><path d="M10.25 3.75c-3.59 0-6.5 2.91-6.5 6.5s2.91 6.5 6.5 6.5c1.795 0 3.419-.726 4.596-1.904 1.178-1.177 1.904-2.801 1.904-4.596 0-3.59-2.91-6.5-6.5-6.5z"/></svg>
+        <input class="sin" placeholder="搜索" readonly>
       </div>
     </div>
-
-    <!-- Premium widget -->
-    <div class="widget-box" style="padding: 16px;">
-      <p style="font-size:15px;margin-bottom:8px;">免广告、查看你的分析数据、推广你的回复并解锁 20 多项功能。</p>
-      <button style="background:var(--accent);color:#fff;border:none;border-radius:9999px;padding:9px 20px;font-size:15px;font-weight:700;cursor:pointer;">订阅</button>
+    <div class="widget" style="padding:16px">
+      <p style="font-size:15px;margin-bottom:8px;line-height:1.5">免广告、查看你的分析数据、推广你的回复并解锁 20 多项功能。</p>
+      <button style="background:var(--accent);color:#fff;border:none;border-radius:9999px;padding:9px 20px;font-size:15px;font-weight:700;cursor:pointer">订阅</button>
     </div>
-
-    <!-- Trends -->
-    <div class="widget-box">
-      <div class="widget-title">有什么新鲜事</div>
-      <div class="trend-item">
-        <div class="trend-meta">科技 趋势</div>
-        <div class="trend-name">#AI大模型</div>
-        <div class="trend-count">12.3万 条帖子</div>
+    <div class="widget">
+      <div class="wt">有什么新鲜事</div>
+      <div class="trend-item" onclick="navigate('trending')"><div class="tm">科技 趋势</div><div class="tn2">#AI大模型</div><div class="tc">12.3万 条帖子</div></div>
+      <div class="trend-item" onclick="navigate('trending')"><div class="tm">娱乐 趋势</div><div class="tn2">#新剧热播</div><div class="tc">9.8万 条帖子</div></div>
+      <div class="trend-item" onclick="navigate('trending')"><div class="tm">体育 趋势</div><div class="tn2">#世界杯预选赛</div><div class="tc">7.2万 条帖子</div></div>
+      <div class="trend-item" onclick="navigate('trending')"><div class="tm">财经 趋势</div><div class="tn2">#A股行情</div><div class="tc">5.6万 条帖子</div></div>
+      <div class="trend-item" onclick="navigate('trending')"><div class="tm">科技 趋势</div><div class="tn2">#开源项目</div><div class="tc">4.3万 条帖子</div></div>
+      <a class="show-more" onclick="navigate('trending')">显示更多</a>
+    </div>
+    <div class="widget">
+      <div class="wt">推荐关注</div>
+      <div class="fi">
+        <div class="fa" style="background:linear-gradient(135deg,#f093fb,#f5576c)">张</div>
+        <div class="fi-info"><div class="fi-name">张伟 <span style="color:var(--accent);display:inline-flex"><svg width="18" height="18" viewBox="0 0 24 24"><path fill="var(--accent)" d="M20.396 11c-.018-.646-.215-1.275-.57-1.816-.354-.54-.852-.972-1.438-1.246.223-.607.27-1.264.14-1.897-.131-.634-.437-1.218-.882-1.687-.47-.445-1.053-.75-1.687-.882-.633-.13-1.29-.083-1.897.14-.273-.587-.704-1.086-1.245-1.44S11.647 1.62 11 1.604c-.646.017-1.273.213-1.813.568s-.969.854-1.24 1.441c-.608-.223-1.267-.272-1.902-.14-.635.13-1.22.436-1.69.882-.445.47-.749 1.055-.878 1.688-.13.633-.08 1.29.144 1.896-.587.274-1.087.705-1.443 1.245-.356.54-.555 1.17-.574 1.817.02.647.218 1.276.574 1.817.356.54.856.972 1.443 1.245-.224.606-.274 1.263-.144 1.896.13.634.433 1.218.877 1.688.47.443 1.054.747 1.687.878.633.132 1.29.084 1.897-.136.274.586.705 1.084 1.246 1.439.54.354 1.17.551 1.816.569.647-.016 1.276-.213 1.817-.567s.972-.854 1.245-1.44c.604.239 1.266.296 1.903.164.636-.132 1.22-.447 1.68-.907.46-.46.776-1.044.908-1.681s.075-1.299-.165-1.903c.586-.274 1.084-.705 1.439-1.246.354-.54.551-1.17.569-1.816z"/></svg></span></div><div class="fi-handle">@zhangwei</div></div>
+        <button class="fbtn" onclick="event.stopPropagation();toggleFollow(this)">关注</button>
       </div>
-      <div class="trend-item">
-        <div class="trend-meta">科技 趋势</div>
-        <div class="trend-name">#开源项目</div>
-        <div class="trend-count">8.7万 条帖子</div>
+      <div class="fi">
+        <div class="fa" style="background:linear-gradient(135deg,#4facfe,#00f2fe)">李</div>
+        <div class="fi-info"><div class="fi-name">李娜</div><div class="fi-handle">@lina_tech</div></div>
+        <button class="fbtn" onclick="event.stopPropagation();toggleFollow(this)">关注</button>
       </div>
-      <div class="trend-item">
-        <div class="trend-meta">娱乐 趋势</div>
-        <div class="trend-name">#新歌发布</div>
-        <div class="trend-count">5.2万 条帖子</div>
+      <div class="fi">
+        <div class="fa" style="background:linear-gradient(135deg,#43e97b,#38f9d7)">陈</div>
+        <div class="fi-info"><div class="fi-name">陈明 <span style="color:var(--accent)"><svg width="18" height="18" viewBox="0 0 24 24"><path fill="var(--accent)" d="M20.396 11c-.018-.646-.215-1.275-.57-1.816-.354-.54-.852-.972-1.438-1.246.223-.607.27-1.264.14-1.897-.131-.634-.437-1.218-.882-1.687-.47-.445-1.053-.75-1.687-.882-.633-.13-1.29-.083-1.897.14-.273-.587-.704-1.086-1.245-1.44S11.647 1.62 11 1.604c-.646.017-1.273.213-1.813.568s-.969.854-1.24 1.441c-.608-.223-1.267-.272-1.902-.14-.635.13-1.22.436-1.69.882-.445.47-.749 1.055-.878 1.688-.13.633-.08 1.29.144 1.896-.587.274-1.087.705-1.443 1.245-.356.54-.555 1.17-.574 1.817.02.647.218 1.276.574 1.817.356.54.856.972 1.443 1.245-.224.606-.274 1.263-.144 1.896.13.634.433 1.218.877 1.688.47.443 1.054.747 1.687.878.633.132 1.29.084 1.897-.136.274.586.705 1.084 1.246 1.439.54.354 1.17.551 1.816.569.647-.016 1.276-.213 1.817-.567s.972-.854 1.245-1.44c.604.239 1.266.296 1.903.164.636-.132 1.22-.447 1.68-.907.46-.46.776-1.044.908-1.681s.075-1.299-.165-1.903c.586-.274 1.084-.705 1.439-1.246.354-.54.551-1.17.569-1.816z"/></svg></span></div><div class="fi-handle">@chenming_ai</div></div>
+        <button class="fbtn" onclick="event.stopPropagation();toggleFollow(this)">关注</button>
       </div>
-      <div class="trend-item">
-        <div class="trend-meta">体育 趋势</div>
-        <div class="trend-name">#世界杯预选赛</div>
-        <div class="trend-count">4.1万 条帖子</div>
-      </div>
-      <div class="trend-item">
-        <div class="trend-meta">财经 趋势</div>
-        <div class="trend-name">#A股行情</div>
-        <div class="trend-count">3.8万 条帖子</div>
+      <div class="fi">
+        <div class="fa" style="background:linear-gradient(135deg,#fa709a,#fee140)">王</div>
+        <div class="fi-info"><div class="fi-name">王珊珊</div><div class="fi-handle">@wangshanshan</div></div>
+        <button class="fbtn" onclick="event.stopPropagation();toggleFollow(this)">关注</button>
       </div>
       <a class="show-more">显示更多</a>
     </div>
-
-    <!-- Who to follow -->
-    <div class="widget-box">
-      <div class="widget-title">推荐关注</div>
-      <div class="follow-item">
-        <div class="follow-avatar" style="background:linear-gradient(135deg,#f093fb,#f5576c);">张</div>
-        <div class="follow-info">
-          <div class="follow-name">张伟
-            <span class="verified-badge"><svg viewBox="0 0 24 24"><path d="M20.396 11c-.018-.646-.215-1.275-.57-1.816-.354-.54-.852-.972-1.438-1.246.223-.607.27-1.264.14-1.897-.131-.634-.437-1.218-.882-1.687-.47-.445-1.053-.75-1.687-.882-.633-.13-1.29-.083-1.897.14-.273-.587-.704-1.086-1.245-1.44S11.647 1.62 11 1.604c-.646.017-1.273.213-1.813.568s-.969.854-1.24 1.441c-.608-.223-1.267-.272-1.902-.14-.635.13-1.22.436-1.69.882-.445.47-.749 1.055-.878 1.688-.13.633-.08 1.29.144 1.896-.587.274-1.087.705-1.443 1.245-.356.54-.555 1.17-.574 1.817.02.647.218 1.276.574 1.817.356.54.856.972 1.443 1.245-.224.606-.274 1.263-.144 1.896.13.634.433 1.218.877 1.688.47.443 1.054.747 1.687.878.633.132 1.29.084 1.897-.136.274.586.705 1.084 1.246 1.439.54.354 1.17.551 1.816.569.647-.016 1.276-.213 1.817-.567s.972-.854 1.245-1.44c.604.239 1.266.296 1.903.164.636-.132 1.22-.447 1.68-.907.46-.46.776-1.044.908-1.681s.075-1.299-.165-1.903c.586-.274 1.084-.705 1.439-1.246.354-.54.551-1.17.569-1.816zM9.662 14.85l-3.429-3.428 1.293-1.302 2.072 2.072 4.4-4.794 1.347 1.246z"/></svg></span>
-          </div>
-          <div class="follow-handle">@zhangwei</div>
-        </div>
-        <button class="follow-btn">关注</button>
-      </div>
-      <div class="follow-item">
-        <div class="follow-avatar" style="background:linear-gradient(135deg,#4facfe,#00f2fe);">李</div>
-        <div class="follow-info">
-          <div class="follow-name">李娜</div>
-          <div class="follow-handle">@lina_tech</div>
-        </div>
-        <button class="follow-btn">关注</button>
-      </div>
-      <div class="follow-item">
-        <div class="follow-avatar" style="background:linear-gradient(135deg,#43e97b,#38f9d7);">陈</div>
-        <div class="follow-info">
-          <div class="follow-name">陈明
-            <span class="verified-badge"><svg viewBox="0 0 24 24"><path d="M20.396 11c-.018-.646-.215-1.275-.57-1.816-.354-.54-.852-.972-1.438-1.246.223-.607.27-1.264.14-1.897-.131-.634-.437-1.218-.882-1.687-.47-.445-1.053-.75-1.687-.882-.633-.13-1.29-.083-1.897.14-.273-.587-.704-1.086-1.245-1.44S11.647 1.62 11 1.604c-.646.017-1.273.213-1.813.568s-.969.854-1.24 1.441c-.608-.223-1.267-.272-1.902-.14-.635.13-1.22.436-1.69.882-.445.47-.749 1.055-.878 1.688-.13.633-.08 1.29.144 1.896-.587.274-1.087.705-1.443 1.245-.356.54-.555 1.17-.574 1.817.02.647.218 1.276.574 1.817.356.54.856.972 1.443 1.245-.224.606-.274 1.263-.144 1.896.13.634.433 1.218.877 1.688.47.443 1.054.747 1.687.878.633.132 1.29.084 1.897-.136.274.586.705 1.084 1.246 1.439.54.354 1.17.551 1.816.569.647-.016 1.276-.213 1.817-.567s.972-.854 1.245-1.44c.604.239 1.266.296 1.903.164.636-.132 1.22-.447 1.68-.907.46-.46.776-1.044.908-1.681s.075-1.299-.165-1.903c.586-.274 1.084-.705 1.439-1.246.354-.54.551-1.17.569-1.816zM9.662 14.85l-3.429-3.428 1.293-1.302 2.072 2.072 4.4-4.794 1.347 1.246z"/></svg></span>
-          </div>
-          <div class="follow-handle">@chenming_ai</div>
-        </div>
-        <button class="follow-btn">关注</button>
-      </div>
-      <a class="show-more">显示更多</a>
-    </div>
-
     <div class="footer-links">
-      <a href="#">服务条款</a>
-      <a href="#">隐私政策</a>
-      <a href="#">Cookie 政策</a>
-      <a href="#">无障碍</a>
-      <a href="#">广告信息</a>
-      <a href="#">更多</a>
-      <span>© 2026 言</span>
+      <a href="#">服务条款</a><a href="#">隐私政策</a><a href="#">Cookie</a><a href="#">无障碍</a><a href="#">广告</a><a href="#">更多</a><span>© 2026 言</span>
     </div>
   </aside>
 </div>
 
-<script>
-const tweets = [
-  {
-    id: 1,
-    name: "林小雨",
-    handle: "@linxiaoyu",
-    verified: true,
-    time: "2小时",
-    text: "今天用 AI 写了一段代码，效率提升了三倍。以前需要半天的工作，现在一小时搞定。技术真的在改变我们的工作方式 🚀",
-    avatar: "林",
-    avatarBg: "linear-gradient(135deg,#667eea,#764ba2)",
-    likes: 1024,
-    retweets: 238,
-    replies: 56,
-    views: "8.3万",
-    liked: false
-  },
-  {
-    id: 2,
-    name: "科技日报",
-    handle: "@techdaily",
-    verified: true,
-    time: "4小时",
-    text: "【重磅】国内首款自研芯片正式量产，性能超越国际同类产品20%。这标志着我国在半导体领域取得重大突破，打破了长期以来的技术封锁。",
-    avatar: "科",
-    avatarBg: "linear-gradient(135deg,#f093fb,#f5576c)",
-    likes: 5820,
-    retweets: 2341,
-    replies: 428,
-    views: "42万",
-    liked: false,
-    hasMedia: true
-  },
-  {
-    id: 3,
-    name: "创业老王",
-    handle: "@chuangyelaowang",
-    verified: false,
-    time: "6小时",
-    text: "创业第三年的感悟：\n\n1. 找到真正的痛点比找资金更重要\n2. 团队比产品更关键\n3. 现金流是命脉\n4. 不要追风口，要做有价值的事\n5. 失败是最好的老师\n\n共勉 💪",
-    avatar: "王",
-    avatarBg: "linear-gradient(135deg,#4facfe,#00f2fe)",
-    likes: 892,
-    retweets: 445,
-    replies: 103,
-    views: "6.1万",
-    liked: false
-  },
-  {
-    id: 4,
-    name: "摄影师阿明",
-    handle: "@photographer_aming",
-    verified: false,
-    time: "8小时",
-    text: "早晨六点的城市，属于少数清醒的人。",
-    avatar: "阿",
-    avatarBg: "linear-gradient(135deg,#43e97b,#38f9d7)",
-    likes: 3201,
-    retweets: 189,
-    replies: 67,
-    views: "15万",
-    liked: false,
-    hasMedia: true
-  },
-  {
-    id: 5,
-    name: "前端开发者社区",
-    handle: "@fe_community",
-    verified: true,
-    time: "10小时",
-    text: "Vue 4.0 正式发布！主要更新：\n• 全新编译器，性能提升 50%\n• 更好的 TypeScript 支持\n• 全新的响应式系统\n• 更小的包体积\n\n大家都用上了吗？评论区分享体验！",
-    avatar: "前",
-    avatarBg: "linear-gradient(135deg,#fa709a,#fee140)",
-    likes: 4567,
-    retweets: 1823,
-    replies: 312,
-    views: "28.9万",
-    liked: false
-  },
-  {
-    id: 6,
-    name: "每日财经",
-    handle: "@daily_finance",
-    verified: true,
-    time: "12小时",
-    text: "今日市场回顾：A股三大指数全线上涨，沪指涨1.2%，深成指涨1.8%，创业板涨2.3%。新能源、半导体、AI板块领涨。\n\n明日关注：美联储议息会议结果，以及国内CPI数据。",
-    avatar: "财",
-    avatarBg: "linear-gradient(135deg,#a18cd1,#fbc2eb)",
-    likes: 721,
-    retweets: 356,
-    replies: 89,
-    views: "5.4万",
-    liked: false
-  }
-];
-
-function formatNum(n) {
-  if (n >= 10000) return (n/10000).toFixed(1) + '万';
-  if (n >= 1000) return (n/1000).toFixed(1) + 'k';
-  return n;
-}
-
-function renderTweets(list) {
-  const feed = document.getElementById('feed');
-  feed.innerHTML = list.map(t => `
-    <div class="tweet" id="tweet-${t.id}">
-      <div class="tweet-avatar" style="background:${t.avatarBg}">${t.avatar}</div>
-      <div class="tweet-body">
-        <div class="tweet-header">
-          <span class="tweet-name">${t.name}</span>
-          ${t.verified ? `<span class="verified-badge"><svg viewBox="0 0 24 24"><path d="M20.396 11c-.018-.646-.215-1.275-.57-1.816-.354-.54-.852-.972-1.438-1.246.223-.607.27-1.264.14-1.897-.131-.634-.437-1.218-.882-1.687-.47-.445-1.053-.75-1.687-.882-.633-.13-1.29-.083-1.897.14-.273-.587-.704-1.086-1.245-1.44S11.647 1.62 11 1.604c-.646.017-1.273.213-1.813.568s-.969.854-1.24 1.441c-.608-.223-1.267-.272-1.902-.14-.635.13-1.22.436-1.69.882-.445.47-.749 1.055-.878 1.688-.13.633-.08 1.29.144 1.896-.587.274-1.087.705-1.443 1.245-.356.54-.555 1.17-.574 1.817.02.647.218 1.276.574 1.817.356.54.856.972 1.443 1.245-.224.606-.274 1.263-.144 1.896.13.634.433 1.218.877 1.688.47.443 1.054.747 1.687.878.633.132 1.29.084 1.897-.136.274.586.705 1.084 1.246 1.439.54.354 1.17.551 1.816.569.647-.016 1.276-.213 1.817-.567s.972-.854 1.245-1.44c.604.239 1.266.296 1.903.164.636-.132 1.22-.447 1.68-.907.46-.46.776-1.044.908-1.681s.075-1.299-.165-1.903c.586-.274 1.084-.705 1.439-1.246.354-.54.551-1.17.569-1.816zM9.662 14.85l-3.429-3.428 1.293-1.302 2.072 2.072 4.4-4.794 1.347 1.246z"/></svg></span>` : ''}
-          <span class="tweet-handle">${t.handle}</span>
-          <span class="tweet-time">· ${t.time}</span>
-          <div class="tweet-more" onclick="event.stopPropagation()">
-            <svg viewBox="0 0 24 24"><path d="M3 12c0-1.1.9-2 2-2s2 .9 2 2-.9 2-2 2-2-.9-2-2zm9 2c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm7 0c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2z"/></svg>
+<!-- MODAL: POST -->
+<div class="modal-overlay" id="postModal">
+  <div class="modal">
+    <div class="modal-header">
+      <button class="modal-close" onclick="closePostModal()">
+        <svg viewBox="0 0 24 24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+      </button>
+      <button class="modal-btn primary" id="modalPostBtn" onclick="submitPost()" disabled style="border-radius:9999px;padding:8px 20px;font-size:14px">发帖</button>
+    </div>
+    <div class="modal-body">
+      <div style="display:flex;gap:12px">
+        <div class="av" id="modalAv">王</div>
+        <div style="flex:1">
+          <textarea id="modalText" class="ri-textarea" placeholder="有什么新鲜事？" oninput="updateModalPostBtn()"></textarea>
+          <div style="display:flex;gap:4px;margin-top:8px">
+            <button class="tb"><svg viewBox="0 0 24 24"><path d="M3 5.5C3 4.119 4.119 3 5.5 3h13C19.881 3 21 4.119 21 5.5v13c0 1.381-1.119 2.5-2.5 2.5h-13C4.119 21 3 19.881 3 18.5v-13z"/></svg></button>
+            <button class="tb"><svg viewBox="0 0 24 24"><path d="M3 5.5C3 4.119 4.119 3 5.5 3h13C19.881 3 21 4.119 21 5.5v13c0 1.381-1.119 2.5-2.5 2.5h-13C4.119 21 3 19.881 3 18.5v-13z"/></svg></button>
+            <button class="tb" onclick="toggleEmoji()"><svg viewBox="0 0 24 24"><path d="M8 9.5C8 8.119 8.672 7 9.5 7S11 8.119 11 9.5 10.328 12 9.5 12 8 10.881 8 9.5zm6.5 0c0-1.381.672-2.5 1.5-2.5s1.5 1.119 1.5 2.5-.672 2.5-1.5 2.5-1.5-1.119-1.5-2.5z"/></svg></button>
+            <button class="tb"><svg viewBox="0 0 24 24"><path d="M12 7c-1.381 0-2.5 1.119-2.5 2.5S10.619 12 12 12s2.5-1.119 2.5-2.5S13.381 7 12 7z"/></svg></button>
           </div>
-        </div>
-        <div class="tweet-text">${t.text.replace(/\n/g,'<br>')}</div>
-        ${t.hasMedia ? `<div class="tweet-media"><div class="media-placeholder" style="background:${t.avatarBg.replace('linear-gradient','radial-gradient')};opacity:0.3;height:280px;"></div></div>` : ''}
-        <div class="tweet-actions">
-          <button class="action-btn" onclick="event.stopPropagation()">
-            <svg viewBox="0 0 24 24"><path d="M1.751 10c0-4.42 3.584-8 8.005-8h4.366c4.49 0 7.501 3.858 7.501 7.501 0 3.808-2.851 7.091-6.056 7.765 .005.099.01.197.01.297 0 1.68-1.072 2.96-2.584 3.063C11.51 21.954 11.013 22 10.5 22c-4.394 0-8.75-3.519-8.75-8.5 0-1.085.225-2.107.625-3.025-.001-.075-.014-.155-.014-.237C2.361 10 2.056 10 1.75 10z"/></svg>
-            <span class="action-count">${formatNum(t.replies)}</span>
-          </button>
-          <button class="action-btn retweet" onclick="event.stopPropagation();retweetAction(${t.id},this)">
-            <svg viewBox="0 0 24 24"><path d="M4.5 3.88l4.432 4.14-1.364 1.46L5.5 7.55V16c0 1.1.896 2 2 2H13v2H7.5c-2.209 0-4-1.79-4-4V7.55L1.432 9.48.068 8.02 4.5 3.88zM16.5 6H11V4h5.5c2.209 0 4 1.79 4 4v8.45l2.068-1.93 1.364 1.46-4.432 4.14-4.432-4.14 1.364-1.46 2.068 1.93V8c0-1.1-.896-2-2-2z"/></svg>
-            <span class="action-count">${formatNum(t.retweets)}</span>
-          </button>
-          <button class="action-btn like ${t.liked?'liked':''}" onclick="event.stopPropagation();likeAction(${t.id},this)">
-            <svg viewBox="0 0 24 24"><path d="M16.697 5.5c-1.222-.06-2.679.51-3.89 2.16l-.805 1.09-.806-1.09C9.984 6.01 8.526 5.44 7.304 5.5c-1.243.07-2.349.78-2.91 1.91-.552 1.12-.633 2.78.479 4.82 1.074 1.97 3.257 4.27 7.129 6.61 3.87-2.34 6.052-4.64 7.126-6.61 1.111-2.04 1.03-3.7.477-4.82-.561-1.13-1.666-1.84-2.908-1.91zm4.187 7.69c-1.351 2.48-4.001 5.12-8.379 7.67l-.503.3-.504-.3c-4.379-2.55-7.029-5.19-8.382-7.67-1.36-2.5-1.41-4.86-.514-6.67.887-1.79 2.647-2.91 4.601-3.01 1.651-.09 3.368.56 4.798 2.01 1.429-1.45 3.146-2.1 4.796-2.01 1.954.1 3.714 1.22 4.601 3.01.896 1.81.846 4.17-.514 6.67z"/></svg>
-            <span class="action-count" id="likes-${t.id}">${formatNum(t.likes)}</span>
-          </button>
-          <button class="action-btn" onclick="event.stopPropagation()">
-            <svg viewBox="0 0 24 24"><path d="M8.75 21V3h2v18h-2zM18 21V8.5h2V21h-2zM4 21l.004-10h2L6 21H4zm9.248 0v-7h2v7h-2z"/></svg>
-            <span class="action-count">${t.views}</span>
-          </button>
-          <button class="action-btn" onclick="event.stopPropagation()">
-            <svg viewBox="0 0 24 24"><path d="M12 2.59l5.7 5.7-1.41 1.42L13 6.41V16h-2V6.41l-3.3 3.3-1.41-1.42L12 2.59zM21 15l-.02 3.51c0 1.38-1.12 2.49-2.5 2.49H5.5C4.11 21 3 19.88 3 18.5V15h2v3.5c0 .28.22.5.5.5h12.98c.28 0 .5-.22.5-.5L19 15h2z"/></svg>
-          </button>
+          <div class="emoji-picker" id="emojiPicker"></div>
         </div>
       </div>
     </div>
-  `).join('');
+  </div>
+</div>
+
+<!-- MODAL: SHARE -->
+<div class="modal-overlay" id="shareModal">
+  <div class="modal">
+    <div class="modal-header">
+      <button class="modal-close" onclick="closeShareModal()">
+        <svg viewBox="0 0 24 24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+      </button>
+    </div>
+    <div class="modal-body">
+      <h3 style="font-size:20px;font-weight:800;margin-bottom:4px">分享这条帖子</h3>
+      <div class="share-url" id="shareUrl"><span id="shareUrlText">https://yanyan.com/post/1</span><button class="copy-btn" onclick="copyShareUrl()">复制链接</button></div>
+      <div style="margin-top:16px;display:flex;flex-direction:column;gap:4px">
+        <div class="d-item" onclick="closeShareModal()"><svg viewBox="0 0 24 24"><path d="M4 4.5C4 3.12 5.119 2 6.5 2h11C18.881 2 20 3.12 20 4.5v18.44l-8-5.71-8 5.71V4.5z"/></svg> 添加到书签</div>
+        <div class="d-item" onclick="closeShareModal()"><svg viewBox="0 0 24 24"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg> 复制链接</div>
+        <div class="d-item" onclick="closeShareModal()"><svg viewBox="0 0 24 24"><path d="M12 3c-4.97 0-9 4.03-9 9s4.03 9 9 9 9-4.03 9-9-4.03-9-9-9zm0 16c-3.86 0-7-3.14-7-7s3.14-7 7-7 7 3.14 7 7-3.14 7-7 7z"/></svg> 关注 @user</div>
+        <div class="d-item" onclick="closeShareModal()"><svg viewBox="0 0 24 24"><path d="M3 11l8-8 8 8H3z"/></svg> 查看帖子隐藏回复</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: MORE ACTIONS -->
+<div class="modal-overlay" id="moreModal">
+  <div class="modal" style="max-width:400px">
+    <div class="modal-body" style="padding:8px" id="moreModalBody"></div>
+  </div>
+</div>
+
+<!-- MORE DROPDOWN -->
+<div class="dropdown" id="more-menu" style="position:fixed;left:76px;bottom:140px">
+  <div class="d-item" onclick="navigate('bookmarks')"><svg viewBox="0 0 24 24"><path d="M4 4.5C4 3.12 5.119 2 6.5 2h11C18.881 2 20 3.12 20 4.5v18.44l-8-5.71-8 5.71V4.5z"/></svg> 书签</div>
+  <div class="d-item" onclick="navigate('lists')"><svg viewBox="0 0 24 24"><path d="M3 13h2v-2H3v2zm0 4h2v-2H3v2zm0-8h2V7H3v2zm4 4h14v-2H7v2zm0 4h14v-2H7v2zM7 7v2h14V7H7z"/></svg> 列表</div>
+  <div class="d-item" onclick="navigate('topics')"><svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg> 话题</div>
+  <div class="d-divider"></div>
+  <div class="d-item"><svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8z"/></svg> 赞助商内容</div>
+  <div class="d-item" onclick="navigate('settings')"><svg viewBox="0 0 24 24"><path d="M12 8.25c-.914 0-1.674.746-1.674 1.664S11.086 11.578 12 11.578s1.674-.746 1.674-1.664S12.914 8.25 12 8.25z"/></svg> 设置和隐私</div>
+</div>
+
+<!-- Auth page overlay -->
+<div id="authPage" class="page"></div>
+
+<script>
+// ===== STATE =====
+const state = {
+  currentPage: 'home',
+  theme: 'dark',
+  user: { name:'王坤', handle:'@wngkn5393218313', bio:'开发者 / AI爱好者 / 创业者', followers:3721, following:891, posts:284, liked:1562 },
+  notifCount: 3,
+  currentUser: null, // null = logged out
+  modalTweet: null,
+  likers: []
+};
+
+const DB = {
+  tweets: [
+    {id:1,name:"林小雨",handle:"@linxiaoyu",verified:true,time:"2小时",text:"今天用 AI 写了一段代码，效率提升了三倍。以前需要半天的工作，现在一小时搞定。技术真的在改变我们的工作方式 🚀",avatar:"林",avatarBg:"linear-gradient(135deg,#667eea,#764ba2)",likes:1024,retweets:238,replies:56,views:"8.3万",liked:false,retweeted:false,bookmarked:false},
+    {id:2,name:"科技日报",handle:"@techdaily",verified:true,time:"4小时",text:"【重磅】国内首款自研芯片正式量产，性能超越国际同类产品20%。这标志着我国在半导体领域取得重大突破，打破了长期以来的技术封锁。",avatar:"科",avatarBg:"linear-gradient(135deg,#f093fb,#f5576c)",likes:5820,retweets:2341,replies:428,views:"42万",liked:false,retweeted:false,bookmarked:false},
+    {id:3,name:"创业老王",handle:"@chuangyelaowang",verified:false,time:"6小时",text:"创业第三年的感悟：\n\n1. 找到真正的痛点比找资金更重要\n2. 团队比产品更关键\n3. 现金流是命脉\n4. 不要追风口，要做有价值的事\n5. 失败是最好的老师\n\n共勉 💪",avatar:"王",avatarBg:"linear-gradient(135deg,#4facfe,#00f2fe)",likes:892,retweets:445,replies:103,views:"6.1万",liked:false,retweeted:false,bookmarked:false},
+    {id:4,name:"摄影师阿明",handle:"@photographer_aming",verified:false,time:"8小时",text:"早晨六点的城市，属于少数清醒的人。",avatar:"阿",avatarBg:"linear-gradient(135deg,#43e97b,#38f9d7)",likes:3201,retweets:189,replies:67,views:"15万",liked:false,retweeted:false,bookmarked:false,hasMedia:true,mediaBg:"linear-gradient(135deg,#43e97b,#38f9d7)"},
+    {id:5,name:"前端开发者社区",handle:"@fe_community",verified:true,time:"10小时",text:"Vue 4.0 正式发布！主要更新：\n• 全新编译器，性能提升 50%\n• 更好的 TypeScript 支持\n• 全新的响应式系统\n• 更小的包体积\n\n大家都用上了吗？评论区分享体验！",avatar:"前",avatarBg:"linear-gradient(135deg,#fa709a,#fee140)",likes:4567,retweets:1823,replies:312,views:"28.9万",liked:false,retweeted:false,bookmarked:false},
+    {id:6,name:"每日财经",handle:"@daily_finance",verified:true,time:"12小时",text:"今日市场回顾：A股三大指数全线上涨，沪指涨1.2%，深成指涨1.8%，创业板涨2.3%。新能源、半导体、AI板块领涨。",avatar:"财",avatarBg:"linear-gradient(135deg,#a18cd1,#fbc2eb)",likes:721,retweets:356,replies:89,views:"5.4万",liked:false,retweeted:false,bookmarked:false},
+    {id:7,name:"电影爱好者",handle:"@movie_fan2026",verified:false,time:"14小时",text:"强烈推荐这部电影！《星际穿越》重映，诺兰的宏大叙事和汉斯·季默的配乐依然震撼。每一帧都是艺术品。",avatar:"电",avatarBg:"linear-gradient(135deg,#ffecd2,#fcb69f)",likes:2341,retweets:876,replies:201,views:"19.2万",liked:false,retweeted:false,bookmarked:false},
+    {id:8,name:"产品经理小李",handle:"@pm_xiaoli",verified:true,time:"16小时",text:"好的产品不是功能堆砌出来的，而是对用户需求的深刻理解。少即是多，克制是一种能力。",avatar:"李",avatarBg:"linear-gradient(135deg,#a1c4fd,#c2e9fb)",likes:1823,retweets:934,replies:156,views:"12.8万",liked:false,retweeted:false,bookmarked:false}
+  ],
+  notifications: [
+    {id:1,type:"like",name:"张伟",handle:"@zhangwei",avatar:"张",avatarBg:"linear-gradient(135deg,#f093fb,#f5576c)",text:"赞了你的帖子",time:"30分钟前",unread:true,target:"今天用 AI 写了一段代码..."},
+    {id:2,type:"follow",name:"李娜",handle:"@lina_tech",avatar:"李",avatarBg:"linear-gradient(135deg,#4facfe,#00f2fe)",text:"关注了你",time:"1小时前",unread:true},
+    {id:3,type:"retweet",name:"陈明",handle:"@chenming_ai",avatar:"陈",avatarBg:"linear-gradient(135deg,#43e97b,#38f9d7)",text:"转推了你的帖子",time:"2小时前",unread:true,target:"【重磅】国内首款自研芯片..."},
+    {id:4,type:"reply",name:"王珊珊",handle:"@wangshanshan",avatar:"王",avatarBg:"linear-gradient(135deg,#fa709a,#fee140)",text:"回复了你的帖子：说的太对了！",time:"3小时前",unread:true,target:"创业第三年的感悟"},
+    {id:5,type:"like",name:"赵六",handle:"@zhaoliu",avatar:"赵",avatarBg:"linear-gradient(135deg,#667eea,#764ba2)",text:"赞了你的帖子",time:"5小时前",unread:false,target:"Vue 4.0 正式发布..."},
+    {id:6,type:"mention",name:"科技日报",handle:"@techdaily",avatar:"科",avatarBg:"linear-gradient(135deg,#f093fb,#f5576c)",text:"提及了你：@wngkn5393218313",time:"6小时前",unread:false,target:"今天 AI 领域又有新突破"},
+    {id:7,type:"follow",name:"孙七",handle:"@sunqi",avatar:"孙",avatarBg:"linear-gradient(135deg,#a1c4fd,#c2e9fb)",text:"关注了你",time:"昨天",unread:false}
+  ],
+  messages: [
+    {id:1,name:"张伟",handle:"@zhangwei",avatar:"张",avatarBg:"linear-gradient(135deg,#f093fb,#f5576c)",preview:"好的，明天见！",time:"14:32",unread:1,messages:[
+      {sent:false,text:"你好，看了你的帖子很有感触",time:"14:20"},
+      {sent:true,text:"谢谢！你是做什么工作的？",time:"14:22"},
+      {sent:false,text:"我是产品经理，也在关注 AI 领域",time:"14:25"},
+      {sent:false,text:"有空可以聊聊合作",time:"14:26"},
+      {sent:true,text:"好的，明天见！",time:"14:32"}
+    ]},
+    {id:2,name:"李娜",handle:"@lina_tech",avatar:"李",avatarBg:"linear-gradient(135deg,#4facfe,#00f2fe)",preview:"那个开源项目有兴趣一起做吗",time:"昨天",unread:0,messages:[
+      {sent:false,text:"嗨，王坤",time:"昨天 10:00"},
+      {sent:false,text:"看到你做的「言」App 很棒",time:"昨天 10:01"},
+      {sent:true,text:"谢谢夸奖！有什么建议吗？",time:"昨天 10:15"},
+      {sent:false,text:"那个开源项目有兴趣一起做吗",time:"昨天 10:20"}
+    ]},
+    {id:3,name:"陈明",handle:"@chenming_ai",avatar:"陈",avatarBg:"linear-gradient(135deg,#43e97b,#38f9d7)",preview:"下周技术分享会你能来吗",time:"周一",unread:2,messages:[
+      {sent:false,text:"王坤，下周技术分享会你能来吗",time:"周一 09:00"}
+    ]}
+  ],
+  replies: {
+    2: [
+      {id:101,replyTo:2,name:"程序员小张",handle:"@coder_zhang",avatar:"张",avatarBg:"linear-gradient(135deg,#4facfe,#00f2fe)",time:"3小时前",text:"太激动了！终于等到了这一天！国产芯片加油 💪",likes:342,liked:false},
+      {id:102,replyTo:2,name:"科技爱好者",handle:"@techfan",avatar:"科",avatarBg:"linear-gradient(135deg,#f093fb,#f5576c)",time:"3小时前",text:"期待更多突破，打破技术封锁！",likes:189,liked:false}
+    ],
+    5: [
+      {id:103,replyTo:5,name:"Vue开发者",handle:"@vue_dev",avatar:"V",avatarBg:"#42b883;color:#fff",time:"9小时前",text:"已经用上了，性能确实提升明显！编译速度感觉快了一倍",likes:567,liked:false},
+      {id:104,replyTo:5,name:"前端新手",handle:"@fe_newbie",avatar:"新",avatarBg:"linear-gradient(135deg,#a1c4fd,#c2e9fb)",time:"9小时前",text:"刚升级，还在适应新语法，不过文档写得很清楚",likes:234,liked:false}
+    ]
+  },
+  bookmarks: [],
+  searchResults: []
+};
+
+// ===== UTILITIES =====
+function f(n){if(n>=10000)return(n/10000).toFixed(1)+'万';if(n>=1000)return(n/1000).toFixed(1)+'k';return n}
+function vSvg(){return'<svg viewBox="0 0 24 24"><path d="M20.884 13.19c-1.351 2.48-4.001 5.12-8.379 7.67l-.503.3-.504-.3c-4.379-2.55-7.029-5.19-8.382-7.67-1.36-2.5-1.41-4.86-.514-6.67.887-1.79 2.647-2.91 4.601-3.01 1.651-.09 3.368.56 4.798 2.01 1.429-1.45 3.146-2.1 4.796-2.01 1.954.1 3.714 1.22 4.601 3.01.896 1.81.846 4.17-.514 6.67z"/></svg>'}
+function vbSvg(){return'<svg viewBox="0 0 24 24"><path d="M4.5 3.88l4.432 4.14-1.364 1.46L5.5 7.55V16c0 1.1.896 2 2 2H13v2H7.5c-2.209 0-4-1.79-4-4V7.55L1.432 9.48.068 8.02 4.5 3.88z"/></svg>'}
+function rSvg(){return'<svg viewBox="0 0 24 24"><path d="M1.751 10c0-4.42 3.584-8 8.005-8h4.366c4.49 0 7.501 3.858 7.501 7.501 0 3.808-2.851 7.091-6.056 7.765 .005.099.01.197.01.297 0 1.68-1.072 2.96-2.584 3.063C11.51 21.954 11.013 22 10.5 22c-4.394 0-8.75-3.519-8.75-8.5 0-1.085.225-2.107.625-3.025-.001-.075-.014-.155-.014-.237C2.361 10 2.056 10 1.75 10z"/></svg>'}
+function cSvg(){return'<svg viewBox="0 0 24 24"><path d="M8.75 21V3h2v18h-2zM18 21V8.5h2V21h-2zM4 21l.004-10h2L6 21H4zm9.248 0v-7h2v7h-2z"/></svg>'}
+function shSvg(){return'<svg viewBox="0 0 24 24"><path d="M12 2.59l5.7 5.7-1.41 1.42L13 6.41V16h-2V6.41l-3.3 3.3-1.41-1.42L12 2.59zM21 15l-.02 3.51c0 1.38-1.12 2.49-2.5 2.49H5.5C4.11 21 3 19.88 3 18.5V15h2v3.5c0 .28.22.5.5.5h12.98c.28 0 .5-.22.5-.5L19 15h2z"/></svg>'}
+
+// ===== TWEET RENDER =====
+function renderTweet(t, showReply=false){
+  const likedD = t.liked ? ' liked' : '';
+  const rtD = t.retweeted ? ' retweeted' : '';
+  const media = t.hasMedia ? `<div class="tmedia"><div style="width:100%;height:280px;background:${t.mediaBg};opacity:0.4;border-radius:16px;display:flex;align-items:center;justify-content:center;font-size:48px;font-weight:900;color:rgba(255,255,255,0.5)">${t.avatar}</div></div>` : '';
+  const poll = t.poll ? renderPoll(t.poll) : '';
+  const replyForm = showReply ? `
+    <div class="reply-input" style="border-top:1px solid var(--border)">
+      <div class="av">王</div>
+      <textarea class="ri-textarea" placeholder="发一条回复..." id="replyText-${t.id}"></textarea>
+      <button class="pb" onclick="submitReply(${t.id})" style="align-self:flex-end">回复</button>
+    </div>` : '';
+  return `
+  <div class="tweet" id="tweet-${t.id}" onclick="navigate('post',${t.id})">
+    ${t.retweeted ? '<div style="padding:0 16px 0 52px;font-size:13px;color:var(--text2);display:flex;align-items:center;gap:6px"><svg width="14" height="14" fill="var(--green)" viewBox="0 0 24 24"><path d="M4.5 3.88l4.432 4.14-1.364 1.46L5.5 7.55V16c0 1.1.896 2 2 2H13v2H7.5c-2.209 0-4-1.79-4-4V7.55L1.432 9.48.068 8.02 4.5 3.88z"/></svg> 王坤 转推</div>' : ''}
+    <div class="ta" style="background:${t.avatarBg}" onclick="event.stopPropagation();navigate('user','${t.handle}')">${t.avatar}</div>
+    <div class="tbdy">
+      <div class="th">
+        <span class="tn" onclick="event.stopPropagation();navigate('user','${t.handle}')">${t.name}</span>
+        ${t.verified ? `<span class="vb"><svg viewBox="0 0 24 24"><path fill="var(--accent)" d="M20.396 11c-.018-.646-.215-1.275-.57-1.816-.354-.54-.852-.972-1.438-1.246.223-.607.27-1.264.14-1.897-.131-.634-.437-1.218-.882-1.687-.47-.445-1.053-.75-1.687-.882-.633-.13-1.29-.083-1.897.14-.273-.587-.704-1.086-1.245-1.44S11.647 1.62 11 1.604c-.646.017-1.273.213-1.813.568s-.969.854-1.24 1.441c-.608-.223-1.267-.272-1.902-.14-.635.13-1.22.436-1.69.882-.445.47-.749 1.055-.878 1.688-.13.633-.08 1.29.144 1.896-.587.274-1.087.705-1.443 1.245-.356.54-.555 1.17-.574 1.817.02.647.218 1.276.574 1.817.356.54.856.972 1.443 1.245-.224.606-.274 1.263-.144 1.896.13.634.433 1.218.877 1.688.47.443 1.054.747 1.687.878.633.132 1.29.084 1.897-.136.274.586.705 1.084 1.246 1.439.54.354 1.17.551 1.816.569.647-.016 1.276-.213 1.817-.567s.972-.854 1.245-1.44c.604.239 1.266.296 1.903.164.636-.132 1.22-.447 1.68-.907.46-.46.776-1.044.908-1.681s.075-1.299-.165-1.903c.586-.274 1.084-.705 1.439-1.246.354-.54.551-1.17.569-1.816z"/></svg></span>` : ''}
+        <span class="thandle">${t.handle}</span>
+        <span class="tt">· ${t.time}</span>
+        <button class="more-btn" onclick="event.stopPropagation();openMoreMenu(${t.id},event)" style="position:relative"><svg viewBox="0 0 24 24"><path d="M3 12c0-1.1.9-2 2-2s2 .9 2 2-.9 2-2 2-2-.9-2-2zm9 2c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm7 0c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2z"/></svg></button>
+      </div>
+      <div class="ttxt">${t.text.replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n/g,'<br>').replace(/#(\w+)/g,'<a href="#">#$1</a>').replace(/@(\w+)/g,'<a href="#">@$1</a>')}</div>
+      ${media}
+      ${poll}
+      <div class="tactions">
+        <button class="ab" onclick="event.stopPropagation();openReplyModal(${t.id})">${rSvg()}<span class="ac">${f(t.replies)}</span></button>
+        <button class="ab rt${rtD}" onclick="event.stopPropagation();doRetweet(${t.id},this)">${vbSvg()}<span class="ac">${f(t.retweets)}</span></button>
+        <button class="ab like${likedD}" onclick="event.stopPropagation();doLike(${t.id},this)">${vSvg()}<span class="ac" id="lk-${t.id}">${f(t.likes)}</span></button>
+        <button class="ab" onclick="event.stopPropagation();openShareModal(${t.id})">${cSvg()}</button>
+        <button class="ab" onclick="event.stopPropagation();bookmark(${t.id},this)"><svg viewBox="0 0 24 24" fill="${t.bookmarked ? 'var(--accent)' : 'var(--text2)'}"><path d="M4 4.5C4 3.12 5.119 2 6.5 2h11C18.881 2 20 3.12 20 4.5v18.44l-8-5.71-8 5.71V4.5z"/></svg></button>
+      </div>
+    </div>
+  </div>`;
 }
 
-function likeAction(id, btn) {
-  const t = tweets.find(x=>x.id===id);
-  t.liked = !t.liked;
-  t.likes += t.liked ? 1 : -1;
-  btn.classList.toggle('liked', t.liked);
-  document.getElementById('likes-'+id).textContent = formatNum(t.likes);
-  const svg = btn.querySelector('svg path');
-  if(t.liked) {
-    svg.setAttribute('d','M20.884 13.19c-1.351 2.48-4.001 5.12-8.379 7.67l-.503.3-.504-.3c-4.379-2.55-7.029-5.19-8.382-7.67-1.36-2.5-1.41-4.86-.514-6.67.887-1.79 2.647-2.91 4.601-3.01 1.651-.09 3.368.56 4.798 2.01 1.429-1.45 3.146-2.1 4.796-2.01 1.954.1 3.714 1.22 4.601 3.01.896 1.81.846 4.17-.514 6.67z');
-    btn.querySelector('svg').style.fill = '#f91880';
-  } else {
-    svg.setAttribute('d','M16.697 5.5c-1.222-.06-2.679.51-3.89 2.16l-.805 1.09-.806-1.09C9.984 6.01 8.526 5.44 7.304 5.5c-1.243.07-2.349.78-2.91 1.91-.552 1.12-.633 2.78.479 4.82 1.074 1.97 3.257 4.27 7.129 6.61 3.87-2.34 6.052-4.64 7.126-6.61 1.111-2.04 1.03-3.7.477-4.82-.561-1.13-1.666-1.84-2.908-1.91zm4.187 7.69c-1.351 2.48-4.001 5.12-8.379 7.67l-.503.3-.504-.3c-4.379-2.55-7.029-5.19-8.382-7.67-1.36-2.5-1.41-4.86-.514-6.67.887-1.79 2.647-2.91 4.601-3.01 1.651-.09 3.368.56 4.798 2.01 1.429-1.45 3.146-2.1 4.796-2.01 1.954.1 3.714 1.22 4.601 3.01.896 1.81.846 4.17-.514 6.67z');
-    btn.querySelector('svg').style.fill = '';
+// ===== PAGES =====
+function navigate(page, param){
+  state.currentPage = page;
+  document.getElementById('sidebar').style.display = '';
+  document.getElementById('sidebarRight').style.display = '';
+  document.getElementById('authPage').classList.remove('active');
+  document.getElementById('authPage').innerHTML = '';
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  const navMap = {home:'nav-home',explore:'nav-explore',notifications:'nav-notif',messages:'nav-messages',bookmarks:'nav-bookmarks',profile:'nav-profile',settings:'nav-settings'};
+  if(navMap[page]) document.getElementById(navMap[page])?.classList.add('active');
+  window.scrollTo(0,0);
+
+  switch(page){
+    case 'home': renderHome(); break;
+    case 'explore': renderExplore(); break;
+    case 'notifications': renderNotifications(); break;
+    case 'messages': renderMessages(); break;
+    case 'bookmarks': renderBookmarks(); break;
+    case 'profile': renderProfile(param); break;
+    case 'settings': renderSettings(); break;
+    case 'post': renderPostDetail(param); break;
+    case 'user': renderUserProfile(param); break;
+    case 'search': renderSearch(param); break;
+    case 'trending': renderTrending(); break;
+    case 'auth': renderAuth(); break;
+    case 'lists': renderLists(); break;
+    case 'topics': renderTopics(); break;
+    default: renderHome();
   }
+  closeAllDropdowns();
 }
 
-function retweetAction(id, btn) {
-  btn.style.color = btn.style.color === 'rgb(0, 186, 124)' ? '' : '#00ba7c';
+// ===== HOME PAGE =====
+function renderHome(){
+  const main = document.getElementById('mainContent');
+  const u = state.user;
+  main.innerHTML = `
+    <div class="ct">
+      <div class="main-header">
+        <button class="back-btn" onclick="navigate('home')"><svg viewBox="0 0 24 24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg></button>
+        <div class="page-title">主页</div>
+      </div>
+      <div class="tab-row">
+        <div class="tab active" onclick="switchFTab(this)">为你推荐</div>
+        <div class="tab" onclick="switchFTab(this)">正在关注</div>
+      </div>
+    </div>
+    <div class="compose">
+      <div class="av">王</div>
+      <div class="ca">
+        <textarea class="cin" placeholder="有什么新鲜事？" id="homeCompose" oninput="updateComposeBtn()"></textarea>
+        <div class="ctb">
+          <div class="ctools">
+            <button class="tb disabled"><svg viewBox="0 0 24 24"><path d="M3 5.5C3 4.119 4.119 3 5.5 3h13C19.881 3 21 4.119 21 5.5v13c0 1.381-1.119 2.5-2.5 2.5h-13C4.119 21 3 19.881 3 18.5v-13z"/></svg></button>
+            <button class="tb disabled"><svg viewBox="0 0 24 24"><path d="M3 5.5C3 4.119 4.119 3 5.5 3h13C19.881 3 21 4.119 21 5.5v13c0 1.381-1.119 2.5-2.5 2.5h-13C4.119 21 3 19.881 3 18.5v-13z"/></svg></button>
+            <button class="tb disabled" onclick="toggleEmoji()"><svg viewBox="0 0 24 24"><path d="M8 9.5C8 8.119 8.672 7 9.5 7S11 8.119 11 9.5 10.328 12 9.5 12 8 10.881 8 9.5zm6.5 0c0-1.381.672-2.5 1.5-2.5s1.5 1.119 1.5 2.5-.672 2.5-1.5 2.5-1.5-1.119-1.5-2.5z"/></svg></button>
+            <button class="tb disabled"><svg viewBox="0 0 24 24"><path d="M12 7c-1.381 0-2.5 1.119-2.5 2.5S10.619 12 12 12s2.5-1.119 2.5-2.5S13.381 7 12 7z"/></svg></button>
+          </div>
+          <button class="pb" id="homePostBtn" disabled onclick="homePost()">发帖</button>
+        </div>
+      </div>
+    </div>
+    ${DB.tweets.map(t=>renderTweet(t)).join('')}
+  `;
+  initEmojiPicker();
 }
 
-function switchTab(el) {
-  document.querySelectorAll('.feed-tab').forEach(t=>t.classList.remove('active'));
+function switchFTab(el){
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
   el.classList.add('active');
 }
-
-function updatePostBtn() {
-  const val = document.getElementById('composeText').value.trim();
-  document.getElementById('postBtn').disabled = val.length === 0;
+function updateComposeBtn(){
+  const v = document.getElementById('homeCompose').value.trim();
+  document.getElementById('homePostBtn').disabled = v.length===0;
+}
+function homePost(){
+  const v = document.getElementById('homeCompose').value.trim();
+  if(!v) return;
+  const t = {id:Date.now(),name:"王坤",handle:"@wngkn5393218313",verified:false,time:"刚刚",text:v,avatar:"王",avatarBg:"linear-gradient(135deg,#667eea,#764ba2)",likes:0,retweets:0,replies:0,views:"0",liked:false,retweeted:false,bookmarked:false};
+  DB.tweets.unshift(t);
+  document.getElementById('homeCompose').value = '';
+  document.getElementById('homePostBtn').disabled = true;
+  const feed = document.getElementById('mainContent');
+  const div = document.createElement('div');
+  div.innerHTML = renderTweet(t);
+  feed.insertBefore(div.firstChild, feed.children[2]);
 }
 
-function postTweet() {
-  const text = document.getElementById('composeText').value.trim();
+// ===== EXPLORE PAGE =====
+function renderExplore(){
+  const main = document.getElementById('mainContent');
+  main.innerHTML = `
+    <div class="ct">
+      <div class="main-header">
+        <button class="back-btn" onclick="navigate('home')"><svg viewBox="0 0 24 24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg></button>
+        <div style="flex:1">
+          <div class="search-box" style="position:static;padding:0">
+            <div class="sbw">
+              <svg viewBox="0 0 24 24"><path d="M10.25 3.75c-3.59 0-6.5 2.91-6.5 6.5s2.91 6.5 6.5 6.5c1.795 0 3.419-.726 4.596-1.904 1.178-1.177 1.904-2.801 1.904-4.596 0-3.59-2.91-6.5-6.5-6.5z"/></svg>
+              <input class="sin" placeholder="搜索" id="exploreSearch" oninput="searchExplore(this.value)">
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="explore-filters">
+        <div class="explore-filter active" onclick="switchExploreFilter(this,'all')">推荐</div>
+        <div class="explore-filter" onclick="switchExploreFilter(this,'tech')">科技</div>
+        <div class="explore-filter" onclick="switchExploreFilter(this,'entertainment')">娱乐</div>
+        <div class="explore-filter" onclick="switchExploreFilter(this,'sports')">体育</div>
+        <div class="explore-filter" onclick="switchExploreFilter(this,'finance')">财经</div>
+        <div class="explore-filter" onclick="switchExploreFilter(this,'gaming')">游戏</div>
+      </div>
+    </div>
+    <div class="explore-grid" id="exploreGrid">
+      ${renderExploreItem(0)}
+      ${renderExploreItem(1)}${renderExploreItem(2)}
+      ${renderExploreItem(3)}${renderExploreItem(4)}
+      ${renderExploreItem(5)}
+    </div>
+    <div id="exploreResults"></div>
+    <div style="padding:0 16px">
+      ${DB.tweets.map(t=>renderTweet(t)).join('')}
+    </div>
+  `;
+  initEmojiPicker();
+}
+function renderExploreItem(i){
+  const items = [
+    {name:"热门话题",desc:"#AI大模型最新进展 持续领先全球",bg:"linear-gradient(135deg,#667eea,#764ba2)",icon:"🤖"},
+    {name:"科技",desc:"#iPhone17 全新设计曝光",bg:"linear-gradient(135deg,#4facfe,#00f2fe)",icon:"📱"},
+    {name:"游戏",desc:"#黑神话悟空 全球销量破千万",bg:"linear-gradient(135deg,#43e97b,#38f9d7)",icon:"🎮"},
+    {name:"娱乐",desc:"#热播剧集推荐 周末必看",bg:"linear-gradient(135deg,#f093fb,#f5576c)",icon:"🎬"},
+    {name:"体育",desc:"#世界杯预选赛 精彩回顾",bg:"linear-gradient(135deg,#a1c4fd,#c2e9fb)",icon:"⚽"},
+    {name:"财经",desc:"#美股行情 本周收涨",bg:"linear-gradient(135deg,#fa709a,#fee140)",icon:"📈"}
+  ];
+  const it = items[i]||items[0];
+  return `<div class="explore-grid-item" onclick="navigate('trending')">
+    <div style="width:100%;height:100%;min-height:120px;background:${it.bg};display:flex;align-items:center;justify-content:center;font-size:48px">${it.icon}</div>
+    <div class="ei-overlay"><span>${it.name}</span><span>${it.desc}</span></div>
+  </div>`;
+}
+function switchExploreFilter(el,cat){
+  document.querySelectorAll('.explore-filter').forEach(f=>f.classList.remove('active'));
+  el.classList.add('active');
+}
+function searchExplore(q){
+  if(!q) return;
+  navigate('search',q);
+}
+
+// ===== NOTIFICATIONS =====
+function renderNotifications(){
+  const main = document.getElementById('mainContent');
+  state.notifCount = 0;
+  document.getElementById('notif-badge').classList.remove('has');
+  const n = DB.notifications;
+  main.innerHTML = `
+    <div class="ct">
+      <div class="main-header">
+        <button class="back-btn" onclick="navigate('home')"><svg viewBox="0 0 24 24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg></button>
+        <div class="page-title">通知</div>
+      </div>
+      <div class="tab-row">
+        <div class="tab active" onclick="switchNtab(this)">全部</div>
+        <div class="tab" onclick="switchNtab(this)">我的回复</div>
+        <div class="tab" onclick="switchNtab(this)">我的提及</div>
+      </div>
+    </div>
+    ${n.map(notif=>`
+      <div class="notif ${notif.unread?'unread':''}" onclick="handleNotif(${notif.id},'${notif.type}')">
+        <div class="nicon">
+          ${notif.type==='like'?`<svg viewBox="0 0 24 24" fill="var(--pink)"><path d="M16.697 5.5c-1.222-.06-2.679.51-3.89 2.16l-.805 1.09-.806-1.09C9.984 6.01 8.526 5.44 7.304 5.5c-1.243.07-2.349.78-2.91 1.91-.552 1.12-.633 2.78.479 4.82 1.074 1.97 3.257 4.27 7.129 6.61 3.87-2.34 6.052-4.64 7.126-6.61 1.111-2.04 1.03-3.7.477-4.82-.561-1.13-1.666-1.84-2.908-1.91z"/></svg>`:''}
+          ${notif.type==='follow'?`<svg viewBox="0 0 24 24" fill="var(--accent)"><path d="M5.651 19h12.698c-.337-1.8-1.023-3.21-1.945-4.19C15.318 13.65 13.838 13 12 13s-3.317.65-4.404 1.81c-.922.98-1.608 2.39-1.945 4.19z"/></svg>`:''}
+          ${notif.type==='retweet'?`<svg viewBox="0 0 24 24" fill="var(--green)"><path d="M4.5 3.88l4.432 4.14-1.364 1.46L5.5 7.55V16c0 1.1.896 2 2 2H13v2H7.5c-2.209 0-4-1.79-4-4V7.55L1.432 9.48.068 8.02 4.5 3.88z"/></svg>`:''}
+          ${notif.type==='reply'||notif.type==='mention'?`<svg viewBox="0 0 24 24" fill="var(--accent)"><path d="M1.751 10c0-1.381 1.119-2.5 2.5-2.5h15c1.381 0 2.5 1.119 2.5 2.5v13c0 1.381-1.119 2.5-2.5 2.5h-15c-1.381 0-2.5-1.119-2.5-2.5v-13z"/></svg>`:''}
+        </div>
+        <div class="ta" style="background:${notif.avatarBg};width:40px;height:40px;font-size:16px">${notif.avatar}</div>
+        <div class="nbody">
+          <div class="ntext"><strong>${notif.name}</strong> ${notif.text}</div>
+          ${notif.target?`<div style="font-size:14px;color:var(--text2);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">"${notif.target}"</div>`:''}
+          <div class="ntime">${notif.time}</div>
+        </div>
+      </div>
+    `).join('')}
+  `;
+}
+function switchNtab(el){document.querySelectorAll('.ct .tab').forEach(t=>t.classList.remove('active'));el.classList.add('active');}
+function handleNotif(id,type){
+  const n = DB.notifications.find(x=>x.id===id);
+  if(n) n.unread = false;
+  if(type==='follow') navigate('user',n.handle);
+}
+
+// ===== MESSAGES =====
+let activeChat = null;
+function renderMessages(){
+  activeChat = null;
+  const main = document.getElementById('mainContent');
+  main.innerHTML = `
+    <div class="msg-layout" style="border-right:none">
+      <div class="msg-list">
+        <div class="msg-list-header">消息 <button style="background:var(--accent);color:#fff;border:none;border-radius:50%;width:36px;height:36px;cursor:pointer;font-size:20px;font-weight:300">+</button></div>
+        <div class="msg-search">
+          <div class="sbw">
+            <svg viewBox="0 0 24 24"><path d="M10.25 3.75c-3.59 0-6.5 2.91-6.5 6.5s2.91 6.5 6.5 6.5c1.795 0 3.419-.726 4.596-1.904 1.178-1.177 1.904-2.801 1.904-4.596 0-3.59-2.91-6.5-6.5-6.5z"/></svg>
+            <input class="sin" placeholder="搜索私信">
+          </div>
+        </div>
+        ${DB.messages.map(m=>`
+          <div class="msg-item" id="msg-${m.id}" onclick="openChat(${m.id})">
+            <div class="msg-av" style="background:${m.avatarBg}">${m.avatar}</div>
+            <div class="msg-info">
+              <div class="msg-name">${m.name} <span class="msg-time">${m.time}</span></div>
+              <div class="msg-preview">${m.unread?'<span style="color:var(--text);font-weight:700">'+m.preview+'</span>':m.preview}</div>
+            </div>
+            ${m.unread>0?`<div class="msg-unread"></div>`:''}
+          </div>
+        `).join('')}
+        <div class="empty-state" style="padding:40px">
+          <svg viewBox="0 0 24 24"><path d="M1.998 5.5c0-1.381 1.119-2.5 2.5-2.5h15c1.381 0 2.5 1.119 2.5 2.5v13c0 1.381-1.119 2.5-2.5 2.5h-15c-1.381 0-2.5-1.119-2.5-2.5v-13z"/></svg>
+          <h3>暂无新消息</h3>
+          <p>向感兴趣的人发送私信消息吧</p>
+        </div>
+      </div>
+      <div class="msg-chat" id="chatArea">
+        <div class="empty-state" style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center">
+          <svg viewBox="0 0 24 24" style="width:64px;height:64px"><path d="M1.998 5.5c0-1.381 1.119-2.5 2.5-2.5h15c1.381 0 2.5 1.119 2.5 2.5v13c0 1.381-1.119 2.5-2.5 2.5h-15c-1.381 0-2.5-1.119-2.5-2.5v-13z"/></svg>
+          <h3 style="margin-top:16px">选择对话开始聊天</h3>
+          <p style="margin-top:8px">从左侧选择一个对话</p>
+        </div>
+      </div>
+    </div>
+  `;
+}
+function openChat(id){
+  document.querySelectorAll('.msg-item').forEach(m=>m.classList.remove('active'));
+  document.getElementById('msg-'+id)?.classList.add('active');
+  const chat = DB.messages.find(m=>m.id===id);
+  if(!chat) return;
+  activeChat = chat;
+  chat.unread = 0;
+  const area = document.getElementById('chatArea');
+  area.innerHTML = `
+    <div class="msg-chat-header">
+      <div class="msg-av" style="background:${chat.avatarBg};width:40px;height:40px;font-size:16px">${chat.avatar}</div>
+      <div class="msg-chat-name">${chat.name} <span style="color:var(--text2);font-weight:400;font-size:13px">${chat.handle}</span></div>
+    </div>
+    <div class="chat-body" id="chatBody">
+      ${chat.messages.map(m=>`
+        <div style="display:flex;flex-direction:column;align-items:${m.sent?'flex-end':'flex-start'}">
+          <div class="chat-bubble ${m.sent?'sent':'received'}">${m.text}</div>
+          <div class="chat-time">${m.time}</div>
+        </div>
+      `).join('')}
+    </div>
+    <div class="msg-chat-input">
+      <textarea class="chat-textarea" id="chatInput" placeholder="输入消息..." rows="1" oninput="autoGrow(this)" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendMsg()}"></textarea>
+      <button class="chat-send" id="chatSendBtn" onclick="sendMsg()">发送</button>
+    </div>
+  `;
+  setTimeout(()=>area.querySelector('#chatBody').scrollTop=area.querySelector('#chatBody').scrollHeight,10);
+}
+function autoGrow(el){el.style.height='auto';el.style.height=Math.min(el.scrollHeight,120)+'px'}
+function sendMsg(){
+  const input = document.getElementById('chatInput');
+  const text = input.value.trim();
+  if(!text||!activeChat) return;
+  activeChat.messages.push({sent:true,text,time:new Date().toLocaleTimeString('zh-CN',{hour:'2-digit',minute:'2-digit'})});
+  const body = document.getElementById('chatBody');
+  const div = document.createElement('div');
+  div.style.cssText='display:flex;flex-direction:column;align-items:flex-end';
+  div.innerHTML=`<div class="chat-bubble sent">${text}</div><div class="chat-time">${activeChat.messages[activeChat.messages.length-1].time}</div>`;
+  body.appendChild(div);
+  body.scrollTop=body.scrollHeight;
+  input.value='';
+  input.style.height='42px';
+  // Auto reply after 1 second
+  setTimeout(()=>{
+    const replies = ['好的，收到！','明白了','我也这么觉得 👍','太棒了！','有空细聊'];
+    const reply = replies[Math.floor(Math.random()*replies.length)];
+    activeChat.messages.push({sent:false,text:reply,time:new Date().toLocaleTimeString('zh-CN',{hour:'2-digit',minute:'2-digit'})});
+    const div2 = document.createElement('div');
+    div2.style.cssText='display:flex;flex-direction:column;align-items:flex-start';
+    div2.innerHTML=`<div class="chat-bubble received">${reply}</div><div class="chat-time">${activeChat.messages[activeChat.messages.length-1].time}</div>`;
+    body.appendChild(div2);
+    body.scrollTop=body.scrollHeight;
+  },1200);
+}
+
+// ===== BOOKMARKS =====
+function renderBookmarks(){
+  const main = document.getElementById('mainContent');
+  main.innerHTML = `
+    <div class="ct">
+      <div class="main-header">
+        <button class="back-btn" onclick="navigate('home')"><svg viewBox="0 0 24 24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg></button>
+        <div class="page-title">书签</div>
+      </div>
+    </div>
+    ${DB.bookmarks.length===0?`
+      <div class="empty-state">
+        <svg viewBox="0 0 24 24"><path d="M4 4.5C4 3.12 5.119 2 6.5 2h11C18.881 2 20 3.12 20 4.5v18.44l-8-5.71-8 5.71V4.5z"/></svg>
+        <h3>还没有书签</h3>
+        <p>保存帖子以便稍后阅读，只需点击帖子上的书签图标即可</p>
+      </div>`:
+      DB.bookmarks.map(t=>renderTweet(t)).join('')
+    }
+  `;
+}
+function bookmark(id,btn){
+  const t = DB.tweets.find(x=>x.id===id);
+  if(!t) return;
+  t.bookmarked = !t.bookmarked;
+  if(t.bookmarked) DB.bookmarks.push(t);
+  else DB.bookmarks = DB.bookmarks.filter(x=>x.id!==id);
+  const svg = btn.querySelector('svg');
+  svg.setAttribute('fill', t.bookmarked ? 'var(--accent)' : 'var(--text2)');
+}
+
+// ===== PROFILE =====
+function renderProfile(){
+  const u = state.user;
+  const main = document.getElementById('mainContent');
+  main.innerHTML = `
+    <div class="ct">
+      <div class="main-header">
+        <button class="back-btn" onclick="navigate('home')"><svg viewBox="0 0 24 24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg></button>
+        <div>
+          <div style="font-size:15px;font-weight:700">${u.name}</div>
+          <div style="font-size:13px;color:var(--text2)">${f(u.posts)} 条帖子</div>
+        </div>
+      </div>
+    </div>
+    <div class="profile-cover" onclick="document.querySelector('.profile-avatar').click()"></div>
+    <div class="profile-avatar">王</div>
+    <div class="profile-info">
+      <div class="pi-row">
+        <div>
+          <div class="pi-name">${u.name}</div>
+          <div class="pi-handle">${u.handle}</div>
+        </div>
+        <button class="fbtn following" onclick="this.classList.toggle('following');this.textContent=this.classList.contains('following')?'正在关注':'关注'" style="margin-top:8px">编辑个人资料</button>
+      </div>
+      <div class="pi-bio">${u.bio}</div>
+      <div class="pi-stats">
+        <span class="ps" onclick="navigate('following')"><span>${f(u.following)}</span> 正在关注</span>
+        <span class="ps" onclick="navigate('followers')"><span>${f(u.followers)}</span> 关注者</span>
+      </div>
+      <div class="profile-tabs">
+        <div class="profile-tab active" onclick="switchPTab(this)">帖子</div>
+        <div class="profile-tab" onclick="switchPTab(this)">回复</div>
+        <div class="profile-tab" onclick="switchPTab(this)">媒体</div>
+        <div class="profile-tab" onclick="switchPTab(this)">喜欢</div>
+      </div>
+    </div>
+    ${DB.tweets.filter(t=>t.handle==='@wngkn5393218313').length>0?
+      DB.tweets.filter(t=>t.handle==='@wngkn5393218313').map(t=>renderTweet(t)).join(''):
+      '<div class="empty-state"><h3>还没有帖子</h3><p>发布你的第一条帖子吧！</p></div>'
+    }
+  `;
+}
+function switchPTab(el){document.querySelectorAll('.profile-tab').forEach(t=>t.classList.remove('active'));el.classList.add('active')}
+
+// ===== USER PROFILE =====
+function renderUserProfile(handle){
+  const users = {
+    '@linxiaoyu':{name:'林小雨',handle:'@linxiaoyu',bio:'产品经理 / AI爱好者 / 生活记录者',followers:12834,following:432,posts:892,avatar:'林',avatarBg:'linear-gradient(135deg,#667eea,#764ba2)',verified:true},
+    '@techdaily':{name:'科技日报',handle:'@techdaily',bio:'第一时间报道科技前沿资讯',followers:892341,following:12,posts:3421,avatar:'科',avatarBg:'linear-gradient(135deg,#f093fb,#f5576c)',verified:true},
+    '@zhangwei':{name:'张伟',handle:'@zhangwei',bio:'产品经理 / AI创业者',followers:5623,following:891,posts:234,avatar:'张',avatarBg:'linear-gradient(135deg,#4facfe,#00f2fe)',verified:true},
+    '@lina_tech':{name:'李娜',handle:'@lina_tech',bio:'全栈工程师 / 开源贡献者',followers:8934,following:567,posts:1567,avatar:'李',avatarBg:'linear-gradient(135deg,#43e97b,#38f9d7)',verified:false}
+  };
+  const u = users[handle]||{name:handle.replace('@',''),handle,bio:'',followers:0,following:0,posts:0,avatar:handle[1]?.toUpperCase()||'?',avatarBg:'linear-gradient(135deg,#667eea,#764ba2)',verified:false};
+  const userTweets = DB.tweets.filter(t=>t.handle===handle);
+  const main = document.getElementById('mainContent');
+  main.innerHTML = `
+    <div class="ct">
+      <div class="main-header">
+        <button class="back-btn" onclick="history.back()||navigate('home')"><svg viewBox="0 0 24 24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg></button>
+        <div>
+          <div style="font-size:15px;font-weight:700">${u.name}</div>
+          <div style="font-size:13px;color:var(--text2)">${f(u.posts)} 条帖子</div>
+        </div>
+      </div>
+    </div>
+    <div class="profile-cover"></div>
+    <div class="profile-avatar" style="background:${u.avatarBg}">${u.avatar}</div>
+    <div class="profile-info">
+      <div class="pi-row">
+        <div>
+          <div class="pi-name">${u.name} ${u.verified?`<span style="color:var(--accent)"><svg width="18" height="18" viewBox="0 0 24 24"><path fill="var(--accent)" d="M20.396 11c-.018-.646-.215-1.275-.57-1.816-.354-.54-.852-.972-1.438-1.246.223-.607.27-1.264.14-1.897-.131-.634-.437-1.218-.882-1.687-.47-.445-1.053-.75-1.687-.882-.633-.13-1.29-.083-1.897.14-.273-.587-.704-1.086-1.245-1.44S11.647 1.62 11 1.604c-.646.017-1.273.213-1.813.568s-.969.854-1.24 1.441c-.608-.223-1.267-.272-1.902-.14-.635.13-1.22.436-1.69.882-.445.47-.749 1.055-.878 1.688-.13.633-.08 1.29.144 1.896-.587.274-1.087.705-1.443 1.245-.356.54-.555 1.17-.574 1.817.02.647.218 1.276.574 1.817.356.54.856.972 1.443 1.245-.224.606-.274 1.263-.144 1.896.13.634.433 1.218.877 1.688.47.443 1.054.747 1.687.878.633.132 1.29.084 1.897-.136.274.586.705 1.084 1.246 1.439.54.354 1.17.551 1.816.569.647-.016 1.276-.213 1.817-.567s.972-.854 1.245-1.44c.604.239 1.266.296 1.903.164.636-.132 1.22-.447 1.68-.907.46-.46.776-1.044.908-1.681s.075-1.299-.165-1.903c.586-.274 1.084-.705 1.439-1.246.354-.54.551-1.17.569-1.816z"/></svg></span>`:''}</div>
+          <div class="pi-handle">${u.handle}</div>
+        </div>
+        <button class="fbtn" id="followBtn-${handle}" onclick="toggleUserFollow('${handle}',this)">关注</button>
+      </div>
+      <div class="pi-bio">${u.bio}</div>
+      <div class="pi-stats">
+        <span class="ps"><span>${f(u.following)}</span> 正在关注</span>
+        <span class="ps"><span>${f(u.followers)}</span> 关注者</span>
+      </div>
+      <div class="profile-tabs">
+        <div class="profile-tab active">帖子</div>
+        <div class="profile-tab">回复</div>
+        <div class="profile-tab">媒体</div>
+        <div class="profile-tab">喜欢</div>
+      </div>
+    </div>
+    ${userTweets.length>0?userTweets.map(t=>renderTweet(t)).join(''):'<div class="empty-state"><h3>还没有帖子</h3></div>'}
+  `;
+}
+function toggleUserFollow(handle,btn){
+  const text = btn.textContent.trim();
+  if(text==='关注'){btn.textContent='正在关注';btn.classList.add('following');btn.classList.remove('fbtn');btn.style.cssText='background:transparent;color:var(--text);border:1px solid var(--border);border-radius:9999px;padding:7px 18px;font-size:14px;font-weight:700'}
+  else{btn.textContent='关注';btn.classList.remove('following');btn.style.cssText=''}
+}
+
+// ===== POST DETAIL =====
+function renderPostDetail(id){
+  const t = DB.tweets.find(x=>x.id===id);
+  if(!t) return navigate('home');
+  const replies = DB.replies[id]||[];
+  const main = document.getElementById('mainContent');
+  main.innerHTML = `
+    <div class="ct">
+      <div class="main-header">
+        <button class="back-btn" onclick="history.back()||navigate('home')"><svg viewBox="0 0 24 24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg></button>
+        <div class="page-title">帖子</div>
+      </div>
+    </div>
+    ${renderTweet(t)}
+    <div class="reply-input">
+      <div class="av">王</div>
+      <textarea class="ri-textarea" placeholder="发一条回复..." id="replyTextMain" onkeydown="if(event.key==='Enter'&&!event.shiftKey&&event.ctrlKey){submitMainReply(${id})}"></textarea>
+      <button class="pb" onclick="submitMainReply(${id})" style="align-self:flex-end">回复</button>
+    </div>
+    <div id="repliesArea">
+      ${replies.map(r=>`
+        <div class="reply-item">
+          <div class="ta" style="background:${r.avatarBg};width:36px;height:36px;font-size:14px">${r.avatar}</div>
+          <div class="tbdy">
+            <div class="th">
+              <span class="tn">${r.name}</span>
+              <span class="thandle">${r.handle}</span>
+              <span class="tt">· ${r.time}</span>
+            </div>
+            <div class="ttxt">${r.text}</div>
+            <div class="tactions">
+              <button class="ab" onclick="doLikeReply(${r.id},${id},this)">${vSvg()}<span class="ac">${r.likes}</span></button>
+            </div>
+          </div>
+        </div>
+      `).join('')}
+    </div>
+  `;
+  state.modalTweet = t;
+}
+function submitMainReply(id){
+  const text = document.getElementById('replyTextMain').value.trim();
   if(!text) return;
-  tweets.unshift({
-    id: Date.now(),
-    name: "王坤",
-    handle: "@wngkn5393218313",
-    verified: false,
-    time: "刚刚",
-    text: text,
-    avatar: "王",
-    avatarBg: "linear-gradient(135deg,#667eea,#764ba2)",
-    likes: 0,
-    retweets: 0,
-    replies: 0,
-    views: "0",
-    liked: false
-  });
-  document.getElementById('composeText').value = '';
-  document.getElementById('postBtn').disabled = true;
-  renderTweets(tweets);
+  if(!DB.replies[id]) DB.replies[id]=[];
+  const r = {id:Date.now(),replyTo:id,name:'王坤',handle:'@wngkn5393218313',avatar:'王',avatarBg:'linear-gradient(135deg,#667eea,#764ba2)',time:'刚刚',text,likes:0,liked:false};
+  DB.replies[id].push(r);
+  const t = DB.tweets.find(x=>x.id===id);
+  if(t) t.replies++;
+  const area = document.getElementById('repliesArea');
+  const div = document.createElement('div');
+  div.className='reply-item';
+  div.innerHTML=`<div class="ta" style="background:${r.avatarBg};width:36px;height:36px;font-size:14px">${r.avatar}</div><div class="tbdy"><div class="th"><span class="tn">${r.name}</span><span class="thandle">${r.handle}</span><span class="tt">· ${r.time}</span></div><div class="ttxt">${r.text}</div><div class="tactions"><button class="ab" onclick="doLikeReply(${r.id},${id},this)">${vSvg()}<span class="ac">0</span></button></div></div>`;
+  area.appendChild(div);
+  document.getElementById('replyTextMain').value='';
+}
+function doLikeReply(rid, tid, btn){
+  const rs = DB.replies[tid]||[];
+  const r = rs.find(x=>x.id===rid);
+  if(r){r.liked=!r.liked;r.likes+=r.liked?1:-1;const sp=btn.querySelector('span');sp.textContent=r.likes;btn.classList.toggle('liked',r.liked)}
+}
+function submitReply(id){submitMainReply(id)}
+
+// ===== SETTINGS =====
+function renderSettings(){
+  const main = document.getElementById('mainContent');
+  main.innerHTML = `
+    <div class="ct">
+      <div class="main-header">
+        <button class="back-btn" onclick="navigate('home')"><svg viewBox="0 0 24 24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg></button>
+        <div class="page-title">设置和隐私</div>
+      </div>
+    </div>
+    <div class="settings-list">
+      <div class="settings-section">
+        <div class="settings-section-title">账户</div>
+        <div class="settings-item" onclick="navigate('auth')">
+          <div class="settings-item-info"><h3>${state.currentUser?'王坤 (@wngkn5393218313)':'登录'}</h3><p>管理你的账号信息</p></div>
+          <svg width="20" height="20" fill="var(--text2)" viewBox="0 0 24 24"><path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6z"/></svg>
+        </div>
+      </div>
+      <div class="settings-section">
+        <div class="settings-section-title">外观</div>
+        <div class="settings-item">
+          <div class="settings-item-info"><h3>主题</h3><p>自定义应用外观</p></div>
+          <div class="theme-options">
+            <div class="theme-opt dark ${state.theme==='dark'?'active':''}" onclick="setTheme('dark',this)" title="深色"></div>
+            <div class="theme-opt light ${state.theme==='light'?'active':''}" onclick="setTheme('light',this)" title="浅色"></div>
+            <div class="theme-opt dim ${state.theme==='dim'?'active':''}" onclick="setTheme('dim',this)" title="暗淡"></div>
+          </div>
+        </div>
+      </div>
+      <div class="settings-section">
+        <div class="settings-section-title">隐私和安全</div>
+        <div class="settings-item">
+          <div class="settings-item-info"><h3>允许回复</h3><p>控制谁能回复你的帖子</p></div>
+          <select style="background:var(--bg2);color:var(--text);border:1px solid var(--border);border-radius:8px;padding:6px 12px;font-size:14px">
+            <option>所有人</option><option>关注的人</option><option>仅限提及</option>
+          </select>
+        </div>
+        <div class="settings-item" onclick="this.querySelector('.settings-toggle').classList.toggle('on')">
+          <div class="settings-item-info"><h3>标记为敏感内容</h3><p>在你发布的图片和视频上添加警告</p></div>
+          <button class="settings-toggle"></button>
+        </div>
+        <div class="settings-item" onclick="this.querySelector('.settings-toggle').classList.toggle('on')">
+          <div class="settings-item-info"><h3>显示浏览记录</h3><p>其他人能看到你浏览了哪些帖子</p></div>
+          <button class="settings-toggle on"></button>
+        </div>
+      </div>
+      <div class="settings-section">
+        <div class="settings-section-title">通知</div>
+        <div class="settings-item" onclick="this.querySelector('.settings-toggle').classList.toggle('on')">
+          <div class="settings-item-info"><h3>新回复通知</h3><p>有人回复你的帖子时通知</p></div>
+          <button class="settings-toggle on"></button>
+        </div>
+        <div class="settings-item" onclick="this.querySelector('.settings-toggle').classList.toggle('on')">
+          <div class="settings-item-info"><h3>新粉丝通知</h3><p>有人关注你时通知</p></div>
+          <button class="settings-toggle on"></button>
+        </div>
+        <div class="settings-item" onclick="this.querySelector('.settings-toggle').classList.toggle('on')">
+          <div class="settings-item-info"><h3>私信通知</h3><p>收到私信时通知</p></div>
+          <button class="settings-toggle on"></button>
+        </div>
+      </div>
+      <div class="settings-section">
+        <div class="settings-section-title">内容</div>
+        <div class="settings-item">
+          <div class="settings-item-info"><h3>语言</h3><p>中文</p></div>
+          <svg width="20" height="20" fill="var(--text2)" viewBox="0 0 24 24"><path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6z"/></svg>
+        </div>
+      </div>
+      <div class="settings-section">
+        <div class="settings-section-title">开发者</div>
+        <div class="settings-item">
+          <div class="settings-item-info"><h3>版本</h3><p>言 v1.0.0</p></div>
+        </div>
+        <div class="settings-item">
+          <div class="settings-item-info"><h3>GitHub</h3><p>coolkun999/yan</p></div>
+          <svg width="20" height="20" fill="var(--text2)" viewBox="0 0 24 24"><path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6z"/></svg>
+        </div>
+      </div>
+    </div>
+  `;
+}
+function setTheme(theme,el){
+  state.theme=theme;
+  document.querySelectorAll('.theme-opt').forEach(e=>e.classList.remove('active'));
+  el.classList.add('active');
+  document.documentElement.className='';
+  if(theme==='light') document.documentElement.classList.add('theme-light');
+  if(theme==='dim') document.documentElement.classList.add('theme-dim');
 }
 
-renderTweets(tweets);
+// ===== SEARCH =====
+function renderSearch(q=''){
+  const main = document.getElementById('mainContent');
+  const results = q?DB.tweets.filter(t=>t.text.includes(q)||t.name.includes(q)||t.handle.includes(q)):[];
+  main.innerHTML = `
+    <div class="ct">
+      <div class="main-header">
+        <button class="back-btn" onclick="navigate('home')"><svg viewBox="0 0 24 24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg></button>
+        <div style="flex:1">
+          <div class="search-box" style="position:static;padding:0">
+            <div class="sbw">
+              <svg viewBox="0 0 24 24"><path d="M10.25 3.75c-3.59 0-6.5 2.91-6.5 6.5s2.91 6.5 6.5 6.5c1.795 0 3.419-.726 4.596-1.904 1.178-1.177 1.904-2.801 1.904-4.596 0-3.59-2.91-6.5-6.5-6.5z"/></svg>
+              <input class="sin" placeholder="搜索" id="searchInput" value="${q}" oninput="doSearch(this.value)" onkeydown="if(event.key==='Enter')doSearch(this.value)">
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    ${q?`<div style="padding:12px 16px;font-size:14px;color:var(--text2)">"${q}" 的搜索结果 · ${results.length} 条</div>`:''}
+    ${q&&results.length===0?'<div class="empty-state"><h3>未找到结果</h3><p>试试其他关键词</p></div>':
+      (q?results.map(t=>renderTweet(t)).join(''):
+      `<div class="empty-state"><h3>搜索「言」</h3><p>输入关键词搜索帖子、用户或话题</p></div>
+      <div style="padding:12px 16px"><div class="wt" style="padding:0 0 12px">推荐搜索</div>
+        <div style="display:flex;flex-wrap:wrap;gap:8px">
+          ${['AI大模型','前端开发','Vue 4.0','创业','科技新闻'].map(k=>`<div style="background:var(--bg2);padding:8px 16px;border-radius:20px;font-size:14px;cursor:pointer" onclick="document.getElementById('searchInput').value='${k}';navigate('search','${k}')">${k}</div>`).join('')}
+        </div>
+      </div>`
+    )}
+  `;
+}
+function doSearch(q){if(q.length>1)navigate('search',q)}
+
+// ===== TRENDING =====
+function renderTrending(){
+  const main = document.getElementById('mainContent');
+  const trends = [
+    {cat:'科技',name:'#AI大模型',count:'12.3万'}, {cat:'娱乐',name:'#新剧热播',count:'9.8万'},
+    {cat:'体育',name:'#世界杯预选赛',count:'7.2万'}, {cat:'财经',name:'#A股行情',count:'5.6万'},
+    {cat:'科技',name:'#开源项目',count:'4.3万'}, {cat:'游戏',name:'#黑神话悟空',count:'3.9万'},
+    {cat:'科技',name:'#Vue4发布',count:'3.2万'}, {cat:'娱乐',name:'#电影推荐',count:'2.8万'},
+    {cat:'财经',name:'#比特币',count:'2.5万'}, {cat:'体育',name:'#NBA',count:'2.1万'}
+  ];
+  main.innerHTML = `
+    <div class="ct">
+      <div class="main-header">
+        <button class="back-btn" onclick="navigate('home')"><svg viewBox="0 0 24 24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg></button>
+        <div class="page-title">热门话题</div>
+      </div>
+    </div>
+    ${trends.map(t=>`
+      <div class="trend-item" style="padding:16px">
+        <div class="tm">${t.cat} 趋势</div>
+        <div class="tn2" style="font-size:18px">${t.name}</div>
+        <div class="tc">${t.count} 条帖子</div>
+      </div>
+    `).join('')}
+  `;
+}
+
+// ===== LISTS =====
+function renderLists(){
+  const main = document.getElementById('mainContent');
+  main.innerHTML=`<div class="ct"><div class="main-header"><button class="back-btn" onclick="navigate('home')"><svg viewBox="0 0 24 24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg></button><div class="page-title">列表</div></div></div>
+  <div class="empty-state"><svg viewBox="0 0 24 24"><path d="M3 13h2v-2H3v2zm0 4h2v-2H3v2zm0-8h2V7H3v2zm4 4h14v-2H7v2zm0 4h14v-2H7v2zM7 7v2h14V7H7z"/></svg><h3>还没有列表</h3><p>创建列表来组织你关注的话题和用户</p></div>`;
+}
+function renderTopics(){
+  const main=document.getElementById('mainContent');
+  main.innerHTML=`<div class="ct"><div class="main-header"><button class="back-btn" onclick="navigate('home')"><svg viewBox="0 0 24 24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg></button><div class="page-title">话题</div></div></div>
+  <div class="empty-state"><svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg><h3>还没有话题</h3><p>关注话题以获取相关内容推荐</p></div>`;
+}
+
+// ===== AUTH =====
+let authMode = 'login';
+function renderAuth(){
+  authMode = 'login';
+  document.getElementById('sidebar').style.display='none';
+  document.getElementById('sidebarRight').style.display='none';
+  const auth = document.getElementById('authPage');
+  auth.classList.add('active');
+  auth.innerHTML=renderAuthForm();
+}
+function renderAuthForm(){
+  return `
+    <div class="auth-page">
+      <div class="auth-card">
+        <div class="auth-logo">言</div>
+        <h1 class="auth-title">${authMode==='login'?'登录到你的账号':'创建账号'}</h1>
+        <p class="auth-sub">${authMode==='login'?'欢迎回来！':'加入「言」，开始你的社交之旅'}</p>
+        <div class="auth-inputs">
+          ${authMode==='login'?`
+            <div class="ail"><label>用户名或邮箱</label><input type="text" id="loginUser" placeholder="请输入用户名或邮箱"></div>
+            <div class="ail"><label>密码</label><input type="password" id="loginPass" placeholder="请输入密码"></div>
+          `:`<div class="ail"><label>姓名</label><input type="text" id="regName" placeholder="请输入你的姓名"></div>
+            <div class="ail"><label>用户名</label><input type="text" id="regHandle" placeholder="请输入用户名（不含@）"></div>
+            <div class="ail"><label>邮箱</label><input type="email" id="regEmail" placeholder="请输入邮箱"></div>
+            <div class="ail"><label>密码</label><input type="password" id="regPass" placeholder="设置密码（至少8位）"></div>`}
+          <div class="auth-err" id="authErr"></div>
+          <button class="abtn" onclick="handleAuth()">${authMode==='login'?'登录':'注册'}</button>
+        </div>
+        <div class="auth-divider">或者</div>
+        <button class="abtn" style="background:#fff;color:#000;border:1px solid var(--border)" onclick="handleGoogleAuth()"><svg style="width:18px;height:18px;vertical-align:middle;margin-right:8px" viewBox="0 0 24 24"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg> 使用 Google 继续</button>
+        <div class="auth-switch" onclick="authMode=authMode==='login'?'register':'login';document.getElementById('authPage').innerHTML=renderAuthForm()">
+          ${authMode==='login'?'没有账号？注册':'已有账号？登录'}
+        </div>
+      </div>
+    </div>
+  `;
+}
+function handleAuth(){
+  const err = document.getElementById('authErr');
+  if(authMode==='login'){
+    const u = document.getElementById('loginUser').value.trim();
+    const p = document.getElementById('loginPass').value;
+    if(!u||!p){err.style.display='block';err.textContent='请填写所有字段';return}
+    err.style.display='none';
+    state.currentUser={name:'王坤',handle:'@wngkn5393218313'};
+    navigate('home');
+  } else {
+    const name = document.getElementById('regName').value.trim();
+    const handle = document.getElementById('regHandle').value.trim();
+    const email = document.getElementById('regEmail').value.trim();
+    const pass = document.getElementById('regPass').value;
+    if(!name||!handle||!email||!pass){err.style.display='block';err.textContent='请填写所有字段';return}
+    if(pass.length<8){err.style.display='block';err.textContent='密码至少8位';return}
+    err.style.display='none';
+    state.currentUser={name,handle:'@'+handle};
+    navigate('home');
+  }
+}
+function handleGoogleAuth(){
+  state.currentUser={name:'王坤',handle:'@wngkn5393218313'};
+  navigate('home');
+}
+
+// ===== INTERACTIONS =====
+function doLike(id,btn){
+  const t=DB.tweets.find(x=>x.id===id);
+  if(!t)return;
+  t.liked=!t.liked;
+  t.likes+=t.liked?1:-1;
+  btn.classList.toggle('liked',t.liked);
+  const lk=document.getElementById('lk-'+id);
+  if(lk)lk.textContent=f(t.likes);
+}
+function doRetweet(id,btn){
+  const t=DB.tweets.find(x=>x.id===id);
+  if(!t)return;
+  t.retweeted=!t.retweeted;
+  t.retweets+=t.retweeted?1:-1;
+  btn.classList.toggle('retweeted',t.retweeted);
+  const sp=btn.querySelector('span');
+  if(sp)sp.textContent=f(t.retweets);
+}
+function toggleFollow(btn){
+  btn.textContent=btn.textContent==='关注'?'正在关注':'关注';
+  btn.classList.toggle('following',btn.textContent==='正在关注');
+}
+function openReplyModal(id){
+  const t=DB.tweets.find(x=>x.id===id);
+  if(!t)return;
+  openPostModal();
+  document.getElementById('modalText').value='@'+t.handle.replace('@','')+' ';
+}
+function openPostModal(){
+  document.getElementById('postModal').classList.add('active');
+  setTimeout(()=>document.getElementById('modalText').focus(),50);
+}
+function closePostModal(){
+  document.getElementById('postModal').classList.remove('active');
+  document.getElementById('modalText').value='';
+  document.getElementById('modalPostBtn').disabled=true;
+}
+function updateModalPostBtn(){
+  const v=document.getElementById('modalText').value.trim();
+  document.getElementById('modalPostBtn').disabled=v.length===0;
+}
+function submitPost(){
+  const v=document.getElementById('modalText').value.trim();
+  if(!v)return;
+  const t={id:Date.now(),name:'王坤',handle:'@wngkn5393218313',verified:false,time:'刚刚',text:v,avatar:'王',avatarBg:'linear-gradient(135deg,#667eea,#764ba2)',likes:0,retweets:0,replies:0,views:'0',liked:false,retweeted:false,bookmarked:false};
+  DB.tweets.unshift(t);
+  closePostModal();
+  if(state.currentPage==='home'){
+    const feed=document.getElementById('mainContent');
+    const div=document.createElement('div');
+    div.innerHTML=renderTweet(t);
+    const ct=feed.querySelector('.ct');
+    if(ct)ct.insertAdjacentElement('afterend',div.firstChild);
+  }
+}
+function openShareModal(id){
+  document.getElementById('shareModal').classList.add('active');
+  document.getElementById('shareUrlText').textContent='https://yanyan.com/post/'+id;
+}
+function closeShareModal(){document.getElementById('shareModal').classList.remove('active')}
+function copyShareUrl(){
+  navigator.clipboard.writeText(document.getElementById('shareUrlText').textContent).then(()=>{
+    const btn=document.querySelector('.copy-btn');
+    btn.textContent='已复制！';
+    setTimeout(()=>btn.textContent='复制链接',1500);
+  });
+}
+function openMoreMenu(id,event){
+  const body=document.getElementById('moreModalBody');
+  const t=DB.tweets.find(x=>x.id===id);
+  body.innerHTML=`
+    <div class="d-item" onclick="closeMoreMenu()"><svg viewBox="0 0 24 24"><path d="M4 4.5C4 3.12 5.119 2 6.5 2h11C18.881 2 20 3.12 20 4.5v18.44l-8-5.71-8 5.71V4.5z"/></svg> ${t&&t.bookmarked?'从书签中移除':'添加到书签'}</div>
+    <div class="d-item" onclick="copyTweetLink(${id});closeMoreMenu()"><svg viewBox="0 0 24 24"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg> 复制链接</div>
+    <div class="d-item" onclick="closeMoreMenu()"><svg viewBox="0 0 24 24"><path d="M12 3c-4.97 0-9 4.03-9 9s4.03 9 9 9 9-4.03 9-9c0-.46-.04-.92-.1-1.36-.98 1.37-2.58 2.26-4.4 2.26-2.98 0-5.4-2.42-5.4-5.4 0-1.81.89-3.42 2.26-4.4-.44-.06-.9-.1-1.36-.1z"/></svg> ${t&&t.liked?'不喜欢':'喜欢'}</div>
+    <div class="d-divider"></div>
+    <div class="d-item" onclick="navigate('user','${t?t.handle:''}');closeMoreMenu()"><svg viewBox="0 0 24 24"><path d="M5.651 19h12.698c-.337-1.8-1.023-3.21-1.945-4.19C15.318 13.65 13.838 13 12 13s-3.317.65-4.404 1.81c-.922.98-1.608 2.39-1.945 4.19z"/></svg> 查看个人资料</div>
+    <div class="d-item" onclick="closeMoreMenu()"><svg viewBox="0 0 24 24"><path d="M3.75 12c0-.966.783-1.75 1.75-1.75s1.75.784 1.75 1.75-.783 1.75-1.75 1.75S3.75 12.966 3.75 12zm8.25 0c0-.966.783-1.75 1.75-1.75s1.75.784 1.75 1.75-.783 1.75-1.75 1.75S12 12.966 12 12zm8.25 0c0-.966.783-1.75 1.75-1.75s1.75.784 1.75 1.75-.783 1.75-1.75 1.75S20.25 12.966 20.25 12z"/></svg> 分享</div>
+    <div class="d-divider"></div>
+    <div class="d-item danger" onclick="deleteTweet(${id});closeMoreMenu()"><svg viewBox="0 0 24 24"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg> 删除帖子</div>
+  `;
+  document.getElementById('moreModal').classList.add('active');
+}
+function closeMoreMenu(){document.getElementById('moreModal').classList.remove('active')}
+function copyTweetLink(id){openShareModal(id)}
+function deleteTweet(id){
+  DB.tweets=DB.tweets.filter(x=>x.id!==id);
+  document.getElementById('tweet-'+id)?.remove();
+}
+function toggleDropdown(id){
+  const el=document.getElementById(id);
+  const wasActive=el.classList.contains('active');
+  closeAllDropdowns();
+  if(!wasActive)el.classList.add('active');
+}
+function closeAllDropdowns(){
+  document.querySelectorAll('.dropdown').forEach(d=>d.classList.remove('active'));
+}
+
+// ===== EMOJI PICKER =====
+const EMOJIS='😀 😃 😄 😁 😅 😂 🙂 😉 😊 😍 🤩 😘 😎 🥳 🤗 🤔 🧐 😇 😈 🤡 💀 👻 🙈 🙉 🙊 ❤️ 🧡 💛 💚 💙 💜 🖤 🤍 💔 🌸 🌺 🌻 🌼 🌷 🌹 🍀 🍎 🍕 🍜 🍣 🍦 🍰 ☕ 🍵 🚀 ✈️ 🏠 💼 📱 💻 🎮 🎬 🎵 🎨 📚 🏆 ⚽ 🏀 🏃 💪 🏋️ 🧘 🧠 💡 🔥 ✨ 💫 🌈 ⭐ 🌍 🎉 🎊 ✅ ❌ ⚠️ 🔔 📣 💬 🗣️ 👀 👋 🤝 👏 🙌 🎯 🎁 🏷️ 📌 ⚡ 🌙 ☀️ ⭐ 💰 💳 🎁 📊 📈 📉 🔒 🔓 💳 ✏️ 📝 🖊️ 📸 📷 🎥 📹 🎙️ 📻 🧲 🔍 💡 🛠️ ⚙️ 🔧 🧰 💊 🩺 🏥 🌡️ 🤒 😷';
+let emojiPickerInit=false;
+function initEmojiPicker(){
+  if(emojiPickerInit)return;
+  emojiPickerInit=true;
+  const picker=document.getElementById('emojiPicker');
+  if(!picker)return;
+  EMOJIS.split(' ').filter(e=>e).forEach(e=>{
+    const btn=document.createElement('button');
+    btn.className='emoji-btn';
+    btn.textContent=e;
+    btn.onclick=()=>insertEmoji(e);
+    picker.appendChild(btn);
+  });
+}
+function toggleEmoji(){
+  const picker=document.getElementById('emojiPicker');
+  if(!picker)return;
+  picker.classList.toggle('active');
+}
+function insertEmoji(e){
+  const ta=document.querySelector('.cin:focus,.ri-textarea:focus,#modalText:focus');
+  if(ta){
+    const s=ta.selectionStart||ta.value.length;
+    ta.value=ta.value.slice(0,s)+e+ta.value.slice(s);
+    ta.selectionStart=ta.selectionEnd=s+e.length;
+    ta.focus();
+    if(ta.id==='modalText')updateModalPostBtn();
+  }
+  document.getElementById('emojiPicker')?.classList.remove('active');
+}
+
+// ===== CLICK OUTSIDE =====
+document.addEventListener('click',function(e){
+  if(!e.target.closest('.dropdown')&&!e.target.closest('[onclick*="toggleDropdown"]')){
+    closeAllDropdowns();
+  }
+  if(!e.target.closest('#postModal')&&!e.target.closest('.post-btn')&&!e.target.closest('#modalPostBtn')){
+    // don't close modal from outside
+  }
+  if(!e.target.closest('#shareModal'))closeShareModal();
+  if(!e.target.closest('#moreModal')&&!e.target.closest('.more-btn'))closeMoreMenu();
+});
+
+// ===== INIT =====
+navigate('home');
+
+// ===== KEYBOARD SHORTCUTS =====
+document.addEventListener('keydown',function(e){
+  if(e.key==='Escape'){
+    closePostModal();
+    closeShareModal();
+    closeMoreMenu();
+    closeAllDropdowns();
+  }
+  if(e.key==='n'&&!e.ctrlKey&&!e.metaKey&&!e.target.closest('input,textarea')){
+    openPostModal();
+  }
+  if(e.key==='/'&&!e.target.closest('input,textarea')){
+    e.preventDefault();
+    navigate('search');
+  }
+  if(e.key==='g'&&!e.target.closest('input,textarea')){
+    if(e.ctrlKey||e.metaKey)return;
+    navigate('home');
+  }
+  if(e.key==='r'&&!e.target.closest('input,textarea')){
+    navigate('notifications');
+  }
+  if(e.key==='m'&&!e.target.closest('input,textarea')){
+    navigate('messages');
+  }
+  if(e.key==='p'&&!e.target.closest('input,textarea')){
+    navigate('profile');
+  }
+});
 </script>
 </body>
 </html>
