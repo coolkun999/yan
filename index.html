@@ -125,8 +125,12 @@ textarea,input{font-family:inherit;outline:none;border:none;background:transpare
 .tlink-url{font-size:12px;color:var(--text2);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 
 /* ===== RIGHT SIDEBAR ===== */
-.sidebar-right{width:350px;padding:12px 16px;flex-shrink:0;display:flex;flex-direction:column;gap:16px;position:sticky;top:0;height:100vh;overflow-y:auto}
-.search-box{position:sticky;top:0;padding-top:4px;padding-bottom:8px;background:var(--bg);z-index:5}
+.sidebar-right{width:350px;flex-shrink:0;display:flex;flex-direction:column;position:relative}
+.sidebar-right-inner{position:sticky;top:0;height:100vh;overflow-y:auto;padding:0 16px 16px;display:flex;flex-direction:column;gap:16px}
+.sidebar-right-inner::-webkit-scrollbar{width:6px}
+.sidebar-right-inner::-webkit-scrollbar-track{background:transparent}
+.sidebar-right-inner::-webkit-scrollbar-thumb{background:var(--bg4);border-radius:3px}
+.search-box{padding:12px 16px 8px;z-index:5}
 .sbw{display:flex;align-items:center;background:var(--bg2);border-radius:var(--r);border:1px solid transparent;padding:0 16px;gap:12px;transition:border-color .2s,background .2s}
 .sbw:focus-within{background:var(--bg);border-color:var(--accent)}
 .sbw svg{width:18px;height:18px;fill:var(--text2);flex-shrink:0}
@@ -152,9 +156,42 @@ textarea,input{font-family:inherit;outline:none;border:none;background:transpare
 .fbtn.following:hover{background:rgba(223,27,27,.1);color:#f4212e;border-color:#f4212e}
 .show-more{padding:16px;color:var(--accent);font-size:15px;cursor:pointer;display:block;transition:background .2s}
 .show-more:hover{background:rgba(231,233,234,.05)}
-.footer-links{display:flex;flex-wrap:wrap;gap:8px;padding:8px 16px;font-size:13px;color:var(--text2)}
+.footer-links{display:flex;flex-wrap:wrap;gap:8px;padding:16px 16px 32px;font-size:13px;color:var(--text2)}
 .footer-links a{color:var(--text2);text-decoration:none}
 .footer-links a:hover{text-decoration:underline}
+
+/* ===== PREMIUM CARD ===== */
+.prem-card{background:linear-gradient(135deg,#1d3a5f 0%,#0f212e 100%);border-radius:16px;padding:16px;cursor:pointer;transition:transform .2s,box-shadow .2s;position:relative;overflow:hidden}
+.prem-card::before{content:'';position:absolute;top:-20px;right:-20px;width:80px;height:80px;background:rgba(29,155,240,.15);border-radius:50%}
+.prem-card:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(29,155,240,.15)}
+.prem-icon{margin-bottom:10px;color:rgba(255,255,255,.9)}
+.prem-title{font-size:18px;font-weight:800;color:#fff;margin-bottom:6px}
+.prem-desc{font-size:14px;color:rgba(255,255,255,.65);line-height:1.5;margin-bottom:12px}
+.prem-tags{display:flex;gap:6px;margin-bottom:12px}
+.prem-tag{background:rgba(29,155,240,.25);color:var(--accent);font-size:12px;font-weight:700;padding:3px 10px;border-radius:9999px}
+.prem-cta{background:var(--accent);color:#fff;border-radius:9999px;padding:9px 20px;font-size:15px;font-weight:700;display:inline-block;text-align:center;transition:background .2s}
+.prem-cta:hover{background:var(--ah)}
+
+/* ===== TREND TABS ===== */
+.trend-tabs{display:flex;padding:0 4px;margin-bottom:4px;border-bottom:1px solid var(--border)}
+.trend-tab{flex:1;padding:10px 0;text-align:center;font-size:13px;font-weight:500;color:var(--text2);cursor:pointer;position:relative;transition:color .2s}
+.trend-tab.active{color:var(--text);font-weight:700}
+.trend-tab.active::after{content:'';position:absolute;bottom:0;left:0;right:0;height:3px;background:var(--accent);border-radius:3px 3px 0 0}
+.trend-tab:hover{color:var(--text);background:rgba(231,233,234,.05)}
+
+/* ===== FI META ===== */
+.fi-meta{color:var(--text2);font-size:13px;margin-top:2px}
+
+/* ===== TOPIC PILLS ===== */
+.topic-pill-row{display:flex;flex-direction:column;gap:2px}
+.topic-pill{display:flex;align-items:center;gap:10px;padding:10px 16px;cursor:pointer;transition:background .2s}
+.topic-pill:hover{background:rgba(231,233,234,.05)}
+.tp-icon{font-size:20px;width:32px;text-align:center;flex-shrink:0}
+.tp-info{flex:1;min-width:0}
+.tp-name{font-size:14px;font-weight:600;margin-bottom:1px}
+.tp-count{color:var(--text2);font-size:12px}
+.tp-btn{background:transparent;color:var(--text);border:1px solid var(--border);border-radius:9999px;padding:5px 14px;font-size:13px;font-weight:600;cursor:pointer;flex-shrink:0;transition:all .2s}
+.tp-btn:hover{background:var(--text);color:var(--bg)}
 
 /* ===== PAGE VIEWS ===== */
 .page{display:none;min-height:100vh}
@@ -271,7 +308,9 @@ textarea,input{font-family:inherit;outline:none;border:none;background:transpare
 .msg-item{display:flex;align-items:center;gap:12px;padding:12px 16px;border-bottom:1px solid var(--border);cursor:pointer;transition:background .2s}
 .msg-item:hover{background:var(--hover)}
 .msg-item.active{background:var(--bg2)}
-.msg-av{width:48px;height:48px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:18px;color:#fff;flex-shrink:0}
+.msg-av{width:48px;height:48px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:18px;color:#fff;flex-shrink:0;position:relative}
+.msg-av.online::after{content:'';position:absolute;bottom:0;right:0;width:12px;height:12px;background:var(--green);border:3px solid var(--bg);border-radius:50%}
+.msg-av.offline::after{content:'';position:absolute;bottom:0;right:0;width:10px;height:10px;background:var(--bg4);border:2px solid var(--bg);border-radius:50%}
 .msg-info{flex:1;min-width:0}
 .msg-name{font-weight:700;font-size:15px;display:flex;justify-content:space-between;align-items:center}
 .msg-time{font-size:12px;color:var(--text2)}
@@ -279,19 +318,31 @@ textarea,input{font-family:inherit;outline:none;border:none;background:transpare
 .msg-unread{width:8px;height:8px;border-radius:50%;background:var(--accent);flex-shrink:0}
 .msg-chat{flex:1;display:flex;flex-direction:column;min-width:0}
 .msg-chat-header{display:flex;align-items:center;gap:12px;padding:12px 16px;border-bottom:1px solid var(--border)}
-.msg-chat-name{font-weight:700;font-size:16px;flex:1}
+.msg-chat-name{font-weight:700;font-size:16px;flex:1;display:flex;flex-direction:column}
+.msg-chat-name span{font-weight:400;font-size:13px;color:var(--text2)}
+.chat-online{font-size:12px;color:var(--green);display:flex;align-items:center;gap:4px}
+.chat-online::before{content:'';width:8px;height:8px;background:var(--green);border-radius:50%}
 .chat-body{flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:8px}
 .chat-bubble{max-width:70%;padding:10px 16px;border-radius:18px;font-size:15px;line-height:1.5;word-break:break-word}
 .chat-bubble.sent{background:var(--accent);color:#fff;align-self:flex-end;border-bottom-right-radius:4px}
 .chat-bubble.received{background:var(--bg2);align-self:flex-start;border-bottom-left-radius:4px}
 .chat-time{font-size:11px;color:var(--text2);margin-top:2px;text-align:right}
-.msg-chat-input{display:flex;gap:8px;padding:12px 16px;border-top:1px solid var(--border);align-items:flex-end}
-.chat-textarea{flex:1;background:var(--bg2);border-radius:20px;padding:10px 16px;font-size:15px;resize:none;min-height:42px;max-height:120px;border:1px solid transparent;transition:border-color .2s;line-height:1.5;font-family:inherit}
-.chat-textarea:focus{border-color:var(--accent)}
-.chat-send{background:var(--accent);color:#fff;border-radius:var(--r);padding:8px 20px;font-size:15px;font-weight:700;cursor:pointer;transition:background .2s;white-space:nowrap;border:none}
-.chat-send:hover{background:var(--ah)}
-.chat-send:disabled{opacity:.5;cursor:default}
-.chat-date{text-align:center;font-size:12px;color:var(--text2);margin:8px 0}
+.chat-time.seen{color:var(--accent)}
+.chat-date{text-align:center;font-size:12px;color:var(--text2);margin:12px 0;padding:4px 12px;background:var(--bg2);border-radius:12px;display:inline-block;align-self:center}
+.chat-typing{display:flex;align-items:center;gap:8px;padding:8px 12px;background:var(--bg2);border-radius:16px;align-self:flex-start;max-width:80px}
+.chat-typing-dots{display:flex;gap:4px}
+.chat-typing-dots span{width:8px;height:8px;background:var(--text2);border-radius:50%;animation:typingBounce 1.4s infinite}
+.chat-typing-dots span:nth-child(2){animation-delay:.2s}
+.chat-typing-dots span:nth-child(3){animation-delay:.4s}
+@keyframes typingBounce{0%,60%,100%{transform:translateY(0)}30%{transform:translateY(-6px)}}
+.chat-tools{display:flex;gap:4px}
+.chat-tool{width:32px;height:32px;border-radius:50%;border:none;background:transparent;color:var(--accent);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background .2s}
+.chat-tool:hover{background:rgba(29,155,240,.1)}
+.chat-tool svg{width:18px;height:18px;fill:currentColor}
+.emoji-picker{position:absolute;bottom:60px;left:16px;background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:8px;display:none;flex-wrap:wrap;gap:4px;max-width:280px;z-index:10}
+.emoji-picker.show{display:flex}
+.emoji-btn{display:flex;align-items:center;justify-content:center;width:32px;height:32px;font-size:18px;border-radius:6px;border:none;background:transparent;cursor:pointer;transition:background .2s}
+.emoji-btn:hover{background:var(--bg3)}
 
 /* ===== EXPLORE ===== */
 .explore-search{padding:12px 16px;border-bottom:1px solid var(--border)}
@@ -299,9 +350,12 @@ textarea,input{font-family:inherit;outline:none;border:none;background:transpare
 .es-input svg{width:18px;height:18px;fill:var(--text2)}
 .es-input input{flex:1;background:transparent;border:none;outline:none;color:var(--text);font-size:15px;padding:12px 0;font-family:inherit}
 .es-input input::placeholder{color:var(--text2)}
-.explore-filters{display:flex;gap:8px;padding:12px 16px;overflow-x:auto;border-bottom:1px solid var(--border)}
-.explore-filter{padding:6px 16px;border-radius:var(--r);font-size:14px;font-weight:600;cursor:pointer;white-space:nowrap;border:1px solid var(--border);transition:all .2s;color:var(--text)}
-.explore-filter.active,.explore-filter:hover{background:var(--text);color:var(--bg);border-color:var(--text)}
+.explore-tabs{position:sticky;top:60px;background:rgba(0,0,0,.9);backdrop-filter:blur(12px);z-index:9;border-bottom:1px solid var(--border)}
+.explore-tabs-inner{display:flex}
+.explore-tab{flex:1;padding:16px 0;text-align:center;font-size:15px;font-weight:500;color:var(--text2);cursor:pointer;position:relative;transition:color .2s,background .2s}
+.explore-tab:hover{background:rgba(231,233,234,.05)}
+.explore-tab.active{color:var(--text);font-weight:700}
+.explore-tab.active::after{content:'';position:absolute;bottom:0;left:0;right:0;height:4px;background:var(--accent);border-radius:9999px 9999px 0 0}
 .explore-grid{display:grid;grid-template-columns:1fr 1fr;gap:2px;padding:2px}
 .explore-grid-item{position:relative;cursor:pointer;overflow:hidden;border-radius:0}
 .explore-grid-item:first-child{grid-column:1/-1}
@@ -394,6 +448,15 @@ textarea,input{font-family:inherit;outline:none;border:none;background:transpare
 .copy-btn{background:var(--accent);color:#fff;border:none;border-radius:var(--r);padding:6px 16px;font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap;flex-shrink:0;transition:background .2s}
 .copy-btn:hover{background:var(--ah)}
 
+/* ===== LOAD MORE / PAGINATION ===== */
+.load-more-container{padding:20px;text-align:center}
+.load-more-btn{display:inline-flex;align-items:center;gap:8px;background:transparent;color:var(--accent);border:1px solid var(--border);border-radius:var(--r);padding:10px 24px;font-size:15px;font-weight:600;cursor:pointer;transition:all .2s}
+.load-more-btn:hover{background:rgba(29,155,240,.1);border-color:var(--accent)}
+.load-more-btn:disabled{opacity:.5;cursor:default;pointer-events:none}
+.load-spinner{width:16px;height:16px;border:2px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.loading-more{padding:16px;text-align:center;color:var(--text2);font-size:14px;display:flex;align-items:center;justify-content:center;gap:8px}
+
 /* ===== FLOATING POST BUTTON (mobile) ===== */
 .float-post-btn{position:fixed;bottom:20px;right:20px;width:56px;height:56px;border-radius:50%;background:var(--accent);color:#fff;border:none;cursor:pointer;display:none;align-items:center;justify-content:center;box-shadow:0 4px 16px rgba(29,155,240,.4);z-index:100;transition:background .2s}
 .float-post-btn:hover{background:var(--ah)}
@@ -419,6 +482,21 @@ textarea,input{font-family:inherit;outline:none;border:none;background:transpare
   .ei-img{aspect-ratio:4/3 !important}
   .float-post-btn{display:flex}
 }
+
+/* User menu */
+.user-menu-text{flex:1;min-width:0}
+.user-menu-item{display:flex;align-items:center;gap:12px;padding:12px 16px;font-size:15px;cursor:pointer;transition:background .2s}
+.user-menu-item:hover{background:rgba(231,233,234,.05)}
+.user-menu-item svg{width:18px;height:18px;fill:var(--text)}
+.user-menu-item.danger:hover{background:rgba(249,24,128,.1);color:var(--pink)}
+.user-menu-item.danger:hover svg{fill:var(--pink)}
+.user-menu-divider{height:1px;background:var(--border);margin:4px 0}
+.user-menu-header{padding:12px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px}
+.user-menu-header-info{flex:1}
+.user-menu-header-name{font-weight:700;font-size:15px}
+.user-menu-header-handle{color:var(--text2);font-size:13px}
+.user-menu-switch{color:var(--accent);font-size:13px;cursor:pointer;padding:8px 16px}
+.user-menu-switch:hover{background:rgba(231,233,234,.05)}
 
 /* ===== DARK/LIGHT THEME ===== */
 .theme-light{--bg:#fff;--bg2:#f7f9f9;--bg3:#eff3f4;--bg4:#cfd9de;--text:#0f1419;--text2:#536471;--border:#eff3f4;--hover:#f7f9f9}
@@ -450,10 +528,6 @@ textarea,input{font-family:inherit;outline:none;border:none;background:transpare
         <svg viewBox="0 0 24 24"><path d="M1.998 5.5c0-1.381 1.119-2.5 2.5-2.5h15c1.381 0 2.5 1.119 2.5 2.5v13c0 1.381-1.119 2.5-2.5 2.5h-15c-1.381 0-2.5-1.119-2.5-2.5v-13zM5.5 7c-.276 0-.5.224-.5.5v2.764l8 3.638 8-3.638V7.5c0-.276-.224-.5-.5-.5h-15z"/></svg>
         <span class="nav-label">消息</span>
       </a>
-      <a class="nav-item" onclick="navigate('messages')">
-        <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-1-13h2v6h-2zm0 8h2v2h-2z"/></svg>
-        <span class="nav-label">聊天</span>
-      </a>
       <a class="nav-item" id="nav-bookmarks" onclick="navigate('bookmarks')">
         <svg viewBox="0 0 24 24"><path d="M4 4.5C4 3.12 5.119 2 6.5 2h11C18.881 2 20 3.12 20 4.5v18.44l-8-5.71-8 5.71V4.5z"/></svg>
         <span class="nav-label">书签</span>
@@ -472,15 +546,18 @@ textarea,input{font-family:inherit;outline:none;border:none;background:transpare
       </a>
     </nav>
     <button class="post-btn" onclick="openPostModal()">发帖</button>
-    <div class="user-menu" onclick="navigate('profile')">
+    <div class="user-menu" id="userMenu" onclick="toggleUserDropdown(event)">
       <div class="av">王</div>
-      <div>
+      <div class="user-menu-text">
         <div class="un">王坤</div>
         <div class="uh">@wngkn5393218313</div>
       </div>
       <span class="dots">···</span>
     </div>
   </aside>
+
+  <!-- USER DROPDOWN -->
+  <div class="dropdown" id="user-dropdown" style="position:fixed;bottom:80px;left:10px;min-width:280px;z-index:200"></div>
 
   <!-- MAIN CONTENT -->
   <main class="main" id="mainContent">
@@ -500,43 +577,89 @@ textarea,input{font-family:inherit;outline:none;border:none;background:transpare
         </button>
       </div>
     </div>
-    <div class="widget" style="padding:16px">
-      <p style="font-size:15px;margin-bottom:8px;line-height:1.5;font-weight:700">升级到 Premium</p>
-      <p style="font-size:15px;margin-bottom:12px;line-height:1.5;color:var(--text2)">免广告、查看你的分析数据、推广你的回复并解锁 20 多项功能。</p>
-      <button style="background:var(--accent);color:#fff;border:none;border-radius:9999px;padding:9px 20px;font-size:15px;font-weight:700;cursor:pointer">订阅</button>
+    <div class="sidebar-right-inner">
+    <!-- Premium Card -->
+    <div class="prem-card" onclick="navigate('settings')">
+      <div class="prem-icon">
+        <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="rgba(255,255,255,.9)" stroke-width="1.5">
+          <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+        </svg>
+      </div>
+      <div class="prem-title">订阅 Premium</div>
+      <div class="prem-desc">解锁高级功能，免广告浏览，提升你的影响力</div>
+      <div class="prem-tags">
+        <span class="prem-tag">50% 优惠</span>
+      </div>
+      <div class="prem-cta">立即订阅</div>
     </div>
-    <div class="widget">
-      <div class="wt">有什么新鲜事</div>
+    <!-- Trending Widget -->
+    <div class="widget" id="trendingWidget">
+      <div class="wt">热门话题</div>
+      <div class="trend-tabs" id="trendTabs">
+        <span class="trend-tab active" data-cat="all" onclick="filterTrends('all')">综合</span>
+        <span class="trend-tab" data-cat="tech" onclick="filterTrends('tech')">科技</span>
+        <span class="trend-tab" data-cat="ent" onclick="filterTrends('ent')">娱乐</span>
+        <span class="trend-tab" data-cat="sport" onclick="filterTrends('sport')">体育</span>
+        <span class="trend-tab" data-cat="fin" onclick="filterTrends('fin')">财经</span>
+      </div>
+      <div id="trendList">
       <div class="trend-item" onclick="navigate('trending')"><div style="display:flex;justify-content:space-between"><span class="tm">科技 · 趋势</span><span style="color:var(--text2)">···</span></div><div class="tn2">#AI大模型</div><div class="tc">12.3万 条帖子</div></div>
       <div class="trend-item" onclick="navigate('trending')"><div style="display:flex;justify-content:space-between"><span class="tm">娱乐 · 趋势</span><span style="color:var(--text2)">···</span></div><div class="tn2">#新剧热播</div><div class="tc">9.8万 条帖子</div></div>
       <div class="trend-item" onclick="navigate('trending')"><div style="display:flex;justify-content:space-between"><span class="tm">体育 · 趋势</span><span style="color:var(--text2)">···</span></div><div class="tn2">#世界杯预选赛</div><div class="tc">7.2万 条帖子</div></div>
       <div class="trend-item" onclick="navigate('trending')"><div style="display:flex;justify-content:space-between"><span class="tm">财经 · 趋势</span><span style="color:var(--text2)">···</span></div><div class="tn2">#A股行情</div><div class="tc">5.6万 条帖子</div></div>
       <div class="trend-item" onclick="navigate('trending')"><div style="display:flex;justify-content:space-between"><span class="tm">科技 · 趋势</span><span style="color:var(--text2)">···</span></div><div class="tn2">#开源项目</div><div class="tc">4.3万 条帖子</div></div>
+      </div>
       <a class="show-more" onclick="navigate('trending')">显示更多</a>
     </div>
+    <!-- Who to Follow -->
     <div class="widget">
       <div class="wt">你可能会喜欢</div>
       <div class="fi" onclick="navigate('user','@stevenmarkryan')">
         <div class="fa" style="background:linear-gradient(135deg,#1d9bf0,#0d8ecf)">S</div>
-        <div class="fi-info"><div class="fi-name">stevenmarkryan <span style="color:var(--accent);display:inline-flex"><svg width="14" height="14" viewBox="0 0 24 24"><path fill="var(--accent)" d="M20.396 11c-.018-.646-.215-1.275-.57-1.816-.354-.54-.852-.972-1.438-1.246.223-.607.27-1.264.14-1.897-.131-.634-.437-1.218-.882-1.687-.47-.445-1.053-.75-1.687-.882-.633-.13-1.29-.083-1.897.14-.273-.587-.704-1.086-1.245-1.44S11.647 1.62 11 1.604c-.646.017-1.273.213-1.813.568s-.969.854-1.24 1.441c-.608-.223-1.267-.272-1.902-.14-.635.13-1.22.436-1.69.882-.445.47-.749 1.055-.878 1.688-.13.633-.08 1.29.144 1.896-.587.274-1.087.705-1.443 1.245-.356.54-.555 1.17-.574 1.817.02.647.218 1.276.574 1.817.356.54.856.972 1.443 1.245-.224.606-.274 1.263-.144 1.896.13.634.433 1.218.877 1.688.47.443 1.054.747 1.687.878.633.132 1.29.084 1.897-.136.274.586.705 1.084 1.246 1.439.54.354 1.17.551 1.816.569.647-.016 1.276-.213 1.817-.567s.972-.854 1.245-1.44c.604.239 1.266.296 1.903.164.636-.132 1.22-.447 1.68-.907.46-.46.776-1.044.908-1.681s.075-1.299-.165-1.903c.586-.274 1.084-.705 1.439-1.246.354-.54.551-1.17.569-1.816z"/></svg></span></div><div class="fi-handle">@stevenmarkryan</div></div>
+        <div class="fi-info"><div class="fi-name">stevenmarkryan <span style="color:var(--accent);display:inline-flex"><svg width="14" height="14" viewBox="0 0 24 24"><path fill="var(--accent)" d="M20.396 11c-.018-.646-.215-1.275-.57-1.816-.354-.54-.852-.972-1.438-1.246.223-.607.27-1.264.14-1.897-.131-.634-.437-1.218-.882-1.687-.47-.445-1.053-.75-1.687-.882-.633-.13-1.29-.083-1.897.14-.273-.587-.704-1.086-1.245-1.44S11.647 1.62 11 1.604c-.646.017-1.273.213-1.813.568s-.969.854-1.24 1.441c-.608-.223-1.267-.272-1.902-.14-.635.13-1.22.436-1.69.882-.445.47-.749 1.055-.878 1.688-.13.633-.08 1.29.144 1.896-.587.274-1.087.705-1.443 1.245-.356.54-.555 1.17-.574 1.817.02.647.218 1.276.574 1.817.356.54.856.972 1.443 1.245-.224.606-.274 1.263-.144 1.896.13.634.433 1.218.877 1.688.47.443 1.054.747 1.687.878.633.132 1.29.084 1.897-.136.274.586.705 1.084 1.246 1.439.54.354 1.17.551 1.816.569.647-.016 1.276-.213 1.817-.567s.972-.854 1.245-1.44c.604.239 1.266.296 1.903.164.636-.132 1.22-.447 1.68-.907.46-.46.776-1.044.908-1.681s.075-1.299-.165-1.903c.586-.274 1.084-.705 1.439-1.246.354-.54.551-1.17.569-1.816z"/></svg></span></div><div class="fi-handle">@stevenmarkryan</div><div class="fi-meta">32.1万 粉丝</div></div>
         <button class="fbtn" onclick="event.stopPropagation();toggleFollow(this)">关注</button>
       </div>
       <div class="fi" onclick="navigate('user','@ksi')">
         <div class="fa" style="background:linear-gradient(135deg,#f093fb,#f5576c)">K</div>
-        <div class="fi-info"><div class="fi-name">ksi <span style="color:var(--accent);display:inline-flex"><svg width="14" height="14" viewBox="0 0 24 24"><path fill="var(--accent)" d="M20.396 11c-.018-.646-.215-1.275-.57-1.816-.354-.54-.852-.972-1.438-1.246.223-.607.27-1.264.14-1.897-.131-.634-.437-1.218-.882-1.687-.47-.445-1.053-.75-1.687-.882-.633-.13-1.29-.083-1.897.14-.273-.587-.704-1.086-1.245-1.44S11.647 1.62 11 1.604c-.646.017-1.273.213-1.813.568s-.969.854-1.24 1.441c-.608-.223-1.267-.272-1.902-.14-.635.13-1.22.436-1.69.882-.445.47-.749 1.055-.878 1.688-.13.633-.08 1.29.144 1.896-.587.274-1.087.705-1.443 1.245-.356.54-.555 1.17-.574 1.817.02.647.218 1.276.574 1.817.356.54.856.972 1.443 1.245-.224.606-.274 1.263-.144 1.896.13.634.433 1.218.877 1.688.47.443 1.054.747 1.687.878.633.132 1.29.084 1.897-.136.274.586.705 1.084 1.246 1.439.54.354 1.17.551 1.816.569.647-.016 1.276-.213 1.817-.567s.972-.854 1.245-1.44c.604.239 1.266.296 1.903.164.636-.132 1.22-.447 1.68-.907.46-.46.776-1.044.908-1.681s.075-1.299-.165-1.903c.586-.274 1.084-.705 1.439-1.246.354-.54.551-1.17.569-1.816z"/></svg></span></div><div class="fi-handle">@KSI</div></div>
+        <div class="fi-info"><div class="fi-name">KSI <span style="color:var(--accent);display:inline-flex"><svg width="14" height="14" viewBox="0 0 24 24"><path fill="var(--accent)" d="M20.396 11c-.018-.646-.215-1.275-.57-1.816-.354-.54-.852-.972-1.438-1.246.223-.607.27-1.264.14-1.897-.131-.634-.437-1.218-.882-1.687-.47-.445-1.053-.75-1.687-.882-.633-.13-1.29-.083-1.897.14-.273-.587-.704-1.086-1.245-1.44S11.647 1.62 11 1.604c-.646.017-1.273.213-1.813.568s-.969.854-1.24 1.441c-.608-.223-1.267-.272-1.902-.14-.635.13-1.22.436-1.69.882-.445.47-.749 1.055-.878 1.688-.13.633-.08 1.29.144 1.896-.587.274-1.087.705-1.443 1.245-.356.54-.555 1.17-.574 1.817.02.647.218 1.276.574 1.817.356.54.856.972 1.443 1.245-.224.606-.274 1.263-.144 1.896.13.634.433 1.218.877 1.688.47.443 1.054.747 1.687.878.633.132 1.29.084 1.897-.136.274.586.705 1.084 1.246 1.439.54.354 1.17.551 1.816.569.647-.016 1.276-.213 1.817-.567s.972-.854 1.245-1.44c.604.239 1.266.296 1.903.164.636-.132 1.22-.447 1.68-.907.46-.46.776-1.044.908-1.681s.075-1.299-.165-1.903c.586-.274 1.084-.705 1.439-1.246.354-.54.551-1.17.569-1.816z"/></svg></span></div><div class="fi-handle">@KSI</div><div class="fi-meta">189万 粉丝</div></div>
         <button class="fbtn" onclick="event.stopPropagation();toggleFollow(this)">关注</button>
       </div>
-      <div class="fi" onclick="navigate('user','@ronaldobetter07')">
-        <div class="fa" style="background:linear-gradient(135deg,#4facfe,#00f2fe)">R</div>
-        <div class="fi-info"><div class="fi-name">ronaldobetter07 <span style="color:var(--text2);display:inline-flex" title="戏仿账号"><svg width="14" height="14" viewBox="0 0 24 24"><path fill="var(--text2)" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-1-13h2v6h-2zm0 8h2v2h-2z"/></svg></span></div><div class="fi-handle">@ronaldobetter07</div></div>
+      <div class="fi" onclick="navigate('user','@ai_hub')">
+        <div class="fa" style="background:linear-gradient(135deg,#43e97b,#38f9d7)">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="#fff"><path d="M21 10.12h-6.78l2.74 2.74L15.12 21 12 17.88l-3.12 3.12-1.84-1.84 2.74-2.74H3a1 1 0 01-1-1V11a1 1 0 011-1h7.06a8.07 8.07 0 013.22-.78A8 8 0 0121 10.12z"/></svg>
+        </div>
+        <div class="fi-info"><div class="fi-name">AI Hub <span style="background:rgba(29,155,240,.15);color:var(--accent);font-size:11px;font-weight:700;padding:1px 6px;border-radius:4px">官方</span></div><div class="fi-handle">@ai_hub</div><div class="fi-meta">56.7万 粉丝</div></div>
         <button class="fbtn" onclick="event.stopPropagation();toggleFollow(this)">关注</button>
       </div>
       <a class="show-more" onclick="navigate('explore')">显示更多</a>
     </div>
+    <!-- Topics Widget -->
+    <div class="widget">
+      <div class="wt">推荐话题</div>
+      <div class="topic-pill-row">
+        <div class="topic-pill" onclick="navigate('topic','AI大模型')">
+          <span class="tp-icon">🤖</span>
+          <div class="tp-info"><div class="tp-name">AI大模型</div><div class="tp-count">12.3万人关注</div></div>
+          <button class="tp-btn" onclick="event.stopPropagation();this.textContent=this.textContent==='关注'?'已关注':'关注'">关注</button>
+        </div>
+        <div class="topic-pill" onclick="navigate('topic','开发生态')">
+          <span class="tp-icon">🛠️</span>
+          <div class="tp-info"><div class="tp-name">开发生态</div><div class="tp-count">8.9万人关注</div></div>
+          <button class="tp-btn" onclick="event.stopPropagation();this.textContent=this.textContent==='关注'?'已关注':'关注'">关注</button>
+        </div>
+        <div class="topic-pill" onclick="navigate('topic','数字艺术')">
+          <span class="tp-icon">🎨</span>
+          <div class="tp-info"><div class="tp-name">数字艺术</div><div class="tp-count">6.4万人关注</div></div>
+          <button class="tp-btn" onclick="event.stopPropagation();this.textContent=this.textContent==='关注'?'已关注':'关注'">关注</button>
+        </div>
+      </div>
+      <a class="show-more" onclick="navigate('explore')">查看更多话题</a>
+    </div>
     <div class="footer-links">
       <a href="#">服务条款</a><a href="#">隐私政策</a><a href="#">Cookie 政策</a><a href="#">辅助功能</a><a href="#">广告信息</a><a href="#">更多</a><span>© 2026 言 Corp.</span>
     </div>
-  </aside>
+    </div><!-- end sidebar-right-inner -->
+    </aside>
 </div>
 
 <!-- FLOATING POST BUTTON -->
@@ -599,14 +722,55 @@ textarea,input{font-family:inherit;outline:none;border:none;background:transpare
   </div>
 </div>
 
+<!-- NEW MESSAGE MODAL -->
+<div class="modal-overlay" id="newMsgModal">
+  <div class="modal" style="max-width:400px">
+    <div class="modal-header">
+      <button class="modal-close" onclick="closeNewMsgModal()">
+        <svg viewBox="0 0 24 24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+      </button>
+      <div class="modal-title">新消息</div>
+      <button class="modal-btn primary" onclick="startNewMessage()">下一步</button>
+    </div>
+    <div class="modal-body">
+      <div style="margin-bottom:12px">
+        <label style="font-size:13px;color:var(--text2);font-weight:600;display:block;margin-bottom:8px">发送至</label>
+        <input type="text" id="newMsgRecipient" placeholder="输入用户名（不含@）" style="width:100%;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:12px;font-size:15px;color:var(--text)">
+      </div>
+      <div>
+        <label style="font-size:13px;color:var(--text2);font-weight:600;display:block;margin-bottom:8px">消息内容</label>
+        <textarea id="newMsgText" placeholder="输入消息..." style="width:100%;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:12px;font-size:15px;color:var(--text);min-height:100px;resize:none"></textarea>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="modal-overlay" id="likersModal">
+  <div class="modal" style="max-width:400px">
+    <div class="modal-header">
+      <button class="modal-close" onclick="closeLikersModal()">
+        <svg viewBox="0 0 24 24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+      </button>
+      <div class="modal-title">喜欢此帖子的用户</div>
+    </div>
+    <div class="modal-body" id="likersListBody" style="padding:0;max-height:400px;overflow-y:auto"></div>
+  </div>
+</div>
+
 <!-- MORE DROPDOWN -->
-<div class="dropdown" id="more-menu" style="position:fixed;left:76px;bottom:140px">
-  <div class="d-item" onclick="navigate('bookmarks')"><svg viewBox="0 0 24 24"><path d="M4 4.5C4 3.12 5.119 2 6.5 2h11C18.881 2 20 3.12 20 4.5v18.44l-8-5.71-8 5.71V4.5z"/></svg> 书签</div>
-  <div class="d-item" onclick="navigate('lists')"><svg viewBox="0 0 24 24"><path d="M3 13h2v-2H3v2zm0 4h2v-2H3v2zm0-8h2V7H3v2zm4 4h14v-2H7v2zm0 4h14v-2H7v2zM7 7v2h14V7H7z"/></svg> 列表</div>
-  <div class="d-item" onclick="navigate('topics')"><svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg> 话题</div>
+<div class="dropdown" id="more-menu" style="position:fixed;left:76px;bottom:100px;min-width:260px">
+  <div class="d-item" onclick="navigate('topics');closeAllDropdowns()"><svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg> 话题</div>
+  <div class="d-item" onclick="navigate('lists');closeAllDropdowns()"><svg viewBox="0 0 24 24"><path d="M3 13h2v-2H3v2zm0 4h2v-2H3v2zm0-8h2V7H3v2zm4 4h14v-2H7v2zm0 4h14v-2H7v2zM7 7v2h14V7H7z"/></svg> 列表</div>
   <div class="d-divider"></div>
-  <div class="d-item"><svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8z"/></svg> 赞助商内容</div>
-  <div class="d-item" onclick="navigate('settings')"><svg viewBox="0 0 24 24"><path d="M12 8.25c-.914 0-1.674.746-1.674 1.664S11.086 11.578 12 11.578s1.674-.746 1.674-1.664S12.914 8.25 12 8.25z"/></svg> 设置和隐私</div>
+  <div class="d-item" onclick="navigate('monetization');closeAllDropdowns()"><svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1.41 16.09V20h-2.67v-1.93c-1.71-.36-3.16-1.46-3.27-3.4h1.96c.1 1.05.82 1.87 2.65 1.87 1.96 0 2.4-.98 2.4-1.59 0-.83-.44-1.61-2.67-2.14-2.48-.6-4.18-1.62-4.18-3.67 0-1.72 1.39-2.84 3.11-3.21V4h2.67v1.95c1.86.45 2.79 1.86 2.85 3.39H14.3c-.05-1.11-.64-1.87-2.22-1.87-1.5 0-2.4.68-2.4 1.64 0 .84.65 1.39 2.67 1.91s4.18 1.39 4.18 3.91c-.01 1.83-1.38 2.83-3.12 3.16z"/></svg> 创作者中心</div>
+  <div class="d-item" onclick="navigate('communities');closeAllDropdowns()"><svg viewBox="0 0 24 24"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg> 社群</div>
+  <div class="d-item" onclick="navigate('monetization');closeAllDropdowns()"><svg viewBox="0 0 24 24"><path d="M12 7V3H2v18h20V7H12zM6 19H4v-2h2v2zm0-4H4v-2h2v2zm0-4H4V9h2v2zm0-4H4V5h2v2zm4 12H8v-2h2v2zm0-4H8v-2h2v2zm0-4H8V9h2v2zm0-4H8V5h2v2zm10 12h-8v-2h2v-2h-2v-2h2v-2h-2V9h8v10zm-2-8h-2v2h2v-2zm0 4h-2v2h2v-2z"/></svg> 专业版</div>
+  <div class="d-divider"></div>
+  <div class="d-item" onclick="navigate('settings');closeAllDropdowns()"><svg viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.31.06-.63.06-.94 0-.31-.02-.63-.06-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.04.31-.06.63-.06.94s.02.63.06.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg> 设置和隐私</div>
+  <div class="d-item" onclick="navigate('spaces');closeAllDropdowns()"><svg viewBox="0 0 24 24"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm0 10.99h7c-.53 4.12-3.28 7.79-7 8.94V12H5V6.3l7-3.11v8.8z"/></svg> 辅助功能</div>
+  <div class="d-item" onclick="navigate('settings');closeAllDropdowns()"><svg viewBox="0 0 24 24"><path d="M11 18h2v-2h-2v2zm1-16C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm0-14c-2.21 0-4 1.79-4 4h2c0-1.1.9-2 2-2s2 .9 2 2c0 2-3 1.75-3 5h2c0-2.25 3-2.5 3-5 0-2.21-1.79-4-4-4z"/></svg> 帮助中心</div>
+  <div class="d-item" onclick="navigate('ads');closeAllDropdowns()"><svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/></svg> 广告</div>
+  <div class="d-divider"></div>
+  <div class="d-item" onclick="closeAllDropdowns()"><svg viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg> 订阅专业版</div>
 </div>
 
 <!-- Auth page overlay -->
@@ -625,7 +789,17 @@ const state = {
   notifCount: 3,
   currentUser: null,
   modalTweet: null,
-  likers: []
+  likers: [],
+  // 分页状态
+  homePage: 0,
+  homePageSize: 8,
+  homeHasMore: true,
+  notifPage: 0,
+  notifPageSize: 10,
+  notifHasMore: true,
+  explorePage: 0,
+  explorePageSize: 15,
+  exploreHasMore: true
 };
 
 const DB = {
@@ -638,6 +812,28 @@ const DB = {
     {id:6,name:"每日财经",handle:"@daily_finance",verified:true,time:"12小时",text:"今日市场回顾：A股三大指数全线上涨，沪指涨1.2%，深成指涨1.8%，创业板涨2.3%。新能源、半导体、AI板块领涨。",avatar:"财",avatarBg:"linear-gradient(135deg,#a18cd1,#fbc2eb)",likes:721,retweets:356,replies:89,views:"5.4万",liked:false,retweeted:false,bookmarked:false},
     {id:7,name:"电影爱好者",handle:"@movie_fan2026",verified:false,time:"14小时",text:"强烈推荐这部电影！《星际穿越》重映，诺兰的宏大叙事和汉斯·季默的配乐依然震撼。每一帧都是艺术品。",avatar:"电",avatarBg:"linear-gradient(135deg,#ffecd2,#fcb69f)",likes:2341,retweets:876,replies:201,views:"19.2万",liked:false,retweeted:false,bookmarked:false},
     {id:8,name:"产品经理小李",handle:"@pm_xiaoli",verified:true,time:"16小时",text:"好的产品不是功能堆砌出来的，而是对用户需求的深刻理解。少即是多，克制是一种能力。",avatar:"李",avatarBg:"linear-gradient(135deg,#a1c4fd,#c2e9fb)",likes:1823,retweets:934,replies:156,views:"12.8万",liked:false,retweeted:false,bookmarked:false},
+    {id:9,name:"美食达人",handle:"@foodie_daily",verified:false,time:"18小时",text:"分享一家藏在巷子里的老字号砂锅粥，开了三十年了。地址就在城隍庙后街，每天限量供应，去晚了可就没有啦！",avatar:"美",avatarBg:"linear-gradient(135deg,#ff9a9e,#fecfef)",likes:1567,retweets:234,replies:89,views:"8.7万",liked:false,retweeted:false,bookmarked:false},
+    {id:10,name:"旅行家小周",handle:"@travel_zhou",verified:true,time:"20小时",text:"刚从西藏回来，洗涤心灵之旅。青藏高原的天空蓝得不像真的，牦牛比人还多。强烈建议大家有机会都去一次！",avatar:"旅",avatarBg:"linear-gradient(135deg:#a8edea,#fed6e3)",likes:4523,retweets:1234,replies:345,views:"32.1万",liked:false,retweeted:false,bookmarked:false},
+    {id:11,name:"程序员老张",handle:"@coder_laozhang",verified:false,time:"22小时",text:"写代码十年了，最大的感悟是：注释不是给机器看的，是给未来的自己看的。别偷懒，写好注释。",avatar:"程",avatarBg:"linear-gradient(135deg,#667eea,#764ba2)",likes:2341,retweets:567,replies:123,views:"15.6万",liked:false,retweeted:false,bookmarked:false},
+    {id:12,name:"游戏评测师",handle:"@game_reviewer",verified:true,time:"1天前",text:"《黑神话：悟空》DLC终于来了！新增三个章节，Boss战难度爆表，画质又有提升。STEAM直接冲！",avatar:"游",avatarBg:"linear-gradient(135deg,#667eea,#f093fb)",likes:8923,retweets:3456,replies:678,views:"67.8万",liked:false,retweeted:false,bookmarked:false},
+    {id:13,name:"健身教练阿杰",handle:"@fitness_ajie",verified:false,time:"1天前",text:"减脂不是饿肚子，是调整饮食结构。给大家分享我的每日三餐食谱，简单易做，亲测有效！",avatar:"健",avatarBg:"linear-gradient(135deg,#4facfe,#00f2fe)",likes:1234,retweets:456,replies:234,views:"9.2万",liked:false,retweeted:false,bookmarked:false},
+    {id:14,name:"音乐博主小雅",handle:"@music_xiaoya",verified:false,time:"1天前",text:"推荐一首最近单曲循环的歌《漠河舞厅》，听完让人想起那些错过的爱情和再也回不去的时光。",avatar:"音",avatarBg:"linear-gradient(135deg,#fa709a,#fee140)",likes:3456,retweets:1234,replies:456,views:"23.4万",liked:false,retweeted:false,bookmarked:false},
+    {id:15,name:"读书笔记",handle:"@book_notes",verified:false,time:"1天前",text:"《人类简史》读完了，最震撼的观点是：人类之所以能统治地球，是因为我们能够想象不存在的东西。这是认知革命的核心。",avatar:"书",avatarBg:"linear-gradient(135deg,#a18cd1,#fbc2eb)",likes:987,retweets:234,replies:78,views:"6.5万",liked:false,retweeted:false,bookmarked:false},
+    {id:16,name:"科技极客",handle:"@tech_geek",verified:true,time:"2天前",text:"苹果又发布新品了！iPhone 18 配置曝光：A20芯片 + 8K屏幕 + 固态按键。这次牙膏挤得有点多啊。",avatar:"极",avatarBg:"linear-gradient(135deg,#43e97b,#38f9d7)",likes:5678,retweets:2345,replies:567,views:"45.6万",liked:false,retweeted:false,bookmarked:false},
+    {id:17,name:"宠物博主",handle:"@pet_blog",verified:false,time:"2天前",text:"我家猫主子今天学会了开柜门！养猫的都知道，猫的智商真的是被低估了。它们只是在装傻而已 😺",avatar:"宠",avatarBg:"linear-gradient(135deg,#ffecd2,#fcb69f)",likes:7891,retweets:2345,replies:789,views:"56.7万",liked:false,retweeted:false,bookmarked:false},
+    {id:18,name:"法律顾问",handle:"@legal_advisor",verified:true,time:"2天前",text:"很多创业者容易忽视的法律风险：股权分配、知识产权保护、劳动纠纷。建议创业初期就找专业律师咨询，别等出问题再后悔。",avatar:"法",avatarBg:"linear-gradient(135deg,#a1c4fd,#c2e9fb)",likes:456,retweets:123,replies:45,views:"3.2万",liked:false,retweeted:false,bookmarked:false},
+    {id:19,name:"心理咨询师",handle:"@psychologist_ai",verified:true,time:"3天前",text:"焦虑的本质是对未来的恐惧。当你感到焦虑时，试着把注意力拉回当下。深呼吸，问自己：现在能做什么？",avatar:"心",avatarBg:"linear-gradient(135deg,#f093fb,#f5576c)",likes:2345,retweets:678,replies:234,views:"18.9万",liked:false,retweeted:false,bookmarked:false},
+    {id:20,name:"天文爱好者",handle:"@astro_fan",verified:false,time:"3天前",text:"今晚有流星雨！预计每小时可以看到120颗流星。高峰期在凌晨2点到4点，找个光污染少的地方，带上你的愿望去吧！",avatar:"天",avatarBg:"linear-gradient(135deg,#667eea,#764ba2)",likes:6789,retweets:3456,replies:890,views:"52.3万",liked:false,retweeted:false,bookmarked:false},
+    {id:21,name:"历史老师王",handle:"@history_teacher",verified:true,time:"3天前",text:"唐朝为什么能成为历史上最开放的朝代？因为李家人有胡人血统，文化包容性强。这说明什么？开放带来繁荣。",avatar:"历",avatarBg:"linear-gradient(135deg,#4facfe,#00f2fe)",likes:1234,retweets:345,replies:123,views:"8.9万",liked:false,retweeted:false,bookmarked:false},
+    {id:22,name:"时尚博主",handle:"@fashion_blog",verified:false,time:"4天前",text:"2026年流行色预测：#年度代表色「PANTONE 15-1335」Terra Rose 陶土玫瑰，温暖又高级！这件单品你入手了吗？",avatar:"时",avatarBg:"linear-gradient(135deg,#fa709a,#fee140)",likes:3456,retweets:890,replies:234,views:"21.7万",liked:false,retweeted:false,bookmarked:false},
+    {id:23,name:"户外运动",handle:"@outdoor_sports",verified:false,time:"4天前",text:"徒步穿越可可西里，终于看到了藏羚羊！这是世界上最艰苦的徒步路线之一，但也是最震撼的。高原反应真的要命，但值了。",avatar:"户",avatarBg:"linear-gradient(135deg,#43e97b,#38f9d7)",likes:4567,retweets:1234,replies:345,views:"34.5万",liked:false,retweeted:false,bookmarked:false},
+    {id:24,name:"科技评论员",handle:"@tech_critic",verified:true,time:"5天前",text:"OpenAI 发布 GPT-5，性能提升10倍。这次直接能写小说、做设计、编音乐了。留给人类的时间不多了？",avatar:"评",avatarBg:"linear-gradient(135deg,#667eea,#764ba2)",likes:8901,retweets:4567,replies:1234,views:"78.9万",liked:false,retweeted:false,bookmarked:false},
+    {id:25,name:"教育工作者",handle:"@edu_worker",verified:false,time:"5天前",text:"教育的本质是点燃火焰，不是灌满容器。现在AI时代，死记硬背已经没用了，培养创造力和批判性思维才是关键。",avatar:"教",avatarBg:"linear-gradient(135deg,#a18cd1,#fbc2eb)",likes:1678,retweets:456,replies:178,views:"11.2万",liked:false,retweeted:false,bookmarked:false},
+    {id:26,name:"养生专家",handle:"@health_expert",verified:false,time:"6天前",text:"早起第一杯水要喝温的，不要喝凉的。晚上11点前必须睡觉，这是养肝的黄金时间。健康是最大的财富。",avatar:"养",avatarBg:"linear-gradient(135deg,#ff9a9e,#fecfef)",likes:2345,retweets:567,replies:234,views:"15.8万",liked:false,retweeted:false,bookmarked:false},
+    {id:27,name:"投资顾问",handle:"@invest_advisor",verified:true,time:"6天前",text:"2026年投资建议：配置30%股票、30%债券、20%黄金、20%现金。不要把鸡蛋放在一个篮子里，分散风险才是王道。",avatar:"投",avatarBg:"linear-gradient(135deg,#4facfe,#00f2fe)",likes:3456,retweets:890,replies:345,views:"26.4万",liked:false,retweeted:false,bookmarked:false},
+    {id:28,name:"摄影技巧",handle:"@photo_tips",verified:false,time:"7天前",text:"学会这三招，手机也能拍大片：1️⃣ 利用光线 2️⃣ 三分构图 3️⃣ 后期调色。收藏起来慢慢练！",avatar:"摄",avatarBg:"linear-gradient(135deg,#fa709a,#fee140)",likes:5678,retweets:2345,replies:678,views:"42.3万",liked:false,retweeted:false,bookmarked:false},
+    {id:29,name:"程序员小明",handle:"@coder_xiaoming",verified:false,time:"7天前",text:"为什么程序员喜欢用命令行？因为GUI是给用户用的，我们是来控制电脑的，不是被电脑控制的。",avatar:"程",avatarBg:"linear-gradient(135deg,#667eea,#764ba2)",likes:3456,retweets:1234,replies:456,views:"25.1万",liked:false,retweeted:false,bookmarked:false},
+    {id:30,name:"生活小妙招",handle:"@life_hacks",verified:false,time:"1周前",text:"把过期牛奶用来浇花，花会长得特别好！还有用香蕉皮擦皮鞋，鞋子又亮又干净。这些生活小妙招你都知道吗？",avatar:"生",avatarBg:"linear-gradient(135deg:#43e97b,#38f9d7)",likes:4567,retweets:1678,replies:456,views:"35.6万",liked:false,retweeted:false,bookmarked:false},
     {id:101,name:"王坤",handle:"@wngkn5393218313",verified:false,time:"4月9日",text:"26.4、9 天气有点冷 下雨",avatar:"王",avatarBg:"linear-gradient(135deg,#667eea,#764ba2)",likes:3,retweets:0,replies:1,views:"98",liked:false,retweeted:false,bookmarked:false},
     {id:102,name:"王坤",handle:"@wngkn5393218313",verified:false,time:"3月27日",text:"又快清明节了",avatar:"王",avatarBg:"linear-gradient(135deg,#667eea,#764ba2)",likes:5,retweets:0,replies:0,views:"108",liked:false,retweeted:false,bookmarked:false}
   ],
@@ -653,20 +849,20 @@ const DB = {
     {id:9,type:"mention",name:"科技日报",handle:"@techdaily",avatar:"科",avatarBg:"linear-gradient(135deg,#f093fb,#f5576c)",text:"提及了你：@wngkn5393218313",time:"6小时前",unread:false,target:"今天 AI 领域又有新突破"}
   ],
   messages: [
-    {id:1,name:"张伟",handle:"@zhangwei",avatar:"张",avatarBg:"linear-gradient(135deg,#f093fb,#f5576c)",preview:"好的，明天见！",time:"14:32",unread:1,messages:[
-      {sent:false,text:"你好，看了你的帖子很有感触",time:"14:20"},
-      {sent:true,text:"谢谢！你是做什么工作的？",time:"14:22"},
-      {sent:false,text:"我是产品经理，也在关注 AI 领域",time:"14:25"},
-      {sent:false,text:"有空可以聊聊合作",time:"14:26"},
-      {sent:true,text:"好的，明天见！",time:"14:32"}
+    {id:1,name:"张伟",handle:"@zhangwei",avatar:"张",avatarBg:"linear-gradient(135deg,#f093fb,#f5576c)",preview:"好的，明天见！",time:"14:32",unread:1,online:true,messages:[
+      {sent:false,text:"你好，看了你的帖子很有感触",time:"今天 14:20"},
+      {sent:true,text:"谢谢！你是做什么工作的？",time:"今天 14:22"},
+      {sent:false,text:"我是产品经理，也在关注 AI 领域",time:"今天 14:25"},
+      {sent:false,text:"有空可以聊聊合作",time:"今天 14:26"},
+      {sent:true,text:"好的，明天见！",time:"今天 14:32"}
     ]},
-    {id:2,name:"李娜",handle:"@lina_tech",avatar:"李",avatarBg:"linear-gradient(135deg,#4facfe,#00f2fe)",preview:"那个开源项目有兴趣一起做吗",time:"昨天",unread:0,messages:[
+    {id:2,name:"李娜",handle:"@lina_tech",avatar:"李",avatarBg:"linear-gradient(135deg,#4facfe,#00f2fe)",preview:"那个开源项目有兴趣一起做吗",time:"昨天",unread:0,online:true,messages:[
       {sent:false,text:"嗨，王坤",time:"昨天 10:00"},
       {sent:false,text:"看到你做的「言」App 很棒",time:"昨天 10:01"},
       {sent:true,text:"谢谢夸奖！有什么建议吗？",time:"昨天 10:15"},
       {sent:false,text:"那个开源项目有兴趣一起做吗",time:"昨天 10:20"}
     ]},
-    {id:3,name:"陈明",handle:"@chenming_ai",avatar:"陈",avatarBg:"linear-gradient(135deg,#43e97b,#38f9d7)",preview:"下周技术分享会你能来吗",time:"周一",unread:2,messages:[
+    {id:3,name:"陈明",handle:"@chenming_ai",avatar:"陈",avatarBg:"linear-gradient(135deg,#43e97b,#38f9d7)",preview:"下周技术分享会你能来吗",time:"周一",unread:2,online:false,messages:[
       {sent:false,text:"王坤，下周技术分享会你能来吗",time:"周一 09:00"}
     ]}
   ],
@@ -681,7 +877,14 @@ const DB = {
     ]
   },
   bookmarks: [],
-  searchResults: []
+  searchResults: [],
+  likersList: [
+    {name:'林小雨',handle:'@linxiaoyu',avatar:'林',avatarBg:'linear-gradient(135deg,#667eea,#764ba2)',verified:true,following:true},
+    {name:'はるみ',handle:'@harumi',avatar:'は',avatarBg:'linear-gradient(135deg,#4facfe,#00f2fe)',verified:false,following:false},
+    {name:'Amelia',handle:'@amelia',avatar:'A',avatarBg:'linear-gradient(135deg,#43e97b,#38f9d7)',verified:false,following:false},
+    {name:'诗雅',handle:'@shiya',avatar:'诗',avatarBg:'linear-gradient(135deg,#f093fb,#f5576c)',verified:false,following:true},
+    {name:'无',handle:'@wu',avatar:'无',avatarBg:'linear-gradient(135deg,#fa709a,#fee140)',verified:false,following:false}
+  ]
 };
 
 // ===== UTILITIES =====
@@ -691,6 +894,7 @@ function vbSvg(){return'<svg viewBox="0 0 24 24"><path d="M4.5 3.88l4.432 4.14-1
 function rSvg(){return'<svg viewBox="0 0 24 24"><path d="M1.751 10c0-4.42 3.584-8 8.005-8h4.366c4.49 0 7.501 3.858 7.501 7.501 0 3.808-2.851 7.091-6.056 7.765 .005.099.01.197.01.297 0 1.68-1.072 2.96-2.584 3.063C11.51 21.954 11.013 22 10.5 22c-4.394 0-8.75-3.519-8.75-8.5 0-1.085.225-2.107.625-3.025-.001-.075-.014-.155-.014-.237C2.361 10 2.056 10 1.75 10z"/></svg>'}
 function cSvg(){return'<svg viewBox="0 0 24 24"><path d="M8.75 21V3h2v18h-2zM18 21V8.5h2V21h-2zM4 21l.004-10h2L6 21H4zm9.248 0v-7h2v7h-2z"/></svg>'}
 function shSvg(){return'<svg viewBox="0 0 24 24"><path d="M12 2.59l5.7 5.7-1.41 1.42L13 6.41V16h-2V6.41l-3.3 3.3-1.41-1.42L12 2.59zM21 15l-.02 3.51c0 1.38-1.12 2.49-2.5 2.49H5.5C4.11 21 3 19.88 3 18.5V15h2v3.5c0 .28.22.5.5.5h12.98c.28 0 .5-.22.5-.5L19 15h2z"/></svg>'}
+function viewsSvg(){return'<svg viewBox="0 0 24 24"><path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/></svg>'}
 
 // ===== TWEET RENDER =====
 function renderTweet(t, showReply=false){
@@ -723,8 +927,8 @@ function renderTweet(t, showReply=false){
         <button class="ab" onclick="event.stopPropagation();openReplyModal(${t.id})">${rSvg()}<span class="ac">${f(t.replies)}</span></button>
         <button class="ab rt${rtD}" onclick="event.stopPropagation();doRetweet(${t.id},this)">${vbSvg()}<span class="ac">${f(t.retweets)}</span></button>
         <button class="ab like${likedD}" onclick="event.stopPropagation();doLike(${t.id},this)">${vSvg()}<span class="ac" id="lk-${t.id}">${f(t.likes)}</span></button>
-        <button class="ab" onclick="event.stopPropagation();openShareModal(${t.id})">${cSvg()}</button>
-        <button class="ab" onclick="event.stopPropagation();bookmark(${t.id},this)"><svg viewBox="0 0 24 24" fill="${t.bookmarked ? 'var(--accent)' : 'var(--text2)'}"><path d="M4 4.5C4 3.12 5.119 2 6.5 2h11C18.881 2 20 3.12 20 4.5v18.44l-8-5.71-8 5.71V4.5z"/></svg></button>
+        <button class="ab" onclick="event.stopPropagation();openShareModal(${t.id})">${viewsSvg()}<span class="ac">${t.views}</span></button>
+        <button class="ab" onclick="event.stopPropagation();openMoreMenu(${t.id},event)"><svg viewBox="0 0 24 24" fill="var(--text2)"><path d="M4 4.5C4 3.12 5.119 2 6.5 2h11C18.881 2 20 3.12 20 4.5v18.44l-8-5.71-8 5.71V4.5z"/></svg></button>
       </div>
     </div>
   </div>`;
@@ -734,7 +938,7 @@ function renderTweet(t, showReply=false){
 function navigate(page, param){
   state.currentPage = page;
   document.getElementById('sidebar').style.display = '';
-  document.getElementById('sidebarRight').style.display = '';
+  document.getElementById('sidebarRight').style.display = 'flex';
   document.getElementById('authPage').classList.remove('active');
   document.getElementById('authPage').innerHTML = '';
   document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
@@ -757,6 +961,13 @@ function navigate(page, param){
     case 'auth': renderAuth(); break;
     case 'lists': renderLists(); break;
     case 'topics': renderTopics(); break;
+    case 'topic': renderTopicPage(param); break;
+    case 'communities': renderCommunities(); break;
+    case 'monetization': renderMonetization(); break;
+    case 'ads': renderAds(); break;
+    case 'spaces': renderSpaces(); break;
+    case 'following': renderFollowing(); break;
+    case 'followers': renderFollowers(); break;
     default: renderHome();
   }
   closeAllDropdowns();
@@ -828,7 +1039,14 @@ function renderForYouFeed(){
         </div>
       </div>
     </div>`;
-  return promoted + DB.tweets.map(t=>renderTweet(t)).join('');
+
+  // 分页加载：获取当前页的数据
+  const start = 0;
+  const end = (state.homePage + 1) * state.homePageSize;
+  const pageTweets = DB.tweets.slice(start, end);
+  state.homeHasMore = end < DB.tweets.length;
+
+  return promoted + pageTweets.map(t=>renderTweet(t)).join('') + renderLoadMoreBtn('home');
 }
 
 function renderFollowingFeed(){
@@ -839,8 +1057,80 @@ function renderFollowingFeed(){
   return followingTweets.map(t=>renderTweet(t)).join('');
 }
 
+// 加载更多按钮渲染
+function renderLoadMoreBtn(type){
+  if(type === 'home'){
+    if(!state.homeHasMore) return '<div class="load-more-container"><div style="color:var(--text2);font-size:14px;padding:16px">已加载全部内容</div></div>';
+    return `<div class="load-more-container" id="homeLoadMore">
+      <button class="load-more-btn" onclick="loadMoreHome()">
+        <span>加载更多</span>
+      </button>
+    </div>`;
+  }
+  return '';
+}
+
+// 加载更多首页内容
+function loadMoreHome(){
+  const container = document.getElementById('homeLoadMore');
+  if(container){
+    container.innerHTML = '<div class="loading-more"><div class="load-spinner"></div>加载中...</div>';
+  }
+
+  // 模拟加载延迟
+  setTimeout(()=>{
+    state.homePage++;
+
+    // 获取当前要显示的推文数量
+    const itemsPerPage = state.homePageSize;
+    const totalToShow = (state.homePage + 1) * itemsPerPage;
+    const pageTweets = DB.tweets.slice(0, totalToShow);
+    state.homeHasMore = totalToShow < DB.tweets.length;
+
+    const feed = document.getElementById('homeFeed');
+    if(feed){
+      // 创建新的推广内容
+      const promotedHTML = `
+        <div class="tweet" style="cursor:default">
+          <div style="padding:0 16px 4px 52px;font-size:13px;color:var(--text2);display:flex;align-items:center;gap:6px">
+            <svg width="14" height="14" fill="var(--text2)" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 15h-2v-2h2v2zm2.07-7.75l-.9.92C12.45 11.9 12 13.5 12 15h-2v-.5c0-1.1.45-2.1 1.17-2.83l1.24-1.26c.37-.36.59-.86.59-1.41 0-1.1-.9-2-2-2s-2 .9-2 2H8c0-2.21 1.79-4 4-4s4 1.79 4 4c0 .88-.36 1.68-.93 2.25z"/></svg>
+            <span>推广内容</span>
+          </div>
+          <div style="display:flex;gap:12px;padding:0 16px 12px">
+            <div style="width:48px;height:48px;border-radius:12px;background:linear-gradient(135deg,#1a73e8,#4285f4);display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:900;color:#fff;flex-shrink:0">IB</div>
+            <div style="flex:1;min-width:0">
+              <div style="display:flex;align-items:center;gap:6px">
+                <span style="font-weight:700;font-size:15px">Interactive Brokers</span>
+                <span style="color:var(--text2);font-size:15px">@IBKR</span>
+                <span style="color:var(--text2);font-size:15px">· 赞助</span>
+              </div>
+              <div style="margin-top:4px;font-size:15px;line-height:1.6">choose Interactive Brokers<br>Sign up for a free trial today!</div>
+              <div style="margin-top:8px;padding:12px;border:1px solid var(--border);border-radius:12px">
+                <div style="font-size:14px;color:var(--text2)">Interactive Brokers Hong Kong Ltd is regulated by the SFC. Your capital is at risk.</div>
+                <div style="margin-top:4px;font-size:13px;color:var(--text2)">来自 interactivebrokers.com.hk</div>
+              </div>
+              <div class="tactions" style="margin-top:12px">
+                <button class="ab"><svg viewBox="0 0 24 24"><path d="M1.751 10c0-1.381 1.119-2.5 2.5-2.5h15c1.381 0 2.5 1.119 2.5 2.5v13c0 1.381-1.119 2.5-2.5 2.5h-15c-1.381 0-2.5-1.119-2.5-2.5v-13z"/></svg><span class="ac">12</span></button>
+                <button class="ab"><svg viewBox="0 0 24 24"><path d="M4.5 3.88l4.432 4.14-1.364 1.46L5.5 7.55V16c0 1.1.896 2 2 2H13v2H7.5c-2.209 0-4-1.79-4-4V7.55L1.432 9.48.068 8.02 4.5 3.88z"/></svg><span class="ac">9</span></button>
+                <button class="ab"><svg viewBox="0 0 24 24"><path d="M16.697 5.5c-1.222-.06-2.679.51-3.89 2.16l-.805 1.09-.806-1.09C9.984 6.01 8.526 5.44 7.304 5.5c-1.243.07-2.349.78-2.91 1.91-.552 1.12-.633 2.78.479 4.82 1.074 1.97 3.257 4.27 7.129 6.61 3.87-2.34 6.052-4.64 7.126-6.61 1.111-2.04 1.03-3.7.477-4.82-.561-1.13-1.666-1.84-2.908-1.91z"/></svg><span class="ac">182</span></button>
+                <button class="ab"><svg viewBox="0 0 24 24"><path d="M8.75 21V3h2v18h-2zM18 21V8.5h2V21h-2zM4 21l.004-10h2L6 21H4zm9.248 0v-7h2v7h-2z"/></svg><span class="ac">408万</span></button>
+              </div>
+            </div>
+          </div>
+        </div>`;
+
+      const allTweetsHTML = pageTweets.map(t=>renderTweet(t)).join('');
+      const loadMoreHTML = renderLoadMoreBtn('home');
+      feed.innerHTML = promotedHTML + allTweetsHTML + loadMoreHTML;
+      initEmojiPicker();
+    }
+  }, 500);
+}
+
 function switchHomeTab(tab){
   state.homeTab = tab;
+  state.homePage = 0;
+  state.homeHasMore = true;
   renderHome();
 }
 function updateComposeBtn(){
@@ -850,14 +1140,62 @@ function updateComposeBtn(){
 function homePost(){
   const v = document.getElementById('homeCompose').value.trim();
   if(!v) return;
-  const t = {id:Date.now(),name:"王坤",handle:"@wngkn5393218313",verified:false,time:"刚刚",text:v,avatar:"王",avatarBg:"linear-gradient(135deg,#667eea,#764ba2)",likes:0,retweets:0,replies:0,views:"0",liked:false,retweeted:false,bookmarked:false};
+  const viewsOptions=['15','28','47','89','124','203'];
+  const t = {id:Date.now(),name:"王坤",handle:"@wngkn5393218313",verified:false,time:"刚刚",text:v,avatar:"王",avatarBg:"linear-gradient(135deg,#667eea,#764ba2)",likes:0,retweets:0,replies:0,views:viewsOptions[Math.floor(Math.random()*viewsOptions.length)],liked:false,retweeted:false,bookmarked:false};
   DB.tweets.unshift(t);
   document.getElementById('homeCompose').value = '';
   document.getElementById('homePostBtn').disabled = true;
-  const feed = document.getElementById('mainContent');
-  const div = document.createElement('div');
-  div.innerHTML = renderTweet(t);
-  feed.insertBefore(div.firstChild, feed.children[2]);
+  // 重置分页状态
+  state.homePage = 0;
+  state.homeHasMore = true;
+  renderHome();
+}
+
+// ===== SIDEBAR TREND FILTER =====
+const TREND_DATA = {
+  all: [
+    {cat:'科技 · 趋势', name:'#AI大模型', count:'12.3万 条帖子'},
+    {cat:'娱乐 · 趋势', name:'#新剧热播', count:'9.8万 条帖子'},
+    {cat:'体育 · 趋势', name:'#世界杯预选赛', count:'7.2万 条帖子'},
+    {cat:'财经 · 趋势', name:'#A股行情', count:'5.6万 条帖子'},
+    {cat:'科技 · 趋势', name:'#开源项目', count:'4.3万 条帖子'}
+  ],
+  tech: [
+    {cat:'科技 · 趋势', name:'#AI大模型', count:'12.3万 条帖子'},
+    {cat:'科技 · 趋势', name:'#开源项目', count:'4.3万 条帖子'},
+    {cat:'科技 · 趋势', name:'#编程语言', count:'3.1万 条帖子'},
+    {cat:'科技 · 趋势', name:'#云计算', count:'2.8万 条帖子'},
+    {cat:'科技 · 趋势', name:'#量子计算', count:'1.9万 条帖子'}
+  ],
+  ent: [
+    {cat:'娱乐 · 趋势', name:'#新剧热播', count:'9.8万 条帖子'},
+    {cat:'娱乐 · 趋势', name:'#演唱会', count:'6.5万 条帖子'},
+    {cat:'娱乐 · 趋势', name:'#电影上映', count:'5.2万 条帖子'},
+    {cat:'娱乐 · 趋势', name:'#综艺', count:'4.1万 条帖子'},
+    {cat:'娱乐 · 趋势', name:'#游戏', count:'3.7万 条帖子'}
+  ],
+  sport: [
+    {cat:'体育 · 趋势', name:'#世界杯预选赛', count:'7.2万 条帖子'},
+    {cat:'体育 · 趋势', name:'#NBA季后赛', count:'5.9万 条帖子'},
+    {cat:'体育 · 趋势', name:'#欧冠', count:'4.6万 条帖子'},
+    {cat:'体育 · 趋势', name:'#奥运', count:'3.8万 条帖子'},
+    {cat:'体育 · 趋势', name:'#马拉松', count:'2.3万 条帖子'}
+  ],
+  fin: [
+    {cat:'财经 · 趋势', name:'#A股行情', count:'5.6万 条帖子'},
+    {cat:'财经 · 趋势', name:'#加密货币', count:'4.4万 条帖子'},
+    {cat:'财经 · 趋势', name:'#美股收盘', count:'3.9万 条帖子'},
+    {cat:'财经 · 趋势', name:'#房产', count:'3.2万 条帖子'},
+    {cat:'财经 · 趋势', name:'#基金净值', count:'2.5万 条帖子'}
+  ]
+};
+
+function filterTrends(cat){
+  document.querySelectorAll('.trend-tab').forEach(t => t.classList.remove('active'));
+  document.querySelector('.trend-tab[data-cat="'+cat+'"]').classList.add('active');
+  const list = TREND_DATA[cat] || TREND_DATA.all;
+  const html = list.map(t => '<div class="trend-item" onclick="navigate(\'trending\')"><div style="display:flex;justify-content:space-between"><span class="tm">'+t.cat+'</span><span style="color:var(--text2)">···</span></div><div class="tn2">'+t.name+'</div><div class="tc">'+t.count+'</div></div>').join('');
+  document.getElementById('trendList').innerHTML = html;
 }
 
 // ===== EXPLORE PAGE =====
@@ -866,87 +1204,116 @@ function renderExplore(){
   const tab = state.exploreTab;
   const tabs = [
     {key:'foryou',label:'为你推荐'},
-    {key:'trending',label:'当前趋势'},
+    {key:'trending',label:'热门'},
     {key:'news',label:'新闻'},
     {key:'sports',label:'体育'},
     {key:'entertainment',label:'娱乐'}
   ];
   let trends = getTrendsByTab(tab);
+  let content = '';
+  
+  if(tab==='foryou'){
+    // 为你推荐：热门推文
+    content = DB.tweets.slice(0,6).map(t=>renderTweet(t)).join('');
+  } else if(tab==='trending'){
+    // 热门趋势列表
+    content = trends.map(t=>renderTrendItem(t)).join('');
+  } else if(tab==='news'){
+    // 新闻：带图标的卡片
+    content = `
+      <div style="padding:16px;border-bottom:1px solid var(--border);cursor:pointer" onclick="navigate('trending')">
+        <div style="font-size:13px;color:var(--text2);margin-bottom:8px">科技 · 今日要闻</div>
+        <div style="font-size:17px;font-weight:800;line-height:1.4;margin-bottom:8px">ChatGPT 发布重大更新：新增多模态交互能力</div>
+        <div style="font-size:14px;color:var(--text2);line-height:1.5">OpenAI 宣布 ChatGPT 将支持语音、图像和视频交互，用户可以更自然地与 AI 对话...</div>
+      </div>
+      <div style="padding:16px;border-bottom:1px solid var(--border);cursor:pointer" onclick="navigate('trending')">
+        <div style="font-size:13px;color:var(--text2);margin-bottom:8px">财经 · 实时</div>
+        <div style="font-size:17px;font-weight:800;line-height:1.4;margin-bottom:8px">A股三大指数集体上涨，沪指重返 3400 点</div>
+        <div style="font-size:14px;color:var(--text2);line-height:1.5">今日开盘后，A股市场表现强劲，科技股和新能源板块领涨...</div>
+      </div>
+      <div style="padding:16px;border-bottom:1px solid var(--border);cursor:pointer" onclick="navigate('trending')">
+        <div style="font-size:13px;color:var(--text2);margin-bottom:8px">国际 · 刚刚</div>
+        <div style="font-size:17px;font-weight:800;line-height:1.4;margin-bottom:8px">联合国气候峰会达成历史性协议</div>
+        <div style="font-size:14px;color:var(--text2);line-height:1.5">各国代表在峰会上承诺减少碳排放，共同应对气候变化挑战...</div>
+      </div>
+    `;
+  } else if(tab==='sports'){
+    content = `
+      <div style="padding:16px;border-bottom:1px solid var(--border);cursor:pointer" onclick="navigate('trending')">
+        <div style="font-size:13px;color:var(--text2);margin-bottom:8px">足球 · 世界杯预选赛</div>
+        <div style="font-size:17px;font-weight:800;line-height:1.4;margin-bottom:8px">中国男足 3:1 战胜对手，成功晋级世界杯！</div>
+        <div style="display:flex;align-items:center;gap:12px;font-size:14px;color:var(--text2)">
+          <span>12.3万 讨论</span><span>8.9万 关注</span>
+        </div>
+      </div>
+      <div style="padding:16px;border-bottom:1px solid var(--border);cursor:pointer" onclick="navigate('trending')">
+        <div style="font-size:13px;color:var(--text2);margin-bottom:8px">NBA · 季后赛</div>
+        <div style="font-size:17px;font-weight:800;line-height:1.4;margin-bottom:8px">湖人队横扫太阳队，晋级西部决赛</div>
+        <div style="display:flex;align-items:center;gap:12px;font-size:14px;color:var(--text2)">
+          <span>5.6万 讨论</span><span>3.2万 关注</span>
+        </div>
+      </div>
+    `;
+  } else if(tab==='entertainment'){
+    content = `
+      <div style="padding:16px;border-bottom:1px solid var(--border);cursor:pointer" onclick="navigate('trending')">
+        <div style="font-size:13px;color:var(--text2);margin-bottom:8px">电影 · 热门</div>
+        <div style="font-size:17px;font-weight:800;line-height:1.4;margin-bottom:8px">《阿凡达3》定档明年春节，全球首映礼阵容曝光</div>
+        <div style="font-size:14px;color:var(--text2);line-height:1.5">詹姆斯·卡梅隆携主演亮相发布会，透露续集将带来前所未有的视觉体验...</div>
+      </div>
+      <div style="padding:16px;border-bottom:1px solid var(--border);cursor:pointer" onclick="navigate('trending')">
+        <div style="font-size:13px;color:var(--text2);margin-bottom:8px">音乐 · 新歌</div>
+        <div style="font-size:17px;font-weight:800;line-height:1.4;margin-bottom:8px">周杰伦新专辑《最伟大的作品2》正式发布</div>
+        <div style="font-size:14px;color:var(--text2);line-height:1.5">暌违六年，周杰伦携新专辑回归，首日销量突破百万...</div>
+      </div>
+    `;
+  }
+  
   main.innerHTML = `
-    <div class="ct">
-      <div class="main-header" style="padding:0 16px;flex-direction:column;align-items:stretch;gap:0">
-        <div style="display:flex;align-items:center;gap:12px;padding:12px 0">
-          <div class="search-box" style="position:static;padding:0;flex:1">
-            <div class="sbw">
-              <svg viewBox="0 0 24 24"><path d="M10.25 3.75c-3.59 0-6.5 2.91-6.5 6.5s2.91 6.5 6.5 6.5c1.795 0 3.419-.726 4.596-1.904 1.178-1.177 1.904-2.801 1.904-4.596 0-3.59-2.91-6.5-6.5-6.5z"/></svg>
-              <input class="sin" placeholder="搜索" id="exploreSearch" onkeydown="if(event.key==='Enter')searchExplore(this.value)">
-            </div>
-          </div>
-          <button class="back-btn" style="display:flex;width:36px;height:36px" onclick="navigate('settings')" title="设置">
-            <svg viewBox="0 0 24 24"><path d="M19.43 12.98c.04-.32.07-.64.07-.98s-.03-.66-.07-.98l2.1-1.65c.19-.15.24-.42.12-.64l-2-3.46c-.12-.22-.39-.3-.61-.22l-2.49 1c-.52-.4-1.08-.73-1.69-.98l-.38-2.65A.488.488 0 0014 2h-4c-.25 0-.46.18-.5.42l-.38 2.65c-.61.25-1.17.59-1.69.98l-2.49-1c-.23-.09-.49 0-.61.22l-2 3.46c-.13.22-.07.49.12.64l2.1 1.65c-.04.32-.07.65-.07.98s.03.66.07.98l-2.1 1.65c-.19.15-.24.42-.12.64l2 3.46c.12.22.39.3.61.22l2.49-1c.52.4 1.08.73 1.69.98l.38 2.65c.04.24.25.42.5.42h4c.25 0 .46-.18.5-.42l.38-2.65c.61-.25 1.17-.59 1.69-.98l2.49 1c.23.09.49 0 .61-.22l2-3.46c.12-.22.07-.49-.12-.64l-2.1-1.65zM12 15.5c-1.93 0-3.5-1.57-3.5-3.5s1.57-3.5 3.5-3.5 3.5 1.57 3.5 3.5-1.57 3.5-3.5 3.5z"/></svg>
-          </button>
-        </div>
-        <div class="tab-row" style="border-bottom:none">
-          ${tabs.map(t=>`<div class="tab ${tab===t.key?'active':''}" onclick="switchExploreTab('${t.key}')">${t.label}</div>`).join('')}
-        </div>
+    <div class="explore-tabs">
+      <div class="explore-tabs-inner">
+        ${tabs.map(t=>`<div class="explore-tab ${tab===t.key?'active':''}" onclick="switchExploreTab('${t.key}')">${t.label}</div>`).join('')}
       </div>
     </div>
-    <div class="explore-trend-list">
-      ${trends.map(t=>renderTrendItem(t)).join('')}
-    </div>
-    <div style="padding:12px 16px;border-bottom:1px solid var(--border);font-size:20px;font-weight:800">推荐关注</div>
     <div>
-      <div class="fi" onclick="navigate('user','@zhangwei')">
-        <div class="fa" style="background:linear-gradient(135deg,#f093fb,#f5576c)">张</div>
-        <div class="fi-info"><div class="fi-name">张伟 <span style="color:var(--accent);display:inline-flex"><svg width="14" height="14" viewBox="0 0 24 24"><path fill="var(--accent)" d="M20.396 11c-.018-.646-.215-1.275-.57-1.816-.354-.54-.852-.972-1.438-1.246.223-.607.27-1.264.14-1.897-.131-.634-.437-1.218-.882-1.687-.47-.445-1.053-.75-1.687-.882-.633-.13-1.29-.083-1.897.14-.273-.587-.704-1.086-1.245-1.44S11.647 1.62 11 1.604c-.646.017-1.273.213-1.813.568s-.969.854-1.24 1.441c-.608-.223-1.267-.272-1.902-.14-.635.13-1.22.436-1.69.882-.445.47-.749 1.055-.878 1.688-.13.633-.08 1.29.144 1.896-.587.274-1.087.705-1.443 1.245-.356.54-.555 1.17-.574 1.817.02.647.218 1.276.574 1.817.356.54.856.972 1.443 1.245-.224.606-.274 1.263-.144 1.896.13.634.433 1.218.877 1.688.47.443 1.054.747 1.687.878.633.132 1.29.084 1.897-.136.274.586.705 1.084 1.246 1.439.54.354 1.17.551 1.816.569.647-.016 1.276-.213 1.817-.567s.972-.854 1.245-1.44c.604.239 1.266.296 1.903.164.636-.132 1.22-.447 1.68-.907.46-.46.776-1.044.908-1.681s.075-1.299-.165-1.903c.586-.274 1.084-.705 1.439-1.246.354-.54.551-1.17.569-1.816z"/></svg></span></div><div class="fi-handle">@zhangwei</div></div>
-        <button class="fbtn" onclick="event.stopPropagation();toggleFollow(this)">关注</button>
-      </div>
-      <div class="fi" onclick="navigate('user','@lina_tech')">
-        <div class="fa" style="background:linear-gradient(135deg,#4facfe,#00f2fe)">李</div>
-        <div class="fi-info"><div class="fi-name">李娜</div><div class="fi-handle">@lina_tech</div></div>
-        <button class="fbtn" onclick="event.stopPropagation();toggleFollow(this)">关注</button>
-      </div>
-      <div class="fi" onclick="navigate('user','@chenming_ai')">
-        <div class="fa" style="background:linear-gradient(135deg,#43e97b,#38f9d7)">陈</div>
-        <div class="fi-info"><div class="fi-name">陈明 <span style="color:var(--accent)"><svg width="14" height="14" viewBox="0 0 24 24"><path fill="var(--accent)" d="M20.396 11c-.018-.646-.215-1.275-.57-1.816-.354-.54-.852-.972-1.438-1.246.223-.607.27-1.264.14-1.897-.131-.634-.437-1.218-.882-1.687-.47-.445-1.053-.75-1.687-.882-.633-.13-1.29-.083-1.897.14-.273-.587-.704-1.086-1.245-1.44S11.647 1.62 11 1.604c-.646.017-1.273.213-1.813.568s-.969.854-1.24 1.441c-.608-.223-1.267-.272-1.902-.14-.635.13-1.22.436-1.69.882-.445.47-.749 1.055-.878 1.688-.13.633-.08 1.29.144 1.896-.587.274-1.087.705-1.443 1.245-.356.54-.555 1.17-.574 1.817.02.647.218 1.276.574 1.817.356.54.856.972 1.443 1.245-.224.606-.274 1.263-.144 1.896.13.634.433 1.218.877 1.688.47.443 1.054.747 1.687.878.633.132 1.29.084 1.897-.136.274.586.705 1.084 1.246 1.439.54.354 1.17.551 1.816.569.647-.016 1.276-.213 1.817-.567s.972-.854 1.245-1.44c.604.239 1.266.296 1.903.164.636-.132 1.22-.447 1.68-.907.46-.46.776-1.044.908-1.681s.075-1.299-.165-1.903c.586-.274 1.084-.705 1.439-1.246.354-.54.551-1.17.569-1.816z"/></svg></span></div><div class="fi-handle">@chenming_ai</div></div>
-        <button class="fbtn" onclick="event.stopPropagation();toggleFollow(this)">关注</button>
-      </div>
+      ${content}
     </div>
   `;
 }
 function getTrendsByTab(tab){
   const allTrends = [
-    {cat:'科技 · 趋势',name:'#Automation',region:'中国香港特别行政区 的趋势'},
-    {cat:'',name:'Freedom',region:'中国香港特别行政区 的趋势'},
-    {cat:'',name:'#Peatwasu',region:'中国香港特别行政区 的趋势'},
-    {cat:'',name:'Starship',region:'中国香港特别行政区 的趋势'},
-    {cat:'',name:'#InterLink',region:'中国香港特别行政区 的趋势'},
-    {cat:'',name:'ADIPSZN 26 Pass',region:'中国香港特别行政区 的趋势'},
-    {cat:'',name:'Agent',region:'中国香港特别行政区 的趋势'},
-    {cat:'',name:'native mcp',region:'中国香港特别行政区 的趋势'},
-    {cat:'',name:'Excellent',region:'中国香港特别行政区 的趋势'},
-    {cat:'',name:'Shanghai',region:'中国香港特别行政区 的趋势'},
-    {cat:'',name:'apache 2.0',region:'中国香港特别行政区 的趋势'},
-    {cat:'',name:'WELCOME TO THE AIR',region:'中国香港特别行政区 的趋势'},
-    {cat:'科技 · 趋势',name:'#AI大模型',region:'',posts:'12.3万 条帖子'},
-    {cat:'娱乐 · 趋势',name:'#新剧热播',region:'',posts:'9.8万 条帖子'},
-    {cat:'体育 · 趋势',name:'#世界杯预选赛',region:'',posts:'7.2万 条帖子'},
-    {cat:'财经 · 趋势',name:'#A股行情',region:'',posts:'5.6万 条帖子'},
-    {cat:'科技 · 趋势',name:'#开源项目',region:'',posts:'4.3万 条帖子'}
+    {cat:'科技 · 趋势',name:'#Automation',posts:'23.4万'},
+    {cat:'',name:'Freedom',region:'中国香港'},
+    {cat:'',name:'#Peatwasu',posts:'12.1万'},
+    {cat:'',name:'Starship',region:'全球'},
+    {cat:'',name:'#InterLink',posts:'8.9万'},
+    {cat:'科技 · 趋势',name:'#AI大模型',posts:'12.3万'},
+    {cat:'娱乐 · 趋势',name:'#新剧热播',posts:'9.8万'},
+    {cat:'体育 · 趋势',name:'#世界杯预选赛',posts:'7.2万'},
+    {cat:'财经 · 趋势',name:'#A股行情',posts:'5.6万'},
+    {cat:'科技 · 趋势',name:'#开源项目',posts:'4.3万'},
+    {cat:'科技 · 趋势',name:'native mcp',posts:'3.8万'},
+    {cat:'',name:'Excellent',region:'全球'},
+    {cat:'',name:'Shanghai',region:'中国'},
+    {cat:'科技 · 趋势',name:'#ChatGPT5',posts:'15.6万'},
+    {cat:'娱乐 · 趋势',name:'#演唱会',posts:'6.7万'},
+    {cat:'财经 · 趋势',name:'#比特币',posts:'4.2万'},
+    {cat:'体育 · 趋势',name:'#NBA季后赛',posts:'3.9万'},
+    {cat:'科技 · 趋势',name:'#SpaceX',posts:'2.8万'}
   ];
-  if(tab==='news') return allTrends.filter(t=>t.cat.includes('新闻')||t.name.includes('AI')||t.name.includes('apache'));
-  if(tab==='sports') return allTrends.filter(t=>t.cat.includes('体育')||t.name.includes('世界杯'));
-  if(tab==='entertainment') return allTrends.filter(t=>t.cat.includes('娱乐')||t.name.includes('剧'));
-  if(tab==='trending') return allTrends.filter(t=>t.posts);
+  if(tab==='news') return allTrends.filter(t=>t.name.includes('AI')||t.name.includes('ChatGPT')||t.name.includes('mcp'));
+  if(tab==='sports') return allTrends.filter(t=>t.name.includes('世界杯')||t.name.includes('NBA'));
+  if(tab==='entertainment') return allTrends.filter(t=>t.name.includes('演唱会')||t.name.includes('剧'));
+  if(tab==='trending') return allTrends.slice(0, 12);
   return allTrends;
 }
 function renderTrendItem(t){
-  const catLine = t.cat ? `<div class="explore-trend-cat">${t.cat}</div>` : `<div class="explore-trend-cat">${t.region}</div>`;
-  const postsLine = t.posts ? `<div class="explore-trend-cat">${t.posts}</div>` : '';
+  const topLine = t.cat ? `<div class="explore-trend-cat">${t.cat}</div>` : (t.region ? `<div class="explore-trend-cat">${t.region}</div>` : '');
+  const postsLine = t.posts ? `<div class="explore-trend-cat">${t.posts} 条帖子</div>` : '';
   return `
     <div class="explore-trend-item" onclick="navigate('trending')">
       <div class="explore-trend-info">
-        ${catLine}
+        ${topLine}
         <div class="explore-trend-name">${t.name}</div>
         ${postsLine}
       </div>
@@ -982,8 +1349,8 @@ function renderNotifications(){
     <div class="ct">
       <div class="main-header" style="justify-content:space-between">
         <div class="page-title">通知</div>
-        <button class="back-btn" style="display:flex" onclick="navigate('settings')" title="设置">
-          <svg viewBox="0 0 24 24"><path d="M19.43 12.98c.04-.32.07-.64.07-.98s-.03-.66-.07-.98l2.1-1.65c.19-.15.24-.42.12-.64l-2-3.46c-.12-.22-.39-.3-.61-.22l-2.49 1c-.52-.4-1.08-.73-1.69-.98l-.38-2.65A.488.488 0 0014 2h-4c-.25 0-.46.18-.5.42l-.38 2.65c-.61.25-1.17.59-1.69.98l-2.49-1c-.23-.09-.49 0-.61.22l-2 3.46c-.13.22-.07.49.12.64l2.1 1.65c-.04.32-.07.65-.07.98s.03.66.07.98l-2.1 1.65c-.19.15-.24.42-.12.64l2 3.46c.12.22.39.3.61.22l2.49-1c.52.4 1.08.73 1.69.98l.38 2.65c.04.24.25.42.5.42h4c.25 0 .46-.18.5-.42l.38-2.65c.61-.25 1.17-.59 1.69-.98l2.49 1c.23.09.49 0 .61-.22l2-3.46c.12-.22.07-.49-.12-.64l-2.1-1.65zM12 15.5c-1.93 0-3.5-1.57-3.5-3.5s1.57-3.5 3.5-3.5 3.5 1.57 3.5 3.5-1.57 3.5-3.5 3.5z"/></svg>
+        <button class="back-btn" style="display:flex" onclick="openNotifSettings()" title="设置">
+          <svg viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.31.06-.63.06-.94 0-.31-.02-.63-.06-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.04.31-.06.63-.06.94s.02.63.06.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58z"/></svg>
         </button>
       </div>
       <div class="tab-row" style="border-bottom:none">
@@ -995,6 +1362,11 @@ function renderNotifications(){
     ${n.length===0?`<div class="empty-state"><svg viewBox="0 0 24 24"><path d="M19.993 9.042C19.48 5.017 16.054 2 11.996 2s-7.49 3.021-7.999 7.051L2.866 18H7.1c.463 2.282 2.481 4 4.9 4s4.437-1.718 4.9-4h4.236l-1.143-8.958z"/></svg><h3>暂无通知</h3><p>当有人与你互动时，你会在这里看到通知。</p></div>`:''}
     ${n.map(notif=>renderNotifItem(notif)).join('')}
   `;
+}
+function openNotifSettings(){
+  const body = document.getElementById('moreModalBody');
+  body.innerHTML='<div class="d-item" onclick="closeMoreMenu()"><svg viewBox="0 0 24 24"><path d="M19.993 9.042C19.48 5.017 16.054 2 11.996 2s-7.49 3.021-7.999 7.051L2.866 18H7.1c.463 2.282 2.481 4 4.9 4s4.437-1.718 4.9-4h4.236l-1.143-8.958z"/></svg> 所有通知</div><div class="d-item" onclick="closeMoreMenu()"><svg viewBox="0 0 24 24"><path d="M5.651 19h12.698c-.337-1.8-1.023-3.21-1.945-4.19C15.318 13.65 13.838 13 12 13s-3.317.65-4.404 1.81c-.922.98-1.608 2.39-1.945 4.19z"/></svg> 新粉丝</div><div class="d-item" onclick="closeMoreMenu()"><svg viewBox="0 0 24 24"><path d="M16.697 5.5c-1.222-.06-2.679.51-3.89 2.16l-.805 1.09-.806-1.09C9.984 6.01 8.526 5.44 7.304 5.5c-1.243.07-2.349.78-2.91 1.91-.552 1.12-.633 2.78.479 4.82 1.074 1.97 3.257 4.27 7.129 6.61 3.87-2.34 6.052-4.64 7.126-6.61 1.111-2.04 1.03-3.7.477-4.82-.561-1.13-1.666-1.84-2.908-1.91z"/></svg> 喜欢</div><div class="d-item" onclick="closeMoreMenu()"><svg viewBox="0 0 24 24"><path d="M4.5 3.88l4.432 4.14-1.364 1.46L5.5 7.55V16c0 1.1.896 2 2 2H13v2H7.5c-2.209 0-4-1.79-4-4V7.55L1.432 9.48.068 8.02 4.5 3.88z"/></svg> 转帖</div><div class="d-item" onclick="closeMoreMenu()"><svg viewBox="0 0 24 24"><path d="M1.751 10c0-4.42 3.584-8 8.005-8h4.366c4.49 0 7.501 3.858 7.501 7.501 0 3.808-2.851 7.091-6.056 7.765 .005.099.01.197.01.297 0 1.68-1.072 2.96-2.584 3.063C11.51 21.954 11.013 22 10.5 22c-4.394 0-8.75-3.519-8.75-8.5 0-1.085.225-2.107.625-3.025-.001-.075-.014-.155-.014-.237C2.361 10 2.056 10 1.75 10z"/></svg> 回复和提及</div><div class="d-divider"></div><div class="d-item" onclick="alert(\'通知设置功能即将上线\');closeMoreMenu()"><svg viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.31.06-.63.06-.94 0-.31-.02-.63-.06-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.04.31-.06.63-.06.94s.02.63.06.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg> 通知设置</div>';
+  document.getElementById('moreModal').classList.add('active');
 }
 function renderPushNotifCard(){
   return `
@@ -1065,7 +1437,7 @@ function renderMessages(){
   main.innerHTML = `
     <div class="msg-layout" style="border-right:none">
       <div class="msg-list">
-        <div class="msg-list-header">消息 <button style="background:var(--accent);color:#fff;border:none;border-radius:50%;width:36px;height:36px;cursor:pointer;font-size:20px;font-weight:300">+</button></div>
+        <div class="msg-list-header">消息 <button style="background:var(--accent);color:#fff;border:none;border-radius:50%;width:36px;height:36px;cursor:pointer;font-size:20px;font-weight:300" onclick="openNewMsgModal()">+</button></div>
         <div class="msg-search">
           <div class="sbw">
             <svg viewBox="0 0 24 24"><path d="M10.25 3.75c-3.59 0-6.5 2.91-6.5 6.5s2.91 6.5 6.5 6.5c1.795 0 3.419-.726 4.596-1.904 1.178-1.177 1.904-2.801 1.904-4.596 0-3.59-2.91-6.5-6.5-6.5z"/></svg>
@@ -1074,7 +1446,7 @@ function renderMessages(){
         </div>
         ${DB.messages.map(m=>`
           <div class="msg-item" id="msg-${m.id}" onclick="openChat(${m.id})">
-            <div class="msg-av" style="background:${m.avatarBg}">${m.avatar}</div>
+            <div class="msg-av ${m.online?'online':''}" style="background:${m.avatarBg}">${m.avatar}</div>
             <div class="msg-info">
               <div class="msg-name">${m.name} <span class="msg-time">${m.time}</span></div>
               <div class="msg-preview">${m.unread?'<span style="color:var(--text);font-weight:700">'+m.preview+'</span>':m.preview}</div>
@@ -1108,49 +1480,158 @@ function openChat(id){
   const area = document.getElementById('chatArea');
   area.innerHTML = `
     <div class="msg-chat-header">
-      <div class="msg-av" style="background:${chat.avatarBg};width:40px;height:40px;font-size:16px">${chat.avatar}</div>
-      <div class="msg-chat-name">${chat.name} <span style="color:var(--text2);font-weight:400;font-size:13px">${chat.handle}</span></div>
+      <button class="back-btn" style="display:none" onclick="navigate('messages')">
+        <svg viewBox="0 0 24 24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>
+      </button>
+      <div class="msg-av online" style="background:${chat.avatarBg};width:40px;height:40px;font-size:16px">${chat.avatar}</div>
+      <div class="msg-chat-name">${chat.name}<span>${chat.handle}</span><span class="chat-online">在线</span></div>
     </div>
     <div class="chat-body" id="chatBody">
-      ${chat.messages.map(m=>`
-        <div style="display:flex;flex-direction:column;align-items:${m.sent?'flex-end':'flex-start'}">
-          <div class="chat-bubble ${m.sent?'sent':'received'}">${m.text}</div>
-          <div class="chat-time">${m.time}</div>
-        </div>
-      `).join('')}
+      ${renderChatMessages(chat.messages)}
     </div>
-    <div class="msg-chat-input">
-      <textarea class="chat-textarea" id="chatInput" placeholder="输入消息..." rows="1" oninput="autoGrow(this)" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendMsg()}"></textarea>
-      <button class="chat-send" id="chatSendBtn" onclick="sendMsg()">发送</button>
+    <div class="msg-chat-input" style="position:relative">
+      <div class="emoji-picker" id="emojiPicker">
+        <button class="emoji-btn" onclick="insertEmoji('😀')">😀</button>
+        <button class="emoji-btn" onclick="insertEmoji('😂')">😂</button>
+        <button class="emoji-btn" onclick="insertEmoji('😍')">😍</button>
+        <button class="emoji-btn" onclick="insertEmoji('👍')">👍</button>
+        <button class="emoji-btn" onclick="insertEmoji('🙏')">🙏</button>
+        <button class="emoji-btn" onclick="insertEmoji('🎉')">🎉</button>
+        <button class="emoji-btn" onclick="insertEmoji('🔥')">🔥</button>
+        <button class="emoji-btn" onclick="insertEmoji('💯')">💯</button>
+        <button class="emoji-btn" onclick="insertEmoji('😊')">😊</button>
+        <button class="emoji-btn" onclick="insertEmoji('🤔')">🤔</button>
+        <button class="emoji-btn" onclick="insertEmoji('👏')">👏</button>
+        <button class="emoji-btn" onclick="insertEmoji('💪')">💪</button>
+      </div>
+      <div class="chat-tools">
+        <button class="chat-tool" onclick="toggleEmojiPicker()" title="表情">
+          <svg viewBox="0 0 24 24"><path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm3.5-9c.83 0 1.5-.67 1.5-1.5S16.33 8 15.5 8 14 8.67 14 9.5s.67 1.5 1.5 1.5zm-7 0c.83 0 1.5-.67 1.5-1.5S9.33 8 8.5 8 7 8.67 7 9.5 7.67 11 8.5 11zm3.5 6.5c2.33 0 4.31-1.46 5.11-3.5H6.89c.8 2.04 2.78 3.5 5.11 3.5z"/></svg>
+        </button>
+        <button class="chat-tool" onclick="alert('图片功能开发中')" title="图片">
+          <svg viewBox="0 0 24 24"><path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"/></svg>
+        </button>
+      </div>
+      <textarea class="chat-textarea" id="chatInput" placeholder="输入消息..." rows="1" oninput="autoGrow(this);toggleSendBtn()" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendMsg()}"></textarea>
+      <button class="chat-send" id="chatSendBtn" onclick="sendMsg()" disabled>发送</button>
     </div>
   `;
   setTimeout(()=>area.querySelector('#chatBody').scrollTop=area.querySelector('#chatBody').scrollHeight,10);
+}
+function renderChatMessages(messages){
+  return messages.map((m,i)=>{
+    const showDate = i===0 || getDateKey(messages[i-1].time) !== getDateKey(m.time);
+    const dateHtml = showDate ? `<div class="chat-date">${getDateLabel(m.time)}</div>` : '';
+    const seenClass = m.seen ? ' seen' : '';
+    return `${dateHtml}
+      <div style="display:flex;flex-direction:column;align-items:${m.sent?'flex-end':'flex-start'}">
+        <div class="chat-bubble ${m.sent?'sent':'received'}">${m.text}</div>
+        <div class="chat-time${seenClass}">${m.time}${m.seen&&!m.sent?' · 已读':''}</div>
+      </div>`;
+  }).join('');
+}
+function getDateKey(timeStr){
+  if(timeStr.includes('今天')) return 'today';
+  if(timeStr.includes('昨天')) return 'yesterday';
+  if(timeStr.includes('周一')||timeStr.includes('周二')||timeStr.includes('周三')||timeStr.includes('周四')||timeStr.includes('周五')||timeStr.includes('周六')||timeStr.includes('周日')) return 'week';
+  return 'other';
+}
+function getDateLabel(timeStr){
+  if(timeStr.includes('今天')) return '今天';
+  if(timeStr.includes('昨天')) return '昨天';
+  if(timeStr.includes('周一')) return '周一';
+  if(timeStr.includes('周二')) return '周二';
+  if(timeStr.includes('周三')) return '周三';
+  if(timeStr.includes('周四')) return '周四';
+  if(timeStr.includes('周五')) return '周五';
+  if(timeStr.includes('周六')) return '周六';
+  if(timeStr.includes('周日')) return '周日';
+  return '更早';
+}
+function toggleEmojiPicker(){
+  document.getElementById('emojiPicker').classList.toggle('show');
+}
+function insertEmoji(emoji){
+  const input = document.getElementById('chatInput');
+  input.value += emoji;
+  input.focus();
+  toggleSendBtn();
+}
+function toggleSendBtn(){
+  const input = document.getElementById('chatInput');
+  const btn = document.getElementById('chatSendBtn');
+  btn.disabled = !input.value.trim();
 }
 function autoGrow(el){el.style.height='auto';el.style.height=Math.min(el.scrollHeight,120)+'px'}
 function sendMsg(){
   const input = document.getElementById('chatInput');
   const text = input.value.trim();
   if(!text||!activeChat) return;
-  activeChat.messages.push({sent:true,text,time:new Date().toLocaleTimeString('zh-CN',{hour:'2-digit',minute:'2-digit'})});
+  const now = new Date();
+  const timeStr = now.toLocaleTimeString('zh-CN',{hour:'2-digit',minute:'2-digit'});
+  activeChat.messages.push({sent:true,text,time:timeStr,seen:true});
+  activeChat.time = timeStr;
+  activeChat.preview = text;
   const body = document.getElementById('chatBody');
   const div = document.createElement('div');
-  div.style.cssText='display:flex;flex-direction:column;align-items:flex-end';
-  div.innerHTML=`<div class="chat-bubble sent">${text}</div><div class="chat-time">${activeChat.messages[activeChat.messages.length-1].time}</div>`;
-  body.appendChild(div);
-  body.scrollTop=body.scrollHeight;
-  input.value='';
-  input.style.height='42px';
-  // Auto reply after 1 second
+  div.innerHTML = renderChatMessages([activeChat.messages[activeChat.messages.length-1]]);
+  body.appendChild(div.lastElementChild);
+  body.scrollTop = body.scrollHeight;
+  input.value = '';
+  input.style.height = '42px';
+  document.getElementById('chatSendBtn').disabled = true;
+  
+  // 更新消息列表预览
+  const msgItem = document.getElementById('msg-'+activeChat.id);
+  if(msgItem){
+    msgItem.querySelector('.msg-preview').innerHTML = text;
+    msgItem.querySelector('.msg-time').textContent = timeStr;
+    const unread = msgItem.querySelector('.msg-unread');
+    if(unread) unread.remove();
+  }
+  
+  // 显示"正在输入..."
+  const typingDiv = document.createElement('div');
+  typingDiv.id = 'typingIndicator';
+  typingDiv.innerHTML = `<div class="chat-typing"><div class="chat-typing-dots"><span></span><span></span><span></span></div></div>`;
+  body.appendChild(typingDiv);
+  body.scrollTop = body.scrollHeight;
+  
+  // 自动回复
   setTimeout(()=>{
-    const replies = ['好的，收到！','明白了','我也这么觉得 👍','太棒了！','有空细聊'];
+    const typing = document.getElementById('typingIndicator');
+    if(typing) typing.remove();
+    
+    const replies = [
+      '好的，我知道了！',
+      '哈哈，太有趣了 😄',
+      '这个主意不错 👍',
+      '收到，我看看',
+      '明白了！',
+      '等我有空详细聊聊',
+      '听起来很棒！',
+      '有意思，继续说',
+      '我也有同感',
+      '感谢分享 🙏'
+    ];
     const reply = replies[Math.floor(Math.random()*replies.length)];
-    activeChat.messages.push({sent:false,text:reply,time:new Date().toLocaleTimeString('zh-CN',{hour:'2-digit',minute:'2-digit'})});
-    const div2 = document.createElement('div');
-    div2.style.cssText='display:flex;flex-direction:column;align-items:flex-start';
-    div2.innerHTML=`<div class="chat-bubble received">${reply}</div><div class="chat-time">${activeChat.messages[activeChat.messages.length-1].time}</div>`;
-    body.appendChild(div2);
-    body.scrollTop=body.scrollHeight;
-  },1200);
+    const replyTime = new Date().toLocaleTimeString('zh-CN',{hour:'2-digit',minute:'2-digit'});
+    activeChat.messages.push({sent:false,text:reply,time:replyTime,seen:false});
+    activeChat.time = replyTime;
+    activeChat.preview = reply;
+    
+    const replyDiv = document.createElement('div');
+    replyDiv.innerHTML = renderChatMessages([activeChat.messages[activeChat.messages.length-1]]);
+    body.appendChild(replyDiv.lastElementChild);
+    body.scrollTop = body.scrollHeight;
+    
+    // 更新消息列表
+    const msgItem2 = document.getElementById('msg-'+activeChat.id);
+    if(msgItem2){
+      msgItem2.querySelector('.msg-preview').innerHTML = `<span style="color:var(--text);font-weight:700">${reply}</span>`;
+      msgItem2.querySelector('.msg-time').textContent = replyTime;
+    }
+  }, 1500 + Math.random()*1500);
 }
 
 // ===== BOOKMARKS =====
@@ -1181,6 +1662,373 @@ function bookmark(id,btn){
   else DB.bookmarks = DB.bookmarks.filter(x=>x.id!==id);
   const svg = btn.querySelector('svg');
   svg.setAttribute('fill', t.bookmarked ? 'var(--accent)' : 'var(--text2)');
+}
+
+// ===== PLACEHOLDER PAGES =====
+function renderPlaceholderPage(title,subtitle,icon){
+  const main = document.getElementById('mainContent');
+  main.innerHTML = `
+    <div class="ct">
+      <div class="main-header">
+        <button class="back-btn" onclick="navigate('home')"><svg viewBox="0 0 24 24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg></button>
+        <div class="page-title">${title}</div>
+      </div>
+    </div>
+    <div class="empty-state">
+      ${icon}
+      <h3>${title}</h3>
+      <p>${subtitle}</p>
+    </div>
+  `;
+}
+// ===== COMMUNITIES =====
+const COMMUNITIES_DATA = [
+  {id:1,name:'AI爱好者社区',desc:'探讨人工智能最新发展，交流AI技术应用',members:'12.3万',avatar:'AI',avatarBg:'linear-gradient(135deg,#667eea,#764ba2)',joined:false,posts:'8.9k'},
+  {id:2,name:'前端开发者联盟',desc:'分享前端技术栈，React/Vue/Angular开发者聚集地',members:'8.7万',avatar:'前',avatarBg:'linear-gradient(135deg,#4facfe,#00f2fe)',joined:true,posts:'6.2k'},
+  {id:3,name:'创业投资圈',desc:'创业者和投资人交流平台，分享融资经验',members:'5.4万',avatar:'创',avatarBg:'linear-gradient(135deg,#f093fb,#f5576c)',joined:false,posts:'4.1k'},
+  {id:4,name:'摄影爱好者',desc:'用镜头记录生活，分享摄影技巧和作品',members:'9.2万',avatar:'摄',avatarBg:'linear-gradient(135deg,#43e97b,#38f9d7)',joined:true,posts:'7.8k'},
+  {id:5,name:'产品经理茶馆',desc:'产品经理的深夜食堂，聊聊需求和用户体验',members:'3.8万',avatar:'产',avatarBg:'linear-gradient(135deg,#fa709a,#fee140)',joined:false,posts:'2.9k'},
+  {id:6,name:'金融科技前沿',desc:'区块链、数字货币、金融科技最新资讯',members:'6.1万',avatar:'金',avatarBg:'linear-gradient(135deg,#a18cd1,#fbc2eb)',joined:false,posts:'3.5k'},
+  {id:7,name:'设计师工坊',desc:'UI/UX设计师交流社区，分享设计灵感和工具',members:'7.5万',avatar:'设',avatarBg:'linear-gradient(135deg,#ffecd2,#fcb69f)',joined:false,posts:'5.3k'},
+  {id:8,name:'程序员之家',desc:'程序员的避风港，代码之外的温暖社区',members:'15.6万',avatar:'程',avatarBg:'linear-gradient(135deg,#a1c4fd,#c2e9fb)',joined:true,posts:'12.1k'}
+];
+function renderCommunities(){
+  const main = document.getElementById('mainContent');
+  main.innerHTML = `
+    <div class="ct">
+      <div class="main-header">
+        <button class="back-btn" onclick="navigate('home')"><svg viewBox="0 0 24 24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg></button>
+        <div class="page-title">社群</div>
+      </div>
+    </div>
+    <div class="tab-row" style="border-bottom:none;padding:0 16px">
+      <div class="tab active">推荐</div>
+      <div class="tab">我的社群</div>
+    </div>
+    ${COMMUNITIES_DATA.map(c=>`
+      <div class="tweet" style="cursor:pointer" onclick="openCommunityDetail(${c.id})">
+        <div class="ta" style="background:${c.avatarBg}" onclick="event.stopPropagation()">${c.avatar}</div>
+        <div class="tbdy">
+          <div class="th">
+            <span class="tn">${c.name}</span>
+            <span class="thandle">· ${c.members} 成员</span>
+          </div>
+          <div class="ttxt" style="font-size:14px;color:var(--text2)">${c.desc}</div>
+          <div style="display:flex;align-items:center;gap:12px;margin-top:8px">
+            <span style="font-size:13px;color:var(--text2)">${c.posts} 帖子</span>
+            <button class="fbtn ${c.joined?'following':''}" onclick="event.stopPropagation();toggleCommunityJoin(${c.id},this)">${c.joined?'已加入':'加入'</button>
+          </div>
+        </div>
+      </div>
+    `).join('')}
+  `;
+}
+function toggleCommunityJoin(id,btn){
+  const c = COMMUNITIES_DATA.find(x=>x.id===id);
+  if(c){c.joined=!c.joined;btn.textContent=c.joined?'已加入':'加入';btn.classList.toggle('following',c.joined);}
+}
+function openCommunityDetail(id){
+  const c = COMMUNITIES_DATA.find(x=>x.id===id);
+  if(!c) return;
+  const main = document.getElementById('mainContent');
+  main.innerHTML = `
+    <div class="ct">
+      <div class="main-header">
+        <button class="back-btn" onclick="navigate('communities')"><svg viewBox="0 0 24 24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg></button>
+        <div class="page-title">${c.name}</div>
+      </div>
+    </div>
+    <div style="padding:16px;border-bottom:1px solid var(--border)">
+      <div class="av" style="width:64px;height:64px;font-size:28px;margin-bottom:12px">${c.avatar}</div>
+      <div style="font-size:18px;font-weight:800">${c.name}</div>
+      <div style="font-size:14px;color:var(--text2);margin-top:4px">${c.desc}</div>
+      <div style="display:flex;gap:16px;margin-top:12px;font-size:14px;color:var(--text2)">
+        <span><strong style="color:var(--text)">${c.members}</strong> 成员</span>
+        <span><strong style="color:var(--text)">${c.posts}</strong> 帖子</span>
+      </div>
+      <button class="fbtn ${c.joined?'following':''}" style="margin-top:12px" onclick="toggleCommunityJoin(${c.id},this)">${c.joined?'已加入':'加入'}</button>
+    </div>
+    <div style="padding:12px 16px;font-size:15px;color:var(--text2)">最新帖子</div>
+    ${DB.tweets.slice(0,3).map(t=>renderTweet(t)).join('')}
+  `;
+}
+// ===== MONETIZATION =====
+const MONETIZATION_DATA = [
+  {id:1,title:'专业版订阅',desc:'解锁高级功能',price:'¥68/月',features:['蓝色认证标识','长帖子支持','高级数据分析','自定义导航','撤销发帖','专注模式']},
+  {id:2,title:'创作者订阅',desc:'通过内容获利',price:'免费',features:['Super Follows','Super Likes','Super Retweets','Tips','订阅内容']},
+  {id:3,title:'广告管理',desc:'推广你的业务',price:'¥100/天起',features:['精准投放','数据分析','多种广告形式','转化追踪']}
+];
+function renderMonetization(){
+  const main = document.getElementById('mainContent');
+  main.innerHTML = `
+    <div class="ct">
+      <div class="main-header">
+        <button class="back-btn" onclick="navigate('home')"><svg viewBox="0 0 24 24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg></button>
+        <div class="page-title">创作者中心</div>
+      </div>
+    </div>
+    <div style="padding:20px 16px">
+      <div style="text-align:center;margin-bottom:24px">
+        <div style="font-size:32px;margin-bottom:8px">💰</div>
+        <div style="font-size:20px;font-weight:800">通过你的内容获利</div>
+        <div style="font-size:14px;color:var(--text2);margin-top:4px">将你的粉丝转化为收入</div>
+      </div>
+      ${MONETIZATION_DATA.map(m=>`
+        <div style="background:var(--bg2);border-radius:16px;padding:20px;margin-bottom:16px;border:1px solid var(--border)">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+            <div>
+              <div style="font-size:16px;font-weight:700">${m.title}</div>
+              <div style="font-size:13px;color:var(--text2)">${m.desc}</div>
+            </div>
+            <div style="font-size:18px;font-weight:700;color:var(--accent)">${m.price}</div>
+          </div>
+          <div style="display:flex;flex-wrap:wrap;gap:8px">
+            ${m.features.map(f=>`<span style="background:var(--bg);padding:4px 10px;border-radius:12px;font-size:12px;color:var(--text2)">✓ ${f}</span>`).join('')}
+          </div>
+          <button class="fbtn" style="margin-top:16px;width:100%" onclick="alert('功能即将上线')">${m.price==='免费'?'立即开通':'立即订阅'}</button>
+        </div>
+      `).join('')}
+      <div style="background:linear-gradient(135deg,rgba(102,126,234,.2),rgba(118,75,162,.2));border-radius:16px;padding:24px;text-align:center;border:1px solid var(--border)">
+        <div style="font-size:18px;font-weight:800">创作者收益概览</div>
+        <div style="display:flex;justify-content:space-around;margin-top:20px">
+          <div><div style="font-size:24px;font-weight:800;color:var(--accent)">¥0</div><div style="font-size:12px;color:var(--text2)">本月收益</div></div>
+          <div><div style="font-size:24px;font-weight:800">128</div><div style="font-size:12px;color:var(--text2)">新粉丝</div></div>
+          <div><div style="font-size:24px;font-weight:800">2.3k</div><div style="font-size:12px;color:var(--text2)">帖子浏览</div></div>
+        </div>
+      </div>
+    </div>
+  `;
+}
+// ===== ADS =====
+const ADS_DATA = [
+  {id:1,title:'言App推广',status:'active',budget:'¥500/天',impressions:'12.3万',clicks:2341,ctr:'1.9%',startDate:'2026-05-01',endDate:'2026-06-01'},
+  {id:2,title:'新品发布预告',status:'paused',budget:'¥300/天',impressions:'8.7万',clicks:1523,ctr:'1.8%',startDate:'2026-05-10',endDate:'2026-05-20'},
+  {id:3,title:'618大促活动',status:'active',budget:'¥1000/天',impressions:'45.2万',clicks:8934,ctr:'2.0%',startDate:'2026-05-15',endDate:'2026-06-18'}
+];
+function renderAds(){
+  const main = document.getElementById('mainContent');
+  main.innerHTML = `
+    <div class="ct">
+      <div class="main-header">
+        <button class="back-btn" onclick="navigate('home')"><svg viewBox="0 0 24 24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg></button>
+        <div class="page-title">广告中心</div>
+        <button class="post-btn" onclick="openNewAdModal()">创建广告</button>
+      </div>
+    </div>
+    <div style="padding:16px">
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:20px">
+        <div style="background:var(--bg2);border-radius:12px;padding:16px;text-align:center;border:1px solid var(--border)">
+          <div style="font-size:24px;font-weight:800;color:var(--accent)">¥1,800</div>
+          <div style="font-size:12px;color:var(--text2);margin-top:4px">总花费</div>
+        </div>
+        <div style="background:var(--bg2);border-radius:12px;padding:16px;text-align:center;border:1px solid var(--border)">
+          <div style="font-size:24px;font-weight:800">66.2万</div>
+          <div style="font-size:12px;color:var(--text2);margin-top:4px">总曝光</div>
+        </div>
+        <div style="background:var(--bg2);border-radius:12px;padding:16px;text-align:center;border:1px solid var(--border)">
+          <div style="font-size:24px;font-weight:800">1.93%</div>
+          <div style="font-size:12px;color:var(--text2);margin-top:4px">平均点击率</div>
+        </div>
+      </div>
+      <div style="font-size:15px;font-weight:700;margin-bottom:12px">广告活动</div>
+      ${ADS_DATA.map(a=>`
+        <div style="background:var(--bg2);border-radius:12px;padding:16px;margin-bottom:12px;border:1px solid var(--border)">
+          <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:12px">
+            <div>
+              <div style="display:flex;align-items:center;gap:8px">
+                <span style="font-weight:700">${a.title}</span>
+                <span style="font-size:11px;padding:2px 8px;border-radius:10px;background:${a.status==='active'?'rgba(34,197,94,.2)':'rgba(234,179,8,.2)'};color:${a.status==='active'?'#22c55e':'#eab308'}">${a.status==='active'?'投放中':'已暂停'}</span>
+              </div>
+              <div style="font-size:12px;color:var(--text2);margin-top:4px">${a.startDate} - ${a.endDate}</div>
+            </div>
+            <div style="display:flex;gap:8px">
+              <button class="fbtn" style="padding:6px 12px;font-size:12px" onclick="toggleAdStatus(${a.id})">${a.status==='active'?'暂停':'启用'}</button>
+              <button class="fbtn following" style="padding:6px 12px;font-size:12px" onclick="editAd(${a.id})">编辑</button>
+            </div>
+          </div>
+          <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;font-size:12px">
+            <div><div style="color:var(--text2)">预算</div><div style="font-weight:600">${a.budget}</div></div>
+            <div><div style="color:var(--text2)">曝光</div><div style="font-weight:600">${a.impressions}</div></div>
+            <div><div style="color:var(--text2)">点击</div><div style="font-weight:600">${a.clicks}</div></div>
+            <div><div style="color:var(--text2)">点击率</div><div style="font-weight:600">${a.ctr}</div></div>
+          </div>
+        </div>
+      `).join('')}
+    </div>
+  `;
+}
+function toggleAdStatus(id){const a=ADS_DATA.find(x=>x.id===id);if(a)a.status=a.status==='active'?'paused':'active';renderAds();}
+function editAd(id){alert('广告编辑功能即将上线')}
+function openNewAdModal(){
+  const body=document.getElementById('moreModalBody');
+  body.innerHTML=`
+    <div style="padding:16px">
+      <div style="font-size:18px;font-weight:700;margin-bottom:16px">创建新广告</div>
+      <div style="margin-bottom:12px"><label style="font-size:13px;color:var(--text2)">广告名称</label><input type="text" placeholder="输入广告名称" style="width:100%;padding:10px;background:var(--bg);border:1px solid var(--border);border-radius:8px;color:var(--text);margin-top:4px"></div>
+      <div style="margin-bottom:12px"><label style="font-size:13px;color:var(--text2)">每日预算</label><input type="text" placeholder="¥100" style="width:100%;padding:10px;background:var(--bg);border:1px solid var(--border);border-radius:8px;color:var(--text);margin-top:4px"></div>
+      <div style="margin-bottom:12px"><label style="font-size:13px;color:var(--text2)">投放日期</label><input type="date" style="width:100%;padding:10px;background:var(--bg);border:1px solid var(--border);border-radius:8px;color:var(--text);margin-top:4px"></div>
+      <button class="fbtn" style="width:100%;margin-top:16px" onclick="alert('广告创建成功！');closeMoreMenu()">创建广告</button>
+    </div>
+  `;
+  document.getElementById('moreModal').classList.add('active');
+}
+// ===== SPACES =====
+const SPACES_DATA = [
+  {id:1,title:'AI大模型发展趋势讨论',host:'林小雨',listeners:234,live:true,duration:'45:23',speakers:['林小雨','科技日报','程序员小张']},
+  {id:2,title:'前端技术栈选择指南',host:'前端开发者社区',listeners:156,live:true,duration:'12:45',speakers:['前端开发者社区','Vue开发者','React爱好者']},
+  {id:3,title:'创业融资经验分享',host:'创业老王',listeners:89,live:false,duration:'01:23:45',speakers:['创业老王','投资人老李','连续创业者']},
+  {id:4,title:'摄影师分享交流会',host:'摄影师阿明',listeners:67,live:false,duration:'34:12',speakers:['摄影师阿明','摄影新手','设计爱好者']}
+];
+function renderSpaces(){
+  const main = document.getElementById('mainContent');
+  main.innerHTML = `
+    <div class="ct">
+      <div class="main-header">
+        <button class="back-btn" onclick="navigate('home')"><svg viewBox="0 0 24 24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg></button>
+        <div class="page-title">空间</div>
+        <button class="post-btn" onclick="openCreateSpaceModal()">创建空间</button>
+      </div>
+    </div>
+    <div class="tab-row" style="border-bottom:none;padding:0 16px">
+      <div class="tab active">正在直播</div>
+      <div class="tab">即将开始</div>
+      <div class="tab">我的空间</div>
+    </div>
+    <div style="padding:16px">
+      <div style="font-size:15px;font-weight:700;margin-bottom:12px">🎙️ 正在直播</div>
+      ${SPACES_DATA.filter(s=>s.live).map(s=>`
+        <div style="background:var(--bg2);border-radius:16px;padding:16px;margin-bottom:12px;border:1px solid var(--border);cursor:pointer" onclick="openSpace(${s.id})">
+          <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:12px">
+            <div>
+              <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
+                <span style="width:8px;height:8px;background:#ef4444;border-radius:50%;animation:pulse 1.5s infinite"></span>
+                <span style="font-size:12px;color:#ef4444;font-weight:600">直播中</span>
+              </div>
+              <div style="font-weight:700">${s.title}</div>
+            </div>
+            <div style="text-align:right">
+              <div style="font-size:18px;font-weight:700">👥 ${s.listeners}</div>
+              <div style="font-size:12px;color:var(--text2)">收听</div>
+            </div>
+          </div>
+          <div style="font-size:13px;color:var(--text2);margin-bottom:12px">主持人：${s.host}</div>
+          <div style="display:flex;gap:4px">
+            ${s.speakers.map((sp,i)=>`<span style="background:var(--bg);padding:4px 8px;border-radius:12px;font-size:11px">${sp}</span>`).join('')}
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-top:12px;padding-top:12px;border-top:1px solid var(--border)">
+            <span style="font-size:12px;color:var(--text2)">⏱️ ${s.duration}</span>
+            <button class="fbtn" onclick="event.stopPropagation();openSpace(${s.id})">立即收听</button>
+          </div>
+        </div>
+      `).join('')}
+      <div style="font-size:15px;font-weight:700;margin:20px 0 12px">📅 即将开始</div>
+      ${SPACES_DATA.filter(s=>!s.live).map(s=>`
+        <div style="background:var(--bg2);border-radius:16px;padding:16px;margin-bottom:12px;border:1px solid var(--border)">
+          <div style="font-weight:700;margin-bottom:8px">${s.title}</div>
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <div style="font-size:13px;color:var(--text2)">主持人：${s.host} · 👥 ${s.listeners}人感兴趣</div>
+            <button class="fbtn" onclick="alert('已预约提醒')">预约</button>
+          </div>
+        </div>
+      `).join('')}
+    </div>
+  `;
+}
+function openSpace(id){
+  const s=SPACES_DATA.find(x=>x.id===id);
+  if(!s)return;
+  const main=document.getElementById('mainContent');
+  main.innerHTML=`
+    <div class="ct">
+      <div class="main-header">
+        <button class="back-btn" onclick="navigate('spaces')"><svg viewBox="0 0 24 24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg></button>
+        <div class="page-title">空间</div>
+      </div>
+    </div>
+    <div style="padding:24px;text-align:center">
+      <div style="width:80px;height:80px;background:var(--accent);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 16px;font-size:36px">🎙️</div>
+      <div style="font-size:18px;font-weight:800">${s.title}</div>
+      <div style="font-size:14px;color:var(--text2);margin-top:8px">主持人：${s.host}</div>
+      <div style="display:flex;justify-content:center;gap:24px;margin:20px 0;font-size:14px">
+        <div><span style="font-weight:800">${s.duration}</span><br><span style="color:var(--text2)">时长</span></div>
+        <div><span style="font-weight:800">${s.listeners}</span><br><span style="color:var(--text2)">收听</span></div>
+      </div>
+      <div style="margin:16px 0">
+        ${s.speakers.map(sp=>`<div style="display:inline-block;text-align:center;margin:8px"><div class="av" style="width:48px;height:48px;font-size:18px">${sp[0]}</div><div style="font-size:11px;margin-top:4px">${sp}</div></div>`).join('')}
+      </div>
+      <button class="fbtn" style="width:200px;margin-top:16px" onclick="alert('已加入空间')">加入收听</button>
+    </div>
+  `;
+}
+function openCreateSpaceModal(){
+  const body=document.getElementById('moreModalBody');
+  body.innerHTML=`
+    <div style="padding:16px">
+      <div style="font-size:18px;font-weight:700;margin-bottom:16px">创建空间</div>
+      <div style="margin-bottom:12px"><label style="font-size:13px;color:var(--text2)">空间标题</label><input type="text" placeholder="给你的空间起个名字" style="width:100%;padding:10px;background:var(--bg);border:1px solid var(--border);border-radius:8px;color:var(--text);margin-top:4px"></div>
+      <div style="margin-bottom:12px"><label style="font-size:13px;color:var(--text2)">话题标签</label><input type="text" placeholder="#话题" style="width:100%;padding:10px;background:var(--bg);border:1px solid var(--border);border-radius:8px;color:var(--text);margin-top:4px"></div>
+      <button class="fbtn" style="width:100%;margin-top:16px" onclick="alert('空间创建成功！');closeMoreMenu()">开始直播</button>
+    </div>
+  `;
+  document.getElementById('moreModal').classList.add('active');
+}
+
+// ===== USER DROPDOWN =====
+function toggleUserDropdown(event){
+  event.stopPropagation();
+  const dropdown = document.getElementById('user-dropdown');
+  if(dropdown.classList.contains('active')){
+    dropdown.classList.remove('active');
+    return;
+  }
+  closeAllDropdowns();
+  dropdown.innerHTML = `
+    <div class="user-menu-header">
+      <div class="av" style="width:40px;height:40px;font-size:16px">王</div>
+      <div class="user-menu-header-info">
+        <div class="user-menu-header-name">王坤</div>
+        <div class="user-menu-header-handle">@wngkn5393218313</div>
+      </div>
+    </div>
+    <div class="user-menu-switch" onclick="toggleAccount()">
+      切换账号
+    </div>
+    <div class="user-menu-divider"></div>
+    <div class="user-menu-item" onclick="navigate('profile');closeAllDropdowns()">
+      <svg viewBox="0 0 24 24"><path d="M5.651 19h12.698c-.337-1.8-1.023-3.21-1.945-4.19C15.318 13.65 13.838 13 12 13s-3.317.65-4.404 1.81c-.922.98-1.608 2.39-1.945 4.19z"/></svg>
+      个人资料
+    </div>
+    <div class="user-menu-item" onclick="navigate('monetization');closeAllDropdowns()">
+      <svg viewBox="0 0 24 24"><path d="M12 7V3H2v18h20V7H12zM6 19H4v-2h2v2zm0-4H4v-2h2v2zm0-4H4V9h2v2zm0-4H4V5h2v2zm4 12H8v-2h2v2zm0-4H8v-2h2v2zm0-4H8V9h2v2zm0-4H8V5h2v2zm10 12h-8v-2h2v-2h-2v-2h2v-2h-2V9h8v10zm-2-8h-2v2h2v-2zm0 4h-2v2h2v-2z"/></svg>
+      专业版
+    </div>
+    <div class="user-menu-item" onclick="navigate('lists');closeAllDropdowns()">
+      <svg viewBox="0 0 24 24"><path d="M3 13h2v-2H3v2zm0 4h2v-2H3v2zm0-8h2V7H3v2zm4 4h14v-2H7v2zm0 4h14v-2H7v2zM7 7v2h14V7H7z"/></svg>
+      列表
+    </div>
+    <div class="user-menu-item" onclick="navigate('bookmarks');closeAllDropdowns()">
+      <svg viewBox="0 0 24 24"><path d="M17 3H7c-1.1 0-1.99.9-1.99 2L5 21l7-3 7 3V5c0-1.1-.9-2-2-2z"/></svg>
+      书签
+    </div>
+    <div class="user-menu-item" onclick="navigate('settings');closeAllDropdowns()">
+      <svg viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.31.06-.63.06-.94 0-.31-.02-.63-.06-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.04.31-.06.63-.06.94s.02.63.06.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg>
+      设置和隐私
+    </div>
+    <div class="user-menu-item" onclick="navigate('settings');closeAllDropdowns()">
+      <svg viewBox="0 0 24 24"><path d="M11 18h2v-2h-2v2zm1-16C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm0-14c-2.21 0-4 1.79-4 4h2c0-1.1.9-2 2-2s2 .9 2 2c0 2-3 1.75-3 5h2c0-2.25 3-2.5 3-5 0-2.21-1.79-4-4-4z"/></svg>
+      帮助中心
+    </div>
+    <div class="user-menu-divider"></div>
+    <div class="user-menu-item" onclick="closeAllDropdowns()">
+      <svg viewBox="0 0 24 24"><path d="M17 7l-1.41 1.41L18.17 11H8v2h10.17l-2.58 2.58L17 17l5-5zM4 5h8V3H4c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h8v-2H4V5z"/></svg>
+      退出登录
+    </div>
+  `;
+  dropdown.classList.add('active');
+}
+function toggleAccount(){
+  closeAllDropdowns();
+  navigate('auth');
 }
 
 // ===== PROFILE =====
@@ -1246,6 +2094,7 @@ function renderProfile(){
       <div class="pi-stats">
         <span class="ps" onclick="navigate('following')"><span>${f(u.following)}</span> 正在关注</span>
         <span class="ps" onclick="navigate('followers')"><span>${f(u.followers)}</span> 关注者</span>
+        <span class="ps" onclick="openLikersModal()"><span>${f(u.liked)}</span> 获赞</span>
       </div>
       <div class="profile-tabs">
         ${tabs.map(t=>`<div class="profile-tab ${tab===t.key?'active':''}" onclick="switchProfileTab('${t.key}')">${t.label}</div>`).join('')}
@@ -1304,7 +2153,13 @@ function renderUserProfile(handle){
       </div>
     </div>
     <div class="profile-info">
-      <div style="display:flex;justify-content:flex-end;padding-bottom:8px">
+      <div style="display:flex;justify-content:flex-end;gap:8px;padding-bottom:8px">
+        <button class="back-btn" style="display:flex;width:36px;height:36px" onclick="navigate('search')" title="搜索">
+          <svg viewBox="0 0 24 24"><path d="M10.25 3.75c-3.59 0-6.5 2.91-6.5 6.5s2.91 6.5 6.5 6.5c1.795 0 3.419-.726 4.596-1.904 1.178-1.177 1.904-2.801 1.904-4.596 0-3.59-2.91-6.5-6.5-6.5z"/></svg>
+        </button>
+        <button class="fbtn" id="msgBtn-${handle}" onclick="sendMsgToUser('${handle}')" style="border-radius:9999px;padding:0 16px;min-width:80px">
+          <svg width="18" height="18" viewBox="0 0 24 24" style="vertical-align:middle"><path d="M1.998 5.5c0-1.381 1.119-2.5 2.5-2.5h15c1.381 0 2.5 1.119 2.5 2.5v13c0 1.381-1.119 2.5-2.5 2.5h-15c-1.381 0-2.5-1.119-2.5-2.5v-13z"/></svg>
+        </button>
         <button class="fbtn" id="followBtn-${handle}" onclick="toggleUserFollow('${handle}',this)">关注</button>
       </div>
       <div class="pi-name">${u.name} ${u.verified?`<span style="color:var(--accent);display:inline-flex;vertical-align:middle"><svg width="18" height="18" viewBox="0 0 24 24"><path fill="var(--accent)" d="M20.396 11c-.018-.646-.215-1.275-.57-1.816-.354-.54-.852-.972-1.438-1.246.223-.607.27-1.264.14-1.897-.131-.634-.437-1.218-.882-1.687-.47-.445-1.053-.75-1.687-.882-.633-.13-1.29-.083-1.897.14-.273-.587-.704-1.086-1.245-1.44S11.647 1.62 11 1.604c-.646.017-1.273.213-1.813.568s-.969.854-1.24 1.441c-.608-.223-1.267-.272-1.902-.14-.635.13-1.22.436-1.69.882-.445.47-.749 1.055-.878 1.688-.13.633-.08 1.29.144 1.896-.587.274-1.087.705-1.443 1.245-.356.54-.555 1.17-.574 1.817.02.647.218 1.276.574 1.817.356.54.856.972 1.443 1.245-.224.606-.274 1.263-.144 1.896.13.634.433 1.218.877 1.688.47.443 1.054.747 1.687.878.633.132 1.29.084 1.897-.136.274.586.705 1.084 1.246 1.439.54.354 1.17.551 1.816.569.647-.016 1.276-.213 1.817-.567s.972-.854 1.245-1.44c.604.239 1.266.296 1.903.164.636-.132 1.22-.447 1.68-.907.46-.46.776-1.044.908-1.681s.075-1.299-.165-1.903c.586-.274 1.084-.705 1.439-1.246.354-.54.551-1.17.569-1.816z"/></svg></span>`:''}</div>
@@ -1328,6 +2183,17 @@ function toggleUserFollow(handle,btn){
   const text = btn.textContent.trim();
   if(text==='关注'){btn.textContent='正在关注';btn.classList.add('following');btn.classList.remove('fbtn');btn.style.cssText='background:transparent;color:var(--text);border:1px solid var(--border);border-radius:9999px;padding:7px 18px;font-size:14px;font-weight:700'}
   else{btn.textContent='关注';btn.classList.remove('following');btn.style.cssText=''}
+}
+function sendMsgToUser(handle){
+  const cleanHandle = handle.replace('@','');
+  const existingMsg = DB.messages.find(m=>m.handle==='@'+cleanHandle);
+  if(existingMsg){
+    navigate('messages');
+    setTimeout(()=>openChat(existingMsg.id),100);
+  } else {
+    openNewMsgModal();
+    document.getElementById('newMsgRecipient').value = cleanHandle;
+  }
 }
 
 // ===== POST DETAIL =====
@@ -1504,6 +2370,7 @@ function renderSearch(q=''){
     ${q&&results.length===0?'<div class="empty-state"><h3>未找到结果</h3><p>试试其他关键词</p></div>':
       (q?results.map(t=>renderTweet(t)).join(''):
       `<div class="empty-state"><h3>搜索「言」</h3><p>输入关键词搜索帖子、用户或话题</p></div>
+      ${state.searchHistory&&state.searchHistory.length>0?`<div style="padding:12px 16px"><div style="display:flex;justify-content:space-between;align-items:center;padding:0 0 12px"><div style="font-size:15px;font-weight:700">搜索历史</div><button onclick="state.searchHistory=[];renderSearch()" style="background:none;border:none;color:var(--accent);cursor:pointer;font-size:13px">清除</button></div>${state.searchHistory.map(k=>`<div style="display:flex;align-items:center;gap:12px;padding:8px 0;border-bottom:1px solid var(--border)"><svg viewBox="0 0 24 24" width="16" height="16" fill="var(--text2)"><path d="M13.5 5.5c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zM9.8 8.9L7 23h2.1l1.8-8 2.1 2v6h2v-7.5l-2.1-2 .6-3C14.8 12 16.8 13 19 13v-2c-1.9 0-3.5-1-4.3-2.4l-1-1.6c-.4-.6-1-1-1.7-1-.3 0-.5.1-.8.1L6 8.3V13h2V9.6l1.8-.7"/></svg><span style="flex:1;cursor:pointer" onclick="document.getElementById('searchInput').value='${k}';navigate('search','${k}')">${k}</span><button onclick="event.stopPropagation();state.searchHistory=state.searchHistory.filter(h=>h!=='${k}');renderSearch()" style="background:none;border:none;color:var(--text2);cursor:pointer">✕</button></div>`).join('')}</div>`:''}
       <div style="padding:12px 16px"><div class="wt" style="padding:0 0 12px">推荐搜索</div>
         <div style="display:flex;flex-wrap:wrap;gap:8px">
           ${['AI大模型','前端开发','Vue 4.0','创业','科技新闻'].map(k=>`<div style="background:var(--bg2);padding:8px 16px;border-radius:20px;font-size:14px;cursor:pointer" onclick="document.getElementById('searchInput').value='${k}';navigate('search','${k}')">${k}</div>`).join('')}
@@ -1512,7 +2379,7 @@ function renderSearch(q=''){
     )}
   `;
 }
-function doSearch(q){if(q.length>1)navigate('search',q)}
+function doSearch(q){if(q.length>1){if(!state.searchHistory)state.searchHistory=[];state.searchHistory=state.searchHistory.filter(h=>h!==q);state.searchHistory.unshift(q);state.searchHistory=state.searchHistory.slice(0,10);navigate('search',q);}}
 
 // ===== TRENDING =====
 function renderTrending(){
@@ -1542,15 +2409,320 @@ function renderTrending(){
 }
 
 // ===== LISTS =====
+const LISTS_DATA = [
+  {id:1,name:'前端开发者',members:1234,description:'分享前端技术和最佳实践',following:false},
+  {id:2,name:'AI爱好者',members:5678,description:'人工智能相关讨论',following:true},
+  {id:3,name:'创业者联盟',members:901,description:'创业者和投资人社区',following:false}
+];
 function renderLists(){
   const main = document.getElementById('mainContent');
-  main.innerHTML=`<div class="ct"><div class="main-header"><button class="back-btn" onclick="navigate('home')"><svg viewBox="0 0 24 24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg></button><div class="page-title">列表</div></div></div>
-  <div class="empty-state"><svg viewBox="0 0 24 24"><path d="M3 13h2v-2H3v2zm0 4h2v-2H3v2zm0-8h2V7H3v2zm4 4h14v-2H7v2zm0 4h14v-2H7v2zM7 7v2h14V7H7z"/></svg><h3>还没有列表</h3><p>创建列表来组织你关注的话题和用户</p></div>`;
+  main.innerHTML=`
+    <div class="ct">
+      <div class="main-header" style="justify-content:space-between">
+        <div style="display:flex;align-items:center;gap:20px">
+          <button class="back-btn" onclick="navigate('home')"><svg viewBox="0 0 24 24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg></button>
+          <div class="page-title">列表</div>
+        </div>
+        <button class="back-btn" onclick="openCreateListModal()" title="创建列表">
+          <svg viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
+        </button>
+      </div>
+    </div>
+    <div class="profile-tabs" style="border-top:none">
+      <div class="profile-tab active">已加入</div>
+      <div class="profile-tab">订阅</div>
+    </div>
+    ${LISTS_DATA.filter(l=>l.following).length>0?LISTS_DATA.filter(l=>l.following).map(l=>`
+      <div class="fi" style="padding:16px">
+        <div style="flex:1;min-width:0">
+          <div style="display:flex;align-items:center;gap:8px">
+            <span style="font-weight:700;font-size:16px">${l.name}</span>
+          </div>
+          <div style="font-size:14px;color:var(--text2);margin-top:2px">${l.members.toLocaleString()} 位成员 · ${l.description}</div>
+        </div>
+        <button class="fbtn following" onclick="toggleListFollow(this)">正在关注</button>
+      </div>
+    `).join(''):'<div class="empty-state"><svg viewBox="0 0 24 24"><path d="M3 13h2v-2H3v2zm0 4h2v-2H3v2zm0-8h2V7H3v2zm4 4h14v-2H7v2zm0 4h14v-2H7v2zM7 7v2h14V7H7z"/></svg><h3>还没有加入的列表</h3><p>发现并加入有趣的列表</p></div>'}
+    <div style="padding:16px 16px 8px;border-bottom:1px solid var(--border)">
+      <div style="font-size:15px;font-weight:700">推荐列表</div>
+    </div>
+    ${LISTS_DATA.filter(l=>!l.following).map(l=>`
+      <div class="fi" style="padding:16px">
+        <div style="flex:1;min-width:0">
+          <div style="display:flex;align-items:center;gap:8px">
+            <span style="font-weight:700;font-size:16px">${l.name}</span>
+          </div>
+          <div style="font-size:14px;color:var(--text2);margin-top:2px">${l.members.toLocaleString()} 位成员 · ${l.description}</div>
+        </div>
+        <button class="fbtn" onclick="toggleListFollow(this)">关注</button>
+      </div>
+    `).join('')}
+  `;
 }
+function toggleListFollow(btn){
+  if(btn.classList.contains('following')){
+    btn.classList.remove('following');
+    btn.classList.add('fbtn');
+    btn.textContent='关注';
+    btn.style.cssText='';
+  } else {
+    btn.classList.add('following');
+    btn.textContent='正在关注';
+    btn.style.cssText='background:transparent;color:var(--text);border:1px solid var(--border);border-radius:9999px;padding:7px 18px;font-size:14px;font-weight:700';
+  }
+}
+function openCreateListModal(){
+  alert('创建列表功能即将上线');
+}
+
+// ===== TOPICS =====
+const TOPICS_DATA = [
+  {name:'AI大模型',posts:'1.2万',following:false,icon:'🤖'},
+  {name:'前端开发',posts:'8.9千',following:true,icon:'💻'},
+  {name:'创业故事',posts:'5.6千',following:false,icon:'🚀'},
+  {name:'科技新闻',posts:'2.3万',following:true,icon:'📰'},
+  {name:'生活方式',posts:'1.8万',following:false,icon:'✨'},
+  {name:'产品设计',posts:'3.4千',following:false,icon:'🎨'},
+  {name:'投资理财',posts:'6.7千',following:false,icon:'💰'},
+  {name:'游戏电竞',posts:'4.5千',following:false,icon:'🎮'},
+  {name:'电影推荐',posts:'7.8千',following:true,icon:'🎬'},
+  {name:'健康生活',posts:'2.1千',following:false,icon:'💪'}
+];
 function renderTopics(){
-  const main=document.getElementById('mainContent');
-  main.innerHTML=`<div class="ct"><div class="main-header"><button class="back-btn" onclick="navigate('home')"><svg viewBox="0 0 24 24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg></button><div class="page-title">话题</div></div></div>
-  <div class="empty-state"><svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg><h3>还没有话题</h3><p>关注话题以获取相关内容推荐</p></div>`;
+  const main = document.getElementById('mainContent');
+  const followingTopics = TOPICS_DATA.filter(t=>t.following);
+  main.innerHTML=`
+    <div class="ct">
+      <div class="main-header">
+        <button class="back-btn" onclick="navigate('home')"><svg viewBox="0 0 24 24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg></button>
+        <div class="page-title">话题</div>
+      </div>
+    </div>
+    ${followingTopics.length>0?`
+      <div style="padding:12px 16px 8px">
+        <div style="font-size:13px;font-weight:700;color:var(--text2);text-transform:uppercase;margin-bottom:8px">你关注的话题</div>
+        <div style="display:flex;flex-wrap:wrap;gap:8px">
+          ${followingTopics.map(t=>`<div class="trend-item" style="display:flex;align-items:center;gap:8px;padding:8px 16px;background:var(--bg2);border-radius:20px" onclick="navigate('trending')">${t.icon}<span style="font-size:14px;font-weight:600">${t.name}</span></div>`).join('')}
+        </div>
+      </div>
+    `:''}
+    <div style="padding:12px 16px 8px">
+      <div style="font-size:13px;font-weight:700;color:var(--text2);text-transform:uppercase;margin-bottom:8px">推荐话题</div>
+    </div>
+    <div style="padding:0 16px">
+      ${TOPICS_DATA.map(t=>`
+        <div style="display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--border)">
+          <div style="width:48px;height:48px;border-radius:12px;background:var(--bg2);display:flex;align-items:center;justify-content:center;font-size:24px">${t.icon}</div>
+          <div style="flex:1;min-width:0">
+            <div style="font-weight:700;font-size:15px">${t.name}</div>
+            <div style="font-size:13px;color:var(--text2)">${t.posts} 条帖子</div>
+          </div>
+          <button class="${t.following?'fbtn following':'fbtn'}" onclick="toggleTopicFollow(this,'${t.name}')">${t.following?'正在关注':'关注'}</button>
+        </div>
+      `).join('')}
+    </div>
+  `;
+}
+function toggleTopicFollow(btn,topic){
+  const t = TOPICS_DATA.find(x=>x.name===topic);
+  if(t) t.following=!t.following;
+  if(btn.classList.contains('following')){
+    btn.classList.remove('following');
+    btn.classList.add('fbtn');
+    btn.textContent='关注';
+    btn.style.cssText='';
+  } else {
+    btn.classList.add('following');
+    btn.textContent='正在关注';
+    btn.style.cssText='background:transparent;color:var(--text);border:1px solid var(--border);border-radius:9999px;padding:7px 18px;font-size:14px;font-weight:700';
+  }
+}
+
+function renderTopicPage(topic){
+  const main = document.getElementById('mainContent');
+  const tweets = DB.tweets.filter(t => t.text.includes(topic) || t.name.includes(topic));
+  main.innerHTML=`
+    <div class="ct">
+      <div class="main-header">
+        <button class="back-btn" onclick="navigate('topics')"><svg viewBox="0 0 24 24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg></button>
+        <div>
+          <div class="page-title">${topic}</div>
+          <div style="font-size:13px;color:var(--text2)">话题</div>
+        </div>
+      </div>
+    </div>
+    <div style="padding:16px;border-bottom:1px solid var(--border)">
+      <div style="font-size:14px;color:var(--text2);line-height:1.6">关注此话题，获取相关内容最新动态</div>
+      <div style="margin-top:12px;display:flex;gap:8px">
+        <button class="fbtn" onclick="navigate('topics')">返回话题列表</button>
+        <button class="fbtn following" onclick="this.textContent=this.textContent==='正在关注'?'关注':'正在关注';this.style.background=this.textContent==='正在关注'?'transparent':'var(--text)';this.style.color=this.textContent==='正在关注'?'var(--text)':'var(--bg)';this.style.borderColor=this.textContent==='正在关注'?'var(--border)':'transparent'">正在关注</button>
+      </div>
+    </div>
+    ${tweets.length>0?`<div class="feed">${tweets.map(t=>renderTweetHTML(t)).join('')}</div>`:'<div class="empty-state" style="padding:40px 0"><h3>暂无相关帖子</h3><p>成为第一个讨论这个话题的人吧！</p></div>'}
+  `;
+}
+
+// ===== FOLLOWING / FOLLOWERS =====
+const FOLLOWING_DATA = [
+  {name:'林小雨',handle:'@linxiaoyu',bio:'产品经理 / AI爱好者',avatar:'林',avatarBg:'linear-gradient(135deg,#667eea,#764ba2)',verified:true,following:true},
+  {name:'科技日报',handle:'@techdaily',bio:'第一时间报道科技前沿资讯',avatar:'科',avatarBg:'linear-gradient(135deg,#f093fb,#f5576c)',verified:true,following:true},
+  {name:'张伟',handle:'@zhangwei',bio:'产品经理 / AI创业者',avatar:'张',avatarBg:'linear-gradient(135deg,#4facfe,#00f2fe)',verified:false,following:true},
+  {name:'李娜',handle:'@lina_tech',bio:'全栈工程师 / 开源贡献者',avatar:'李',avatarBg:'linear-gradient(135deg,#43e97b,#38f9d7)',verified:false,following:true},
+  {name:'前端开发者社区',handle:'@fe_community',bio:'分享前端技术和最佳实践',avatar:'前',avatarBg:'linear-gradient(135deg,#fa709a,#fee140)',verified:true,following:false}
+];
+const FOLLOWERS_DATA = [
+  {name:'王珊珊',handle:'@wangshanshan',bio:'设计师',avatar:'王',avatarBg:'linear-gradient(135deg,#fa709a,#fee140)',verified:false,following:false},
+  {name:'陈明',handle:'@chenming_ai',bio:'AI研究员',avatar:'陈',avatarBg:'linear-gradient(135deg,#43e97b,#38f9d7)',verified:true,following:true},
+  {name:'诗雅',handle:'@shiya',bio:'自由撰稿人',avatar:'诗',avatarBg:'linear-gradient(135deg,#f093fb,#f5576c)',verified:false,following:false}
+];
+function renderFollowing(){
+  const main = document.getElementById('mainContent');
+  main.innerHTML=`
+    <div class="ct">
+      <div class="main-header" style="justify-content:space-between">
+        <div style="display:flex;align-items:center;gap:20px">
+          <button class="back-btn" onclick="navigate('profile')"><svg viewBox="0 0 24 24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg></button>
+          <div>
+            <div style="font-size:17px;font-weight:800">王坤</div>
+            <div style="font-size:13px;color:var(--text2)">${state.user.following} 正在关注</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    ${FOLLOWING_DATA.map(u=>renderFollowItem(u)).join('')}
+    ${FOLLOWING_DATA.length===0?'<div class="empty-state"><h3>还没有关注任何人</h3><p>关注更多人，发现精彩内容</p></div>':''}
+  `;
+}
+function renderFollowers(){
+  const main = document.getElementById('mainContent');
+  main.innerHTML=`
+    <div class="ct">
+      <div class="main-header" style="justify-content:space-between">
+        <div style="display:flex;align-items:center;gap:20px">
+          <button class="back-btn" onclick="navigate('profile')"><svg viewBox="0 0 24 24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg></button>
+          <div>
+            <div style="font-size:17px;font-weight:800">王坤</div>
+            <div style="font-size:13px;color:var(--text2)">${state.user.followers} 关注者</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    ${FOLLOWERS_DATA.map(u=>renderFollowItem(u)).join('')}
+    ${FOLLOWERS_DATA.length===0?'<div class="empty-state"><h3>还没有关注者</h3><p>分享你的内容，吸引关注</p></div>':''}
+  `;
+}
+function renderFollowItem(u){
+  return `
+    <div class="fi" style="padding:16px">
+      <div class="fa" style="background:${u.avatarBg};width:48px;height:48px;font-size:18px;cursor:pointer" onclick="navigate('user','${u.handle}')">${u.avatar}</div>
+      <div class="fi-info" style="flex:1">
+        <div class="fi-name" onclick="navigate('user','${u.handle}')">${u.name}${u.verified?'<span style="color:var(--accent);display:inline-flex"><svg width="14" height="14" viewBox="0 0 24 24"><path fill="var(--accent)" d="M20.396 11c-.018-.646-.215-1.275-.57-1.816-.354-.54-.852-.972-1.438-1.246.223-.607.27-1.264.14-1.897-.131-.634-.437-1.218-.882-1.687-.47-.445-1.053-.75-1.687-.882-.633-.13-1.29-.083-1.897.14-.273-.587-.704-1.086-1.245-1.44S11.647 1.62 11 1.604c-.646.017-1.273.213-1.813.568s-.969.854-1.24 1.441c-.608-.223-1.267-.272-1.902-.14-.635.13-1.22.436-1.69.882-.445.47-.749 1.055-.878 1.688-.13.633-.08 1.29.144 1.896-.587.274-1.087.705-1.443 1.245-.356.54-.555 1.17-.574 1.817.02.647.218 1.276.574 1.817.356.54.856.972 1.443 1.245-.224.606-.274 1.263-.144 1.896.13.634.433 1.218.877 1.688.47.443 1.054.747 1.687.878.633.132 1.29.084 1.897-.136.274.586.705 1.084 1.246 1.439.54.354 1.17.551 1.816.569.647-.016 1.276-.213 1.817-.567s.972-.854 1.245-1.44c.604.239 1.266.296 1.903.164.636-.132 1.22-.447 1.68-.907.46-.46.776-1.044.908-1.681s.075-1.299-.165-1.903c.586-.274 1.084-.705 1.439-1.246.354-.54.551-1.17.569-1.816z"/></svg></span>':''}</div>
+        <div class="fi-handle">${u.handle}</div>
+        <div style="font-size:14px;color:var(--text2);margin-top:4px">${u.bio}</div>
+      </div>
+      <button class="${u.following?'fbtn following':'fbtn'}" onclick="toggleFollowItem(this,'${u.handle}')">${u.following?'正在关注':'关注'}</button>
+    </div>
+  `;
+}
+function toggleFollowItem(btn,handle){
+  const allUsers = [...FOLLOWING_DATA, ...FOLLOWERS_DATA];
+  const user = allUsers.find(u=>u.handle===handle);
+  if(user) user.following=!user.following;
+  if(btn.classList.contains('following')){
+    btn.classList.remove('following');
+    btn.classList.add('fbtn');
+    btn.textContent='关注';
+    btn.style.cssText='';
+  } else {
+    btn.classList.add('following');
+    btn.textContent='正在关注';
+    btn.style.cssText='background:transparent;color:var(--text);border:1px solid var(--border);border-radius:9999px;padding:7px 18px;font-size:14px;font-weight:700';
+    btn.onmouseout=function(){this.style.cssText='background:transparent;color:var(--text);border:1px solid var(--border);border-radius:9999px;padding:7px 18px;font-size:14px;font-weight:700'};
+  }
+}
+
+// ===== LIKERS LIST =====
+function openLikersModal(){
+  const body = document.getElementById('likersListBody');
+  if(DB.likersList.length===0){
+    body.innerHTML='<div class="empty-state"><h3>还没有人喜欢</h3></div>';
+  } else {
+    body.innerHTML = DB.likersList.map(u=>`
+      <div class="liker-item">
+        <div class="ta" style="background:${u.avatarBg};width:40px;height:40px;font-size:16px;cursor:pointer" onclick="closeLikersModal();navigate('user','${u.handle}')">${u.avatar}</div>
+        <div style="flex:1;min-width:0;cursor:pointer" onclick="closeLikersModal();navigate('user','${u.handle}')">
+          <div style="display:flex;align-items:center;gap:4px">
+            <span style="font-weight:700;font-size:15px">${u.name}</span>
+            ${u.verified?'<svg width="14" height="14" viewBox="0 0 24 24"><path fill="var(--accent)" d="M20.396 11c-.018-.646-.215-1.275-.57-1.816-.354-.54-.852-.972-1.438-1.246.223-.607.27-1.264.14-1.897-.131-.634-.437-1.218-.882-1.687-.47-.445-1.053-.75-1.687-.882-.633-.13-1.29-.083-1.897.14-.273-.587-.704-1.086-1.245-1.44S11.647 1.62 11 1.604c-.646.017-1.273.213-1.813.568s-.969.854-1.24 1.441c-.608-.223-1.267-.272-1.902-.14-.635.13-1.22.436-1.69.882-.445.47-.749 1.055-.878 1.688-.13.633-.08 1.29.144 1.896-.587.274-1.087.705-1.443 1.245-.356.54-.555 1.17-.574 1.817.02.647.218 1.276.574 1.817.356.54.856.972 1.443 1.245-.224.606-.274 1.263-.144 1.896.13.634.433 1.218.877 1.688.47.443 1.054.747 1.687.878.633.132 1.29.084 1.897-.136.274.586.705 1.084 1.246 1.439.54.354 1.17.551 1.816.569.647-.016 1.276-.213 1.817-.567s.972-.854 1.245-1.44c.604.239 1.266.296 1.903.164.636-.132 1.22-.447 1.68-.907.46-.46.776-1.044.908-1.681s.075-1.299-.165-1.903c.586-.274 1.084-.705 1.439-1.246.354-.54.551-1.17.569-1.816z"/></svg>':''}
+          </div>
+          <div style="color:var(--text2);font-size:14px">${u.handle}</div>
+        </div>
+        <button class="${u.following?'fbtn following':'fbtn'}" onclick="toggleLikerFollow(this,'${u.handle}')">${u.following?'正在关注':'关注'}</button>
+      </div>
+    `).join('');
+  }
+  document.getElementById('likersModal').classList.add('active');
+}
+
+// ===== NEW MESSAGE =====
+function openNewMsgModal(){
+  document.getElementById('newMsgModal').classList.add('active');
+  setTimeout(()=>document.getElementById('newMsgRecipient').focus(),50);
+}
+function closeNewMsgModal(){
+  document.getElementById('newMsgModal').classList.remove('active');
+  document.getElementById('newMsgRecipient').value='';
+  document.getElementById('newMsgText').value='';
+}
+function startNewMessage(){
+  const recipient = document.getElementById('newMsgRecipient').value.trim();
+  const text = document.getElementById('newMsgText').value.trim();
+  if(!recipient){
+    alert('请输入用户名');
+    return;
+  }
+  // Create or find conversation
+  const existingMsg = DB.messages.find(m=>m.handle==='@'+recipient);
+  if(existingMsg){
+    closeNewMsgModal();
+    navigate('messages');
+    setTimeout(()=>openChat(existingMsg.id),100);
+    return;
+  }
+  const newId = Date.now();
+  const newMsg = {
+    id:newId,
+    name:recipient,
+    handle:'@'+recipient,
+    avatar:recipient[0]?.toUpperCase()||'?',
+    avatarBg:'linear-gradient(135deg,#667eea,#764ba2)',
+    preview:text||'开始对话...',
+    time:'刚刚',
+    unread:0,
+    messages:text?[{sent:true,text,time:new Date().toLocaleTimeString('zh-CN',{hour:'2-digit',minute:'2-digit'})}]:[]
+  };
+  DB.messages.unshift(newMsg);
+  closeNewMsgModal();
+  navigate('messages');
+  if(text) setTimeout(()=>openChat(newId),100);
+}
+function closeLikersModal(){
+  document.getElementById('likersModal').classList.remove('active');
+}
+function toggleLikerFollow(btn,handle){
+  const user = DB.likersList.find(u=>u.handle===handle);
+  if(user) user.following=!user.following;
+  if(btn.classList.contains('following')){
+    btn.classList.remove('following');
+    btn.classList.add('fbtn');
+    btn.textContent='关注';
+    btn.style.cssText='';
+  } else {
+    btn.classList.add('following');
+    btn.textContent='正在关注';
+    btn.style.cssText='background:transparent;color:var(--text);border:1px solid var(--border);border-radius:9999px;padding:7px 18px;font-size:14px;font-weight:700';
+    btn.onmouseout=function(){this.style.cssText='background:transparent;color:var(--text);border:1px solid var(--border);border-radius:9999px;padding:7px 18px;font-size:14px;font-weight:700'};
+  }
 }
 
 // ===== AUTH =====
@@ -1661,16 +2833,11 @@ function updateModalPostBtn(){
 function submitPost(){
   const v=document.getElementById('modalText').value.trim();
   if(!v)return;
-  const t={id:Date.now(),name:'王坤',handle:'@wngkn5393218313',verified:false,time:'刚刚',text:v,avatar:'王',avatarBg:'linear-gradient(135deg,#667eea,#764ba2)',likes:0,retweets:0,replies:0,views:'0',liked:false,retweeted:false,bookmarked:false};
+  const viewsOptions=['12','32','58','103','156','234'];
+  const t={id:Date.now(),name:'王坤',handle:'@wngkn5393218313',verified:false,time:'刚刚',text:v,avatar:'王',avatarBg:'linear-gradient(135deg,#667eea,#764ba2)',likes:0,retweets:0,replies:0,views:viewsOptions[Math.floor(Math.random()*viewsOptions.length)],liked:false,retweeted:false,bookmarked:false};
   DB.tweets.unshift(t);
   closePostModal();
-  if(state.currentPage==='home'){
-    const feed=document.getElementById('mainContent');
-    const div=document.createElement('div');
-    div.innerHTML=renderTweet(t);
-    const ct=feed.querySelector('.ct');
-    if(ct)ct.insertAdjacentElement('afterend',div.firstChild);
-  }
+  if(state.currentPage==='home'){renderHome();}
 }
 function openShareModal(id){
   document.getElementById('shareModal').classList.add('active');
@@ -1688,7 +2855,7 @@ function openMoreMenu(id,event){
   const body=document.getElementById('moreModalBody');
   const t=DB.tweets.find(x=>x.id===id);
   body.innerHTML=`
-    <div class="d-item" onclick="closeMoreMenu()"><svg viewBox="0 0 24 24"><path d="M4 4.5C4 3.12 5.119 2 6.5 2h11C18.881 2 20 3.12 20 4.5v18.44l-8-5.71-8 5.71V4.5z"/></svg> ${t&&t.bookmarked?'从书签中移除':'添加到书签'}</div>
+    <div class="d-item" onclick="toggleBookmarkFromMore(${id});closeMoreMenu()"><svg viewBox="0 0 24 24"><path d="M17 3H7c-1.1 0-1.99.9-1.99 2L5 21l7-3 7 3V5c0-1.1-.9-2-2-2z"/></svg> ${t&&t.bookmarked?'从书签中移除':'添加到书签'}</div>
     <div class="d-item" onclick="copyTweetLink(${id});closeMoreMenu()"><svg viewBox="0 0 24 24"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg> 复制链接</div>
     <div class="d-item" onclick="closeMoreMenu()"><svg viewBox="0 0 24 24"><path d="M12 3c-4.97 0-9 4.03-9 9s4.03 9 9 9 9-4.03 9-9c0-.46-.04-.92-.1-1.36-.98 1.37-2.58 2.26-4.4 2.26-2.98 0-5.4-2.42-5.4-5.4 0-1.81.89-3.42 2.26-4.4-.44-.06-.9-.1-1.36-.1z"/></svg> ${t&&t.liked?'不喜欢':'喜欢'}</div>
     <div class="d-divider"></div>
@@ -1750,7 +2917,7 @@ function insertEmoji(e){
 
 // ===== CLICK OUTSIDE =====
 document.addEventListener('click',function(e){
-  if(!e.target.closest('.dropdown')&&!e.target.closest('[onclick*="toggleDropdown"]')){
+  if(!e.target.closest('.dropdown')&&!e.target.closest('[onclick*="toggleDropdown"]')&&!e.target.closest('#userMenu')){
     closeAllDropdowns();
   }
   if(!e.target.closest('#postModal')&&!e.target.closest('.post-btn')&&!e.target.closest('#modalPostBtn')){
@@ -1758,6 +2925,25 @@ document.addEventListener('click',function(e){
   }
   if(!e.target.closest('#shareModal'))closeShareModal();
   if(!e.target.closest('#moreModal')&&!e.target.closest('.more-btn'))closeMoreMenu();
+  if(!e.target.closest('#likersModal')&&!e.target.closest('.likers-trigger'))closeLikersModal();
+});
+
+// ===== INFINITE SCROLL =====
+let scrollTimer = null;
+window.addEventListener('scroll', function(){
+  if(scrollTimer) return;
+  scrollTimer = setTimeout(()=>{
+    scrollTimer = null;
+    const scrollBottom = window.innerHeight + window.scrollY;
+    const docHeight = document.documentElement.scrollHeight;
+    const threshold = 200; // 距离底部200px时触发
+
+    if(docHeight - scrollBottom < threshold){
+      if(state.currentPage === 'home' && state.homeHasMore){
+        loadMoreHome();
+      }
+    }
+  }, 150);
 });
 
 // ===== INIT =====
