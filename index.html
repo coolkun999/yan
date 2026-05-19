@@ -292,6 +292,17 @@ textarea,input{font-family:inherit;outline:none;border:none;background:transpare
 .ei-item{position:relative;overflow:hidden;border-radius:0}
 .ei-item:first-child{grid-column:1/-1}
 
+/* Explore trending list */
+.explore-trend-list{display:flex;flex-direction:column}
+.explore-trend-item{display:flex;align-items:flex-start;justify-content:space-between;padding:12px 16px;border-bottom:1px solid var(--border);cursor:pointer;transition:background .2s;position:relative}
+.explore-trend-item:hover{background:var(--hover)}
+.explore-trend-info{flex:1;min-width:0;padding-right:8px}
+.explore-trend-cat{color:var(--text2);font-size:13px;margin-bottom:2px}
+.explore-trend-name{font-weight:700;font-size:15px;line-height:1.4}
+.explore-trend-more{width:34px;height:34px;border-radius:50%;border:none;background:transparent;color:var(--text2);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background .2s;flex-shrink:0;margin-top:-4px}
+.explore-trend-more:hover{background:rgba(29,155,240,.1);color:var(--accent)}
+.explore-trend-more svg{width:18px;height:18px;fill:currentColor}
+
 /* ===== SETTINGS ===== */
 .settings-list{max-width:600px;margin:0 auto;padding:16px}
 .settings-section{margin-bottom:32px}
@@ -582,6 +593,7 @@ const state = {
   currentPage: 'home',
   homeTab: 'foryou',
   notifTab: 'all',
+  exploreTab: 'foryou',
   theme: 'dark',
   user: { name:'王坤', handle:'@wngkn5393218313', bio:'开发者 / AI爱好者 / 创业者', followers:3721, following:891, posts:284, liked:1562 },
   notifCount: 3,
@@ -823,55 +835,101 @@ function homePost(){
 // ===== EXPLORE PAGE =====
 function renderExplore(){
   const main = document.getElementById('mainContent');
+  const tab = state.exploreTab;
+  const tabs = [
+    {key:'foryou',label:'为你推荐'},
+    {key:'trending',label:'当前趋势'},
+    {key:'news',label:'新闻'},
+    {key:'sports',label:'体育'},
+    {key:'entertainment',label:'娱乐'}
+  ];
+  let trends = getTrendsByTab(tab);
   main.innerHTML = `
     <div class="ct">
-      <div class="main-header">
-        <button class="back-btn" onclick="navigate('home')"><svg viewBox="0 0 24 24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg></button>
-        <div style="flex:1">
-          <div class="search-box" style="position:static;padding:0">
+      <div class="main-header" style="padding:0 16px;flex-direction:column;align-items:stretch;gap:0">
+        <div style="display:flex;align-items:center;gap:12px;padding:12px 0">
+          <div class="search-box" style="position:static;padding:0;flex:1">
             <div class="sbw">
               <svg viewBox="0 0 24 24"><path d="M10.25 3.75c-3.59 0-6.5 2.91-6.5 6.5s2.91 6.5 6.5 6.5c1.795 0 3.419-.726 4.596-1.904 1.178-1.177 1.904-2.801 1.904-4.596 0-3.59-2.91-6.5-6.5-6.5z"/></svg>
-              <input class="sin" placeholder="搜索" id="exploreSearch" oninput="searchExplore(this.value)">
+              <input class="sin" placeholder="搜索" id="exploreSearch" onkeydown="if(event.key==='Enter')searchExplore(this.value)">
             </div>
           </div>
+          <button class="back-btn" style="display:flex;width:36px;height:36px" onclick="navigate('settings')" title="设置">
+            <svg viewBox="0 0 24 24"><path d="M19.43 12.98c.04-.32.07-.64.07-.98s-.03-.66-.07-.98l2.1-1.65c.19-.15.24-.42.12-.64l-2-3.46c-.12-.22-.39-.3-.61-.22l-2.49 1c-.52-.4-1.08-.73-1.69-.98l-.38-2.65A.488.488 0 0014 2h-4c-.25 0-.46.18-.5.42l-.38 2.65c-.61.25-1.17.59-1.69.98l-2.49-1c-.23-.09-.49 0-.61.22l-2 3.46c-.13.22-.07.49.12.64l2.1 1.65c-.04.32-.07.65-.07.98s.03.66.07.98l-2.1 1.65c-.19.15-.24.42-.12.64l2 3.46c.12.22.39.3.61.22l2.49-1c.52.4 1.08.73 1.69.98l.38 2.65c.04.24.25.42.5.42h4c.25 0 .46-.18.5-.42l.38-2.65c.61-.25 1.17-.59 1.69-.98l2.49 1c.23.09.49 0 .61-.22l2-3.46c.12-.22.07-.49-.12-.64l-2.1-1.65zM12 15.5c-1.93 0-3.5-1.57-3.5-3.5s1.57-3.5 3.5-3.5 3.5 1.57 3.5 3.5-1.57 3.5-3.5 3.5z"/></svg>
+          </button>
+        </div>
+        <div class="tab-row" style="border-bottom:none">
+          ${tabs.map(t=>`<div class="tab ${tab===t.key?'active':''}" onclick="switchExploreTab('${t.key}')">${t.label}</div>`).join('')}
         </div>
       </div>
-      <div class="explore-filters">
-        <div class="explore-filter active" onclick="switchExploreFilter(this,'all')">推荐</div>
-        <div class="explore-filter" onclick="switchExploreFilter(this,'tech')">科技</div>
-        <div class="explore-filter" onclick="switchExploreFilter(this,'entertainment')">娱乐</div>
-        <div class="explore-filter" onclick="switchExploreFilter(this,'sports')">体育</div>
-        <div class="explore-filter" onclick="switchExploreFilter(this,'finance')">财经</div>
-        <div class="explore-filter" onclick="switchExploreFilter(this,'gaming')">游戏</div>
+    </div>
+    <div class="explore-trend-list">
+      ${trends.map(t=>renderTrendItem(t)).join('')}
+    </div>
+    <div style="padding:12px 16px;border-bottom:1px solid var(--border);font-size:20px;font-weight:800">推荐关注</div>
+    <div>
+      <div class="fi" onclick="navigate('user','@zhangwei')">
+        <div class="fa" style="background:linear-gradient(135deg,#f093fb,#f5576c)">张</div>
+        <div class="fi-info"><div class="fi-name">张伟 <span style="color:var(--accent);display:inline-flex"><svg width="14" height="14" viewBox="0 0 24 24"><path fill="var(--accent)" d="M20.396 11c-.018-.646-.215-1.275-.57-1.816-.354-.54-.852-.972-1.438-1.246.223-.607.27-1.264.14-1.897-.131-.634-.437-1.218-.882-1.687-.47-.445-1.053-.75-1.687-.882-.633-.13-1.29-.083-1.897.14-.273-.587-.704-1.086-1.245-1.44S11.647 1.62 11 1.604c-.646.017-1.273.213-1.813.568s-.969.854-1.24 1.441c-.608-.223-1.267-.272-1.902-.14-.635.13-1.22.436-1.69.882-.445.47-.749 1.055-.878 1.688-.13.633-.08 1.29.144 1.896-.587.274-1.087.705-1.443 1.245-.356.54-.555 1.17-.574 1.817.02.647.218 1.276.574 1.817.356.54.856.972 1.443 1.245-.224.606-.274 1.263-.144 1.896.13.634.433 1.218.877 1.688.47.443 1.054.747 1.687.878.633.132 1.29.084 1.897-.136.274.586.705 1.084 1.246 1.439.54.354 1.17.551 1.816.569.647-.016 1.276-.213 1.817-.567s.972-.854 1.245-1.44c.604.239 1.266.296 1.903.164.636-.132 1.22-.447 1.68-.907.46-.46.776-1.044.908-1.681s.075-1.299-.165-1.903c.586-.274 1.084-.705 1.439-1.246.354-.54.551-1.17.569-1.816z"/></svg></span></div><div class="fi-handle">@zhangwei</div></div>
+        <button class="fbtn" onclick="event.stopPropagation();toggleFollow(this)">关注</button>
+      </div>
+      <div class="fi" onclick="navigate('user','@lina_tech')">
+        <div class="fa" style="background:linear-gradient(135deg,#4facfe,#00f2fe)">李</div>
+        <div class="fi-info"><div class="fi-name">李娜</div><div class="fi-handle">@lina_tech</div></div>
+        <button class="fbtn" onclick="event.stopPropagation();toggleFollow(this)">关注</button>
+      </div>
+      <div class="fi" onclick="navigate('user','@chenming_ai')">
+        <div class="fa" style="background:linear-gradient(135deg,#43e97b,#38f9d7)">陈</div>
+        <div class="fi-info"><div class="fi-name">陈明 <span style="color:var(--accent)"><svg width="14" height="14" viewBox="0 0 24 24"><path fill="var(--accent)" d="M20.396 11c-.018-.646-.215-1.275-.57-1.816-.354-.54-.852-.972-1.438-1.246.223-.607.27-1.264.14-1.897-.131-.634-.437-1.218-.882-1.687-.47-.445-1.053-.75-1.687-.882-.633-.13-1.29-.083-1.897.14-.273-.587-.704-1.086-1.245-1.44S11.647 1.62 11 1.604c-.646.017-1.273.213-1.813.568s-.969.854-1.24 1.441c-.608-.223-1.267-.272-1.902-.14-.635.13-1.22.436-1.69.882-.445.47-.749 1.055-.878 1.688-.13.633-.08 1.29.144 1.896-.587.274-1.087.705-1.443 1.245-.356.54-.555 1.17-.574 1.817.02.647.218 1.276.574 1.817.356.54.856.972 1.443 1.245-.224.606-.274 1.263-.144 1.896.13.634.433 1.218.877 1.688.47.443 1.054.747 1.687.878.633.132 1.29.084 1.897-.136.274.586.705 1.084 1.246 1.439.54.354 1.17.551 1.816.569.647-.016 1.276-.213 1.817-.567s.972-.854 1.245-1.44c.604.239 1.266.296 1.903.164.636-.132 1.22-.447 1.68-.907.46-.46.776-1.044.908-1.681s.075-1.299-.165-1.903c.586-.274 1.084-.705 1.439-1.246.354-.54.551-1.17.569-1.816z"/></svg></span></div><div class="fi-handle">@chenming_ai</div></div>
+        <button class="fbtn" onclick="event.stopPropagation();toggleFollow(this)">关注</button>
       </div>
     </div>
-    <div class="explore-grid" id="exploreGrid">
-      ${renderExploreItem(0)}
-      ${renderExploreItem(1)}${renderExploreItem(2)}
-      ${renderExploreItem(3)}${renderExploreItem(4)}
-      ${renderExploreItem(5)}
-    </div>
-    <div id="exploreResults"></div>
-    <div style="padding:0 16px">
-      ${DB.tweets.map(t=>renderTweet(t)).join('')}
-    </div>
   `;
-  initEmojiPicker();
 }
-function renderExploreItem(i){
-  const items = [
-    {name:"热门话题",desc:"#AI大模型最新进展 持续领先全球",bg:"linear-gradient(135deg,#667eea,#764ba2)",icon:"🤖"},
-    {name:"科技",desc:"#iPhone17 全新设计曝光",bg:"linear-gradient(135deg,#4facfe,#00f2fe)",icon:"📱"},
-    {name:"游戏",desc:"#黑神话悟空 全球销量破千万",bg:"linear-gradient(135deg,#43e97b,#38f9d7)",icon:"🎮"},
-    {name:"娱乐",desc:"#热播剧集推荐 周末必看",bg:"linear-gradient(135deg,#f093fb,#f5576c)",icon:"🎬"},
-    {name:"体育",desc:"#世界杯预选赛 精彩回顾",bg:"linear-gradient(135deg,#a1c4fd,#c2e9fb)",icon:"⚽"},
-    {name:"财经",desc:"#美股行情 本周收涨",bg:"linear-gradient(135deg,#fa709a,#fee140)",icon:"📈"}
+function getTrendsByTab(tab){
+  const allTrends = [
+    {cat:'科技 · 趋势',name:'#Automation',region:'中国香港特别行政区 的趋势'},
+    {cat:'',name:'Freedom',region:'中国香港特别行政区 的趋势'},
+    {cat:'',name:'#Peatwasu',region:'中国香港特别行政区 的趋势'},
+    {cat:'',name:'Starship',region:'中国香港特别行政区 的趋势'},
+    {cat:'',name:'#InterLink',region:'中国香港特别行政区 的趋势'},
+    {cat:'',name:'ADIPSZN 26 Pass',region:'中国香港特别行政区 的趋势'},
+    {cat:'',name:'Agent',region:'中国香港特别行政区 的趋势'},
+    {cat:'',name:'native mcp',region:'中国香港特别行政区 的趋势'},
+    {cat:'',name:'Excellent',region:'中国香港特别行政区 的趋势'},
+    {cat:'',name:'Shanghai',region:'中国香港特别行政区 的趋势'},
+    {cat:'',name:'apache 2.0',region:'中国香港特别行政区 的趋势'},
+    {cat:'',name:'WELCOME TO THE AIR',region:'中国香港特别行政区 的趋势'},
+    {cat:'科技 · 趋势',name:'#AI大模型',region:'',posts:'12.3万 条帖子'},
+    {cat:'娱乐 · 趋势',name:'#新剧热播',region:'',posts:'9.8万 条帖子'},
+    {cat:'体育 · 趋势',name:'#世界杯预选赛',region:'',posts:'7.2万 条帖子'},
+    {cat:'财经 · 趋势',name:'#A股行情',region:'',posts:'5.6万 条帖子'},
+    {cat:'科技 · 趋势',name:'#开源项目',region:'',posts:'4.3万 条帖子'}
   ];
-  const it = items[i]||items[0];
-  return `<div class="explore-grid-item" onclick="navigate('trending')">
-    <div style="width:100%;height:100%;min-height:120px;background:${it.bg};display:flex;align-items:center;justify-content:center;font-size:48px">${it.icon}</div>
-    <div class="ei-overlay"><span>${it.name}</span><span>${it.desc}</span></div>
-  </div>`;
+  if(tab==='news') return allTrends.filter(t=>t.cat.includes('新闻')||t.name.includes('AI')||t.name.includes('apache'));
+  if(tab==='sports') return allTrends.filter(t=>t.cat.includes('体育')||t.name.includes('世界杯'));
+  if(tab==='entertainment') return allTrends.filter(t=>t.cat.includes('娱乐')||t.name.includes('剧'));
+  if(tab==='trending') return allTrends.filter(t=>t.posts);
+  return allTrends;
+}
+function renderTrendItem(t){
+  const catLine = t.cat ? `<div class="explore-trend-cat">${t.cat}</div>` : `<div class="explore-trend-cat">${t.region}</div>`;
+  const postsLine = t.posts ? `<div class="explore-trend-cat">${t.posts}</div>` : '';
+  return `
+    <div class="explore-trend-item" onclick="navigate('trending')">
+      <div class="explore-trend-info">
+        ${catLine}
+        <div class="explore-trend-name">${t.name}</div>
+        ${postsLine}
+      </div>
+      <button class="explore-trend-more" onclick="event.stopPropagation()">
+        <svg viewBox="0 0 24 24"><path d="M3 12c0-1.1.9-2 2-2s2 .9 2 2-.9 2-2 2-2-.9-2-2zm9 2c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm7 0c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2z"/></svg>
+      </button>
+    </div>`;
+}
+function switchExploreTab(tab){
+  state.exploreTab = tab;
+  renderExplore();
 }
 function switchExploreFilter(el,cat){
   document.querySelectorAll('.explore-filter').forEach(f=>f.classList.remove('active'));
