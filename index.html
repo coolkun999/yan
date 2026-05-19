@@ -180,7 +180,7 @@ textarea,input{font-family:inherit;outline:none;border:none;background:transpare
 .auth-err{color:#f4212e;font-size:13px;margin-top:8px;display:none}
 
 /* ===== PROFILE PAGE ===== */
-.profile-cover{height:200px;background:linear-gradient(135deg,#1d9bf0,##f5576c,#a855f7);position:relative;cursor:pointer}
+.profile-cover{height:200px;background:linear-gradient(135deg,#1d9bf0,#f5576c,#a855f7);position:relative;cursor:pointer}
 .profile-avatar{width:133px;height:133px;border-radius:50%;border:4px solid var(--bg);background:linear-gradient(135deg,#667eea,#764ba2);display:flex;align-items:center;justify-content:center;font-size:48px;font-weight:900;color:#fff;position:absolute;bottom:-66px;left:16px;cursor:pointer}
 .profile-info{padding:16px;padding-top:72px}
 .pi-row{display:flex;align-items:flex-start;justify-content:space-between}
@@ -337,6 +337,11 @@ textarea,input{font-family:inherit;outline:none;border:none;background:transpare
 .copy-btn{background:var(--accent);color:#fff;border:none;border-radius:var(--r);padding:6px 16px;font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap;flex-shrink:0;transition:background .2s}
 .copy-btn:hover{background:var(--ah)}
 
+/* ===== FLOATING POST BUTTON (mobile) ===== */
+.float-post-btn{position:fixed;bottom:20px;right:20px;width:56px;height:56px;border-radius:50%;background:var(--accent);color:#fff;border:none;cursor:pointer;display:none;align-items:center;justify-content:center;box-shadow:0 4px 16px rgba(29,155,240,.4);z-index:100;transition:background .2s}
+.float-post-btn:hover{background:var(--ah)}
+.float-post-btn svg{width:28px;height:28px;fill:#fff}
+
 /* ===== RESPONSIVE ===== */
 @media(max-width:1100px){.sidebar-right{display:none}}
 @media(max-width:700px){
@@ -355,6 +360,7 @@ textarea,input{font-family:inherit;outline:none;border:none;background:transpare
   .explore-grid{grid-template-columns:1fr}
   .explore-grid-item:first-child{grid-column:1}
   .ei-img{aspect-ratio:4/3 !important}
+  .float-post-btn{display:flex}
 }
 
 /* ===== DARK/LIGHT THEME ===== */
@@ -387,6 +393,10 @@ textarea,input{font-family:inherit;outline:none;border:none;background:transpare
         <svg viewBox="0 0 24 24"><path d="M1.998 5.5c0-1.381 1.119-2.5 2.5-2.5h15c1.381 0 2.5 1.119 2.5 2.5v13c0 1.381-1.119 2.5-2.5 2.5h-15c-1.381 0-2.5-1.119-2.5-2.5v-13zM5.5 7c-.276 0-.5.224-.5.5v2.764l8 3.638 8-3.638V7.5c0-.276-.224-.5-.5-.5h-15z"/></svg>
         <span class="nav-label">消息</span>
       </a>
+      <a class="nav-item" onclick="navigate('messages')">
+        <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-1-13h2v6h-2zm0 8h2v2h-2z"/></svg>
+        <span class="nav-label">聊天</span>
+      </a>
       <a class="nav-item" id="nav-bookmarks" onclick="navigate('bookmarks')">
         <svg viewBox="0 0 24 24"><path d="M4 4.5C4 3.12 5.119 2 6.5 2h11C18.881 2 20 3.12 20 4.5v18.44l-8-5.71-8 5.71V4.5z"/></svg>
         <span class="nav-label">书签</span>
@@ -395,9 +405,9 @@ textarea,input{font-family:inherit;outline:none;border:none;background:transpare
         <svg viewBox="0 0 24 24"><path d="M5.651 19h12.698c-.337-1.8-1.023-3.21-1.945-4.19C15.318 13.65 13.838 13 12 13s-3.317.65-4.404 1.81c-.922.98-1.608 2.39-1.945 4.19z"/></svg>
         <span class="nav-label">个人资料</span>
       </a>
-      <a class="nav-item" id="nav-settings" onclick="navigate('settings')">
-        <svg viewBox="0 0 24 24"><path d="M12 8.25c-.914 0-1.674.746-1.674 1.664S11.086 11.578 12 11.578s1.674-.746 1.674-1.664S12.914 8.25 12 8.25zM3 17.25V16.5c0-.414.336-.75.75-.75h.472c.414 0 .75-.336.75-.75v-.75c0-.414-.336-.75-.75-.75H3.75C3.336 14.25 3 14.586 3 15v.75zm9-6.75h.472c.414 0 .75-.336.75-.75V9c0-.414-.336-.75-.75-.75H12c-.414 0-.75.336-.75.75v.75c0 .414.336.75.75.75zm-4.5 3c0-.414-.336-.75-.75-.75H5.472c-.414 0-.75.336-.75.75v.75c0 .414.336.75.75.75H6.75c.414 0 .75-.336.75-.75V13.5zm1.5-4.5v-.75c0-.414-.336-.75-.75-.75H6c-.414 0-.75.336-.75.75v.75c0 .414.336.75.75.75h.75c.414 0 .75-.336.75-.75z"/></svg>
-        <span class="nav-label">设置</span>
+      <a class="nav-item" onclick="navigate('lists')">
+        <svg viewBox="0 0 24 24"><path d="M3 13h2v-2H3v2zm0 4h2v-2H3v2zm0-8h2V7H3v2zm4 4h14v-2H7v2zm0 4h14v-2H7v2zM7 7v2h14V7H7z"/></svg>
+        <span class="nav-label">列表</span>
       </a>
       <a class="nav-item" onclick="toggleDropdown('more-menu')">
         <svg viewBox="0 0 24 24"><path d="M3.75 12c0-.966.783-1.75 1.75-1.75s1.75.784 1.75 1.75-.783 1.75-1.75 1.75S3.75 12.966 3.75 12zm8.25 0c0-.966.783-1.75 1.75-1.75s1.75.784 1.75 1.75-.783 1.75-1.75 1.75-1.75-.784-1.75-1.75zm8.25 0c0-.966.783-1.75 1.75-1.75s1.75.784 1.75 1.75-.783 1.75-1.75 1.75-1.75-.784-1.75-1.75z"/></svg>
@@ -423,53 +433,54 @@ textarea,input{font-family:inherit;outline:none;border:none;background:transpare
   <!-- RIGHT SIDEBAR -->
   <aside class="sidebar-right" id="sidebarRight" style="display:none">
     <div class="search-box">
-      <div class="sbw" onclick="navigate('search')">
+      <div class="sbw" onclick="navigate('search')" style="cursor:pointer">
         <svg viewBox="0 0 24 24"><path d="M10.25 3.75c-3.59 0-6.5 2.91-6.5 6.5s2.91 6.5 6.5 6.5c1.795 0 3.419-.726 4.596-1.904 1.178-1.177 1.904-2.801 1.904-4.596 0-3.59-2.91-6.5-6.5-6.5z"/></svg>
-        <input class="sin" placeholder="搜索" readonly>
+        <input class="sin" placeholder="搜索" readonly style="cursor:pointer">
       </div>
     </div>
     <div class="widget" style="padding:16px">
-      <p style="font-size:15px;margin-bottom:8px;line-height:1.5">免广告、查看你的分析数据、推广你的回复并解锁 20 多项功能。</p>
+      <p style="font-size:15px;margin-bottom:8px;line-height:1.5;font-weight:700">升级到 Premium</p>
+      <p style="font-size:15px;margin-bottom:12px;line-height:1.5;color:var(--text2)">免广告、查看你的分析数据、推广你的回复并解锁 20 多项功能。</p>
       <button style="background:var(--accent);color:#fff;border:none;border-radius:9999px;padding:9px 20px;font-size:15px;font-weight:700;cursor:pointer">订阅</button>
     </div>
     <div class="widget">
       <div class="wt">有什么新鲜事</div>
-      <div class="trend-item" onclick="navigate('trending')"><div class="tm">科技 趋势</div><div class="tn2">#AI大模型</div><div class="tc">12.3万 条帖子</div></div>
-      <div class="trend-item" onclick="navigate('trending')"><div class="tm">娱乐 趋势</div><div class="tn2">#新剧热播</div><div class="tc">9.8万 条帖子</div></div>
-      <div class="trend-item" onclick="navigate('trending')"><div class="tm">体育 趋势</div><div class="tn2">#世界杯预选赛</div><div class="tc">7.2万 条帖子</div></div>
-      <div class="trend-item" onclick="navigate('trending')"><div class="tm">财经 趋势</div><div class="tn2">#A股行情</div><div class="tc">5.6万 条帖子</div></div>
-      <div class="trend-item" onclick="navigate('trending')"><div class="tm">科技 趋势</div><div class="tn2">#开源项目</div><div class="tc">4.3万 条帖子</div></div>
+      <div class="trend-item" onclick="navigate('trending')"><div style="display:flex;justify-content:space-between"><span class="tm">科技 · 趋势</span><span style="color:var(--text2)">···</span></div><div class="tn2">#AI大模型</div><div class="tc">12.3万 条帖子</div></div>
+      <div class="trend-item" onclick="navigate('trending')"><div style="display:flex;justify-content:space-between"><span class="tm">娱乐 · 趋势</span><span style="color:var(--text2)">···</span></div><div class="tn2">#新剧热播</div><div class="tc">9.8万 条帖子</div></div>
+      <div class="trend-item" onclick="navigate('trending')"><div style="display:flex;justify-content:space-between"><span class="tm">体育 · 趋势</span><span style="color:var(--text2)">···</span></div><div class="tn2">#世界杯预选赛</div><div class="tc">7.2万 条帖子</div></div>
+      <div class="trend-item" onclick="navigate('trending')"><div style="display:flex;justify-content:space-between"><span class="tm">财经 · 趋势</span><span style="color:var(--text2)">···</span></div><div class="tn2">#A股行情</div><div class="tc">5.6万 条帖子</div></div>
+      <div class="trend-item" onclick="navigate('trending')"><div style="display:flex;justify-content:space-between"><span class="tm">科技 · 趋势</span><span style="color:var(--text2)">···</span></div><div class="tn2">#开源项目</div><div class="tc">4.3万 条帖子</div></div>
       <a class="show-more" onclick="navigate('trending')">显示更多</a>
     </div>
     <div class="widget">
       <div class="wt">推荐关注</div>
-      <div class="fi">
+      <div class="fi" onclick="navigate('user','@zhangwei')">
         <div class="fa" style="background:linear-gradient(135deg,#f093fb,#f5576c)">张</div>
-        <div class="fi-info"><div class="fi-name">张伟 <span style="color:var(--accent);display:inline-flex"><svg width="18" height="18" viewBox="0 0 24 24"><path fill="var(--accent)" d="M20.396 11c-.018-.646-.215-1.275-.57-1.816-.354-.54-.852-.972-1.438-1.246.223-.607.27-1.264.14-1.897-.131-.634-.437-1.218-.882-1.687-.47-.445-1.053-.75-1.687-.882-.633-.13-1.29-.083-1.897.14-.273-.587-.704-1.086-1.245-1.44S11.647 1.62 11 1.604c-.646.017-1.273.213-1.813.568s-.969.854-1.24 1.441c-.608-.223-1.267-.272-1.902-.14-.635.13-1.22.436-1.69.882-.445.47-.749 1.055-.878 1.688-.13.633-.08 1.29.144 1.896-.587.274-1.087.705-1.443 1.245-.356.54-.555 1.17-.574 1.817.02.647.218 1.276.574 1.817.356.54.856.972 1.443 1.245-.224.606-.274 1.263-.144 1.896.13.634.433 1.218.877 1.688.47.443 1.054.747 1.687.878.633.132 1.29.084 1.897-.136.274.586.705 1.084 1.246 1.439.54.354 1.17.551 1.816.569.647-.016 1.276-.213 1.817-.567s.972-.854 1.245-1.44c.604.239 1.266.296 1.903.164.636-.132 1.22-.447 1.68-.907.46-.46.776-1.044.908-1.681s.075-1.299-.165-1.903c.586-.274 1.084-.705 1.439-1.246.354-.54.551-1.17.569-1.816z"/></svg></span></div><div class="fi-handle">@zhangwei</div></div>
+        <div class="fi-info"><div class="fi-name">张伟 <span style="color:var(--accent);display:inline-flex"><svg width="14" height="14" viewBox="0 0 24 24"><path fill="var(--accent)" d="M20.396 11c-.018-.646-.215-1.275-.57-1.816-.354-.54-.852-.972-1.438-1.246.223-.607.27-1.264.14-1.897-.131-.634-.437-1.218-.882-1.687-.47-.445-1.053-.75-1.687-.882-.633-.13-1.29-.083-1.897.14-.273-.587-.704-1.086-1.245-1.44S11.647 1.62 11 1.604c-.646.017-1.273.213-1.813.568s-.969.854-1.24 1.441c-.608-.223-1.267-.272-1.902-.14-.635.13-1.22.436-1.69.882-.445.47-.749 1.055-.878 1.688-.13.633-.08 1.29.144 1.896-.587.274-1.087.705-1.443 1.245-.356.54-.555 1.17-.574 1.817.02.647.218 1.276.574 1.817.356.54.856.972 1.443 1.245-.224.606-.274 1.263-.144 1.896.13.634.433 1.218.877 1.688.47.443 1.054.747 1.687.878.633.132 1.29.084 1.897-.136.274.586.705 1.084 1.246 1.439.54.354 1.17.551 1.816.569.647-.016 1.276-.213 1.817-.567s.972-.854 1.245-1.44c.604.239 1.266.296 1.903.164.636-.132 1.22-.447 1.68-.907.46-.46.776-1.044.908-1.681s.075-1.299-.165-1.903c.586-.274 1.084-.705 1.439-1.246.354-.54.551-1.17.569-1.816z"/></svg></span></div><div class="fi-handle">@zhangwei</div></div>
         <button class="fbtn" onclick="event.stopPropagation();toggleFollow(this)">关注</button>
       </div>
-      <div class="fi">
+      <div class="fi" onclick="navigate('user','@lina_tech')">
         <div class="fa" style="background:linear-gradient(135deg,#4facfe,#00f2fe)">李</div>
         <div class="fi-info"><div class="fi-name">李娜</div><div class="fi-handle">@lina_tech</div></div>
         <button class="fbtn" onclick="event.stopPropagation();toggleFollow(this)">关注</button>
       </div>
-      <div class="fi">
+      <div class="fi" onclick="navigate('user','@chenming_ai')">
         <div class="fa" style="background:linear-gradient(135deg,#43e97b,#38f9d7)">陈</div>
-        <div class="fi-info"><div class="fi-name">陈明 <span style="color:var(--accent)"><svg width="18" height="18" viewBox="0 0 24 24"><path fill="var(--accent)" d="M20.396 11c-.018-.646-.215-1.275-.57-1.816-.354-.54-.852-.972-1.438-1.246.223-.607.27-1.264.14-1.897-.131-.634-.437-1.218-.882-1.687-.47-.445-1.053-.75-1.687-.882-.633-.13-1.29-.083-1.897.14-.273-.587-.704-1.086-1.245-1.44S11.647 1.62 11 1.604c-.646.017-1.273.213-1.813.568s-.969.854-1.24 1.441c-.608-.223-1.267-.272-1.902-.14-.635.13-1.22.436-1.69.882-.445.47-.749 1.055-.878 1.688-.13.633-.08 1.29.144 1.896-.587.274-1.087.705-1.443 1.245-.356.54-.555 1.17-.574 1.817.02.647.218 1.276.574 1.817.356.54.856.972 1.443 1.245-.224.606-.274 1.263-.144 1.896.13.634.433 1.218.877 1.688.47.443 1.054.747 1.687.878.633.132 1.29.084 1.897-.136.274.586.705 1.084 1.246 1.439.54.354 1.17.551 1.816.569.647-.016 1.276-.213 1.817-.567s.972-.854 1.245-1.44c.604.239 1.266.296 1.903.164.636-.132 1.22-.447 1.68-.907.46-.46.776-1.044.908-1.681s.075-1.299-.165-1.903c.586-.274 1.084-.705 1.439-1.246.354-.54.551-1.17.569-1.816z"/></svg></span></div><div class="fi-handle">@chenming_ai</div></div>
+        <div class="fi-info"><div class="fi-name">陈明 <span style="color:var(--accent)"><svg width="14" height="14" viewBox="0 0 24 24"><path fill="var(--accent)" d="M20.396 11c-.018-.646-.215-1.275-.57-1.816-.354-.54-.852-.972-1.438-1.246.223-.607.27-1.264.14-1.897-.131-.634-.437-1.218-.882-1.687-.47-.445-1.053-.75-1.687-.882-.633-.13-1.29-.083-1.897.14-.273-.587-.704-1.086-1.245-1.44S11.647 1.62 11 1.604c-.646.017-1.273.213-1.813.568s-.969.854-1.24 1.441c-.608-.223-1.267-.272-1.902-.14-.635.13-1.22.436-1.69.882-.445.47-.749 1.055-.878 1.688-.13.633-.08 1.29.144 1.896-.587.274-1.087.705-1.443 1.245-.356.54-.555 1.17-.574 1.817.02.647.218 1.276.574 1.817.356.54.856.972 1.443 1.245-.224.606-.274 1.263-.144 1.896.13.634.433 1.218.877 1.688.47.443 1.054.747 1.687.878.633.132 1.29.084 1.897-.136.274.586.705 1.084 1.246 1.439.54.354 1.17.551 1.816.569.647-.016 1.276-.213 1.817-.567s.972-.854 1.245-1.44c.604.239 1.266.296 1.903.164.636-.132 1.22-.447 1.68-.907.46-.46.776-1.044.908-1.681s.075-1.299-.165-1.903c.586-.274 1.084-.705 1.439-1.246.354-.54.551-1.17.569-1.816z"/></svg></span></div><div class="fi-handle">@chenming_ai</div></div>
         <button class="fbtn" onclick="event.stopPropagation();toggleFollow(this)">关注</button>
       </div>
-      <div class="fi">
-        <div class="fa" style="background:linear-gradient(135deg,#fa709a,#fee140)">王</div>
-        <div class="fi-info"><div class="fi-name">王珊珊</div><div class="fi-handle">@wangshanshan</div></div>
-        <button class="fbtn" onclick="event.stopPropagation();toggleFollow(this)">关注</button>
-      </div>
-      <a class="show-more">显示更多</a>
+      <a class="show-more" onclick="navigate('explore')">显示更多</a>
     </div>
     <div class="footer-links">
-      <a href="#">服务条款</a><a href="#">隐私政策</a><a href="#">Cookie</a><a href="#">无障碍</a><a href="#">广告</a><a href="#">更多</a><span>© 2026 言</span>
+      <a href="#">服务条款</a><a href="#">隐私政策</a><a href="#">Cookie 政策</a><a href="#">辅助功能</a><a href="#">广告信息</a><a href="#">更多</a><span>© 2026 言 Corp.</span>
     </div>
   </aside>
 </div>
+
+<!-- FLOATING POST BUTTON -->
+<button class="float-post-btn" onclick="openPostModal()">
+  <svg viewBox="0 0 24 24"><path d="M23 3c-6.62-.1-10.38 2.42-13.05 6.64C7.14 13.18 6 18.03 6 18.03V21h2.97c3.96 0 7.14-1.14 9.39-3.95 2.84-3.54 4.41-8.14 4.64-14.05zM12 14a2 2 0 110-4 2 2 0 010 4z"/></svg>
+</button>
 
 <!-- MODAL: POST -->
 <div class="modal-overlay" id="postModal">
@@ -543,10 +554,11 @@ textarea,input{font-family:inherit;outline:none;border:none;background:transpare
 // ===== STATE =====
 const state = {
   currentPage: 'home',
+  homeTab: 'foryou',
   theme: 'dark',
   user: { name:'王坤', handle:'@wngkn5393218313', bio:'开发者 / AI爱好者 / 创业者', followers:3721, following:891, posts:284, liked:1562 },
   notifCount: 3,
-  currentUser: null, // null = logged out
+  currentUser: null,
   modalTweet: null,
   likers: []
 };
@@ -685,15 +697,17 @@ function navigate(page, param){
 function renderHome(){
   const main = document.getElementById('mainContent');
   const u = state.user;
+  const forYouActive = state.homeTab !== 'following';
   main.innerHTML = `
     <div class="ct">
-      <div class="main-header">
-        <button class="back-btn" onclick="navigate('home')"><svg viewBox="0 0 24 24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg></button>
-        <div class="page-title">主页</div>
-      </div>
-      <div class="tab-row">
-        <div class="tab active" onclick="switchFTab(this)">为你推荐</div>
-        <div class="tab" onclick="switchFTab(this)">正在关注</div>
+      <div class="main-header" style="padding:0 16px;flex-direction:column;align-items:stretch;gap:0">
+        <div style="display:flex;align-items:center;gap:20px;padding:12px 0">
+          <div class="page-title" style="font-size:20px;font-weight:800">主页</div>
+        </div>
+        <div class="tab-row" style="border-bottom:none">
+          <div class="tab ${forYouActive?'active':''}" onclick="switchHomeTab('foryou')">为你推荐</div>
+          <div class="tab ${!forYouActive?'active':''}" onclick="switchHomeTab('following')">正在关注</div>
+        </div>
       </div>
     </div>
     <div class="compose">
@@ -702,23 +716,63 @@ function renderHome(){
         <textarea class="cin" placeholder="有什么新鲜事？" id="homeCompose" oninput="updateComposeBtn()"></textarea>
         <div class="ctb">
           <div class="ctools">
-            <button class="tb disabled"><svg viewBox="0 0 24 24"><path d="M3 5.5C3 4.119 4.119 3 5.5 3h13C19.881 3 21 4.119 21 5.5v13c0 1.381-1.119 2.5-2.5 2.5h-13C4.119 21 3 19.881 3 18.5v-13z"/></svg></button>
-            <button class="tb disabled"><svg viewBox="0 0 24 24"><path d="M3 5.5C3 4.119 4.119 3 5.5 3h13C19.881 3 21 4.119 21 5.5v13c0 1.381-1.119 2.5-2.5 2.5h-13C4.119 21 3 19.881 3 18.5v-13z"/></svg></button>
-            <button class="tb disabled" onclick="toggleEmoji()"><svg viewBox="0 0 24 24"><path d="M8 9.5C8 8.119 8.672 7 9.5 7S11 8.119 11 9.5 10.328 12 9.5 12 8 10.881 8 9.5zm6.5 0c0-1.381.672-2.5 1.5-2.5s1.5 1.119 1.5 2.5-.672 2.5-1.5 2.5-1.5-1.119-1.5-2.5z"/></svg></button>
-            <button class="tb disabled"><svg viewBox="0 0 24 24"><path d="M12 7c-1.381 0-2.5 1.119-2.5 2.5S10.619 12 12 12s2.5-1.119 2.5-2.5S13.381 7 12 7z"/></svg></button>
+            <button class="tb"><svg viewBox="0 0 24 24"><path d="M3 5.5C3 4.119 4.119 3 5.5 3h13C19.881 3 21 4.119 21 5.5v13c0 1.381-1.119 2.5-2.5 2.5h-13C4.119 21 3 19.881 3 18.5v-13z"/></svg></button>
+            <button class="tb"><svg viewBox="0 0 24 24"><path d="M12 7V3H2v18h20V7H12zM6 19H4v-2h2v2zm0-4H4v-2h2v2zm0-4H4V9h2v2zm0-4H4V5h2v2zm4 12H8v-2h2v2zm0-4H8v-2h2v2zm0-4H8V9h2v2zm0-4H8V5h2v2zm10 12h-8v-2h2v-2h-2v-2h2v-2h-2V9h8v10zm-2-8h-2v2h2v-2zm0 4h-2v2h2v-2z"/></svg></button>
+            <button class="tb" onclick="toggleEmoji()"><svg viewBox="0 0 24 24"><path d="M8 9.5C8 8.119 8.672 7 9.5 7S11 8.119 11 9.5 10.328 12 9.5 12 8 10.881 8 9.5zm6.5 0c0-1.381.672-2.5 1.5-2.5s1.5 1.119 1.5 2.5-.672 2.5-1.5 2.5-1.5-1.119-1.5-2.5zM12 17.5c2.33 0 4.31-1.46 5.11-3.5H6.89c.8 2.04 2.78 3.5 5.11 3.5z"/></svg></button>
+            <button class="tb"><svg viewBox="0 0 24 24"><path d="M6 3V1h2v2h8V1h2v2h2v18H4V3h2zm0 2H4v16h16V5h-2v2h-2V5H8v2H6V5z"/></svg></button>
           </div>
           <button class="pb" id="homePostBtn" disabled onclick="homePost()">发帖</button>
         </div>
       </div>
     </div>
-    ${DB.tweets.map(t=>renderTweet(t)).join('')}
+    <div id="homeFeed">${forYouActive ? renderForYouFeed() : renderFollowingFeed()}</div>
   `;
   initEmojiPicker();
 }
 
-function switchFTab(el){
-  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
-  el.classList.add('active');
+function renderForYouFeed(){
+  const promoted = `
+    <div class="tweet" style="cursor:default">
+      <div style="padding:0 16px 4px 52px;font-size:13px;color:var(--text2);display:flex;align-items:center;gap:6px">
+        <svg width="14" height="14" fill="var(--text2)" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 15h-2v-2h2v2zm2.07-7.75l-.9.92C12.45 11.9 12 13.5 12 15h-2v-.5c0-1.1.45-2.1 1.17-2.83l1.24-1.26c.37-.36.59-.86.59-1.41 0-1.1-.9-2-2-2s-2 .9-2 2H8c0-2.21 1.79-4 4-4s4 1.79 4 4c0 .88-.36 1.68-.93 2.25z"/></svg>
+        <span>推广内容</span>
+      </div>
+      <div style="display:flex;gap:12px;padding:0 16px 12px">
+        <div style="width:48px;height:48px;border-radius:12px;background:linear-gradient(135deg,#1a73e8,#4285f4);display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:900;color:#fff;flex-shrink:0">IB</div>
+        <div style="flex:1;min-width:0">
+          <div style="display:flex;align-items:center;gap:6px">
+            <span style="font-weight:700;font-size:15px">Interactive Brokers</span>
+            <span style="color:var(--text2);font-size:15px">@IBKR</span>
+            <span style="color:var(--text2);font-size:15px">· 赞助</span>
+          </div>
+          <div style="margin-top:4px;font-size:15px;line-height:1.6">choose Interactive Brokers<br>Sign up for a free trial today!</div>
+          <div style="margin-top:8px;padding:12px;border:1px solid var(--border);border-radius:12px">
+            <div style="font-size:14px;color:var(--text2)">Interactive Brokers Hong Kong Ltd is regulated by the SFC. Your capital is at risk.</div>
+            <div style="margin-top:4px;font-size:13px;color:var(--text2)">来自 interactivebrokers.com.hk</div>
+          </div>
+          <div class="tactions" style="margin-top:12px">
+            <button class="ab"><svg viewBox="0 0 24 24"><path d="M1.751 10c0-1.381 1.119-2.5 2.5-2.5h15c1.381 0 2.5 1.119 2.5 2.5v13c0 1.381-1.119 2.5-2.5 2.5h-15c-1.381 0-2.5-1.119-2.5-2.5v-13z"/></svg><span class="ac">12</span></button>
+            <button class="ab"><svg viewBox="0 0 24 24"><path d="M4.5 3.88l4.432 4.14-1.364 1.46L5.5 7.55V16c0 1.1.896 2 2 2H13v2H7.5c-2.209 0-4-1.79-4-4V7.55L1.432 9.48.068 8.02 4.5 3.88z"/></svg><span class="ac">9</span></button>
+            <button class="ab"><svg viewBox="0 0 24 24"><path d="M16.697 5.5c-1.222-.06-2.679.51-3.89 2.16l-.805 1.09-.806-1.09C9.984 6.01 8.526 5.44 7.304 5.5c-1.243.07-2.349.78-2.91 1.91-.552 1.12-.633 2.78.479 4.82 1.074 1.97 3.257 4.27 7.129 6.61 3.87-2.34 6.052-4.64 7.126-6.61 1.111-2.04 1.03-3.7.477-4.82-.561-1.13-1.666-1.84-2.908-1.91z"/></svg><span class="ac">182</span></button>
+            <button class="ab"><svg viewBox="0 0 24 24"><path d="M8.75 21V3h2v18h-2zM18 21V8.5h2V21h-2zM4 21l.004-10h2L6 21H4zm9.248 0v-7h2v7h-2z"/></svg><span class="ac">408万</span></button>
+          </div>
+        </div>
+      </div>
+    </div>`;
+  return promoted + DB.tweets.map(t=>renderTweet(t)).join('');
+}
+
+function renderFollowingFeed(){
+  const followingTweets = DB.tweets.filter(t => t.handle === '@linxiaoyu' || t.handle === '@techdaily');
+  if(followingTweets.length === 0){
+    return `<div class="empty-state"><svg viewBox="0 0 24 24"><path d="M5.651 19h12.698c-.337-1.8-1.023-3.21-1.945-4.19C15.318 13.65 13.838 13 12 13s-3.317.65-4.404 1.81c-.922.98-1.608 2.39-1.945 4.19z"/></svg><h3>还没有内容</h3><p>关注更多用户，在这里看到他们的帖子</p></div>`;
+  }
+  return followingTweets.map(t=>renderTweet(t)).join('');
+}
+
+function switchHomeTab(tab){
+  state.homeTab = tab;
+  renderHome();
 }
 function updateComposeBtn(){
   const v = document.getElementById('homeCompose').value.trim();
@@ -990,7 +1044,7 @@ function renderProfile(){
           <div class="pi-name">${u.name}</div>
           <div class="pi-handle">${u.handle}</div>
         </div>
-        <button class="fbtn following" onclick="this.classList.toggle('following');this.textContent=this.classList.contains('following')?'正在关注':'关注'" style="margin-top:8px">编辑个人资料</button>
+        <button class="fbtn following" style="margin-top:8px;background:transparent;color:var(--text);border:1px solid var(--border);border-radius:9999px;padding:7px 18px;font-size:14px;font-weight:700">编辑个人资料</button>
       </div>
       <div class="pi-bio">${u.bio}</div>
       <div class="pi-stats">
@@ -1026,7 +1080,7 @@ function renderUserProfile(handle){
   main.innerHTML = `
     <div class="ct">
       <div class="main-header">
-        <button class="back-btn" onclick="history.back()||navigate('home')"><svg viewBox="0 0 24 24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg></button>
+        <button class="back-btn" onclick="navigate('home')"><svg viewBox="0 0 24 24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg></button>
         <div>
           <div style="font-size:15px;font-weight:700">${u.name}</div>
           <div style="font-size:13px;color:var(--text2)">${f(u.posts)} 条帖子</div>
@@ -1073,7 +1127,7 @@ function renderPostDetail(id){
   main.innerHTML = `
     <div class="ct">
       <div class="main-header">
-        <button class="back-btn" onclick="history.back()||navigate('home')"><svg viewBox="0 0 24 24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg></button>
+        <button class="back-btn" onclick="navigate('home')"><svg viewBox="0 0 24 24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg></button>
         <div class="page-title">帖子</div>
       </div>
     </div>
