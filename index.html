@@ -716,8 +716,8 @@ textarea,input{font-family:inherit;outline:none;border:none;background:transpare
 </div>
 
 <!-- MODAL: MORE ACTIONS -->
-<div class="modal-overlay" id="moreModal">
-  <div class="modal" style="max-width:400px">
+<div class="modal-overlay" id="moreModal" onclick="closeMoreMenu()">
+  <div class="modal" style="max-width:400px" onclick="event.stopPropagation()">
     <div class="modal-body" style="padding:8px" id="moreModalBody"></div>
   </div>
 </div>
