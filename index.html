@@ -46,7 +46,7 @@ textarea,input{font-family:inherit;outline:none;border:none;background:transpare
 .dots{color:var(--text2);font-size:18px;margin-left:auto}
 
 /* ===== MAIN ===== */
-.main{flex:1;border-right:1px solid var(--border);max-width:600px;min-width:0;min-height:100vh}
+.main{flex:1;border-right:1px solid var(--border);max-width:600px;min-width:0;height:100vh;overflow:hidden;display:flex;flex-direction:column}
 .main-header{position:sticky;top:0;background:rgba(0,0,0,.9);backdrop-filter:blur(12px);z-index:10;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:20px;padding:12px 16px}
 .back-btn{display:none;width:36px;height:36px;border-radius:50%;background:transparent;border:none;cursor:pointer;color:var(--text);display:flex;align-items:center;justify-content:center;transition:background .2s}
 .back-btn:hover{background:rgba(231,233,234,.1)}
@@ -344,7 +344,7 @@ textarea,input{font-family:inherit;outline:none;border:none;background:transpare
 .chat-send{background:var(--accent);color:#fff;border:none;border-radius:18px;padding:8px 16px;font-size:14px;font-weight:700;cursor:pointer;transition:background .2s;margin-left:8px;flex-shrink:0}
 .chat-send:hover{background:var(--ah)}
 .chat-send:disabled{opacity:.5;cursor:default}
-.msg-chat-input{display:flex;align-items:flex-end;gap:8px;padding:8px 12px;border-top:1px solid var(--border);position:relative}
+.msg-chat-input{display:flex;align-items:flex-end;gap:8px;padding:8px 12px;border-top:1px solid var(--border);position:relative;width:100%;background:var(--bg)}
 .msg-chat-input .emoji-picker{bottom:60px;left:12px}
 .emoji-picker{position:absolute;bottom:60px;left:16px;background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:8px;display:none;flex-wrap:wrap;gap:4px;max-width:280px;z-index:10}
 .emoji-picker.show{display:flex}
@@ -490,9 +490,9 @@ textarea,input{font-family:inherit;outline:none;border:none;background:transpare
   .layout{gap:0}
   .profile-avatar{width:100px;height:100px;top:-50px}
   .profile-info{padding-top:56px}
-  .msg-layout{flex-direction:column}
+  .msg-layout{flex-direction:column;height:auto}
   .msg-list{min-width:100%;border-right:none;border-bottom:1px solid var(--border);max-height:40vh}
-  .msg-chat{flex:1}
+  .msg-chat{flex:1;min-height:300px}
   .explore-grid{grid-template-columns:1fr}
   .explore-grid-item:first-child{grid-column:1}
   .ei-img{aspect-ratio:4/3 !important}
