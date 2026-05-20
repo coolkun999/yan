@@ -275,17 +275,18 @@ textarea,input{font-family:inherit;outline:none;border:none;background:transpare
 .nicon.follow svg{fill:var(--accent)}
 .nicon.mention svg,.nicon.reply svg{fill:#a855f7}
 .nicon.retweet svg{fill:var(--green)}
+.nicon.summary svg{fill:#a855f7}
 .notif-avatars{display:flex;flex-direction:column;align-items:center;gap:4px;margin-top:4px}
 .notif-avatars .ta{width:32px;height:32px;font-size:14px}
 .notif-avatars-multi{display:flex;flex-wrap:wrap;gap:2px;justify-content:center;max-width:40px}
 .notif-avatars-multi .ta{width:18px;height:18px;font-size:10px;border-radius:50%}
 .nbody{flex:1;min-width:0}
-.ntext{font-size:15px;margin-top:2px;line-height:1.5}
-.ntext strong{font-weight:700}
-.ntext a{color:var(--accent)}
-.ntext a:hover{text-decoration:underline}
-.ntime{color:var(--text2);font-size:13px;margin-top:2px}
-.ntarget{font-size:14px;color:var(--text2);margin-top:4px;line-height:1.5}
+.notif-line{font-size:15px;line-height:1.4;margin-bottom:2px}
+.ntarget{font-size:15px;color:var(--text2);margin-top:4px;line-height:1.5}
+/* Summary notification - X style */
+.notif-summary-header{font-size:15px;line-height:1.4;margin-bottom:4px}
+.notif-summary-text{font-size:15px;color:var(--text2);line-height:1.5;margin-top:4px}
+.notif-summary-img{width:60px;height:60px;border-radius:12px;object-fit:cover;flex-shrink:0;margin-left:8px}
 .notif-more{position:absolute;top:8px;right:12px;color:var(--text2);cursor:pointer;width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;transition:background .2s;background:transparent;border:none}
 .notif-more:hover{background:rgba(29,155,240,.1);color:var(--accent)}
 .notif-more svg{width:18px;height:18px;fill:currentColor}
@@ -826,15 +827,16 @@ const DB = {
     {id:102,name:"王坤",handle:"@wngkn5393218313",verified:false,time:"3月27日",text:"又快清明节了",avatar:"王",avatarBg:"linear-gradient(135deg,#667eea,#764ba2)",likes:5,retweets:0,replies:0,views:"108",liked:false,retweeted:false,bookmarked:false}
   ],
   notifications: [
-    {id:1,type:"mention",name:"S.",handle:"@s_example",avatar:"S",avatarBg:"linear-gradient(135deg,#667eea,#764ba2)",text:"So, let me get this straight. We're not entitled to clean water, but AI data centers are???",time:"2小时",unread:true,extra:{icon:"star",iconColor:"#a855f7"},target:""},
+    {id:1,type:"summary",name:"数码荔枝",handle:"@digital_litchi",avatar:"数",avatarBg:"linear-gradient(135deg,#ff6b6b,#feca57)",text:"搬进新家三年不到，购买的【3】个 Aqara H1 毛巾架全部在过去半年【全部】坏了，两次导致了所在卫生间跳闸。",time:"1小时",unread:true,extra:{icon:"star"},image:"https://picsum.photos/seed/notice1/120/120"},
     {id:2,type:"follow",name:"诗雅",handle:"@shiya",avatar:"诗",avatarBg:"linear-gradient(135deg,#f093fb,#f5576c)",text:"关注了你",time:"4月27日",unread:true},
-    {id:3,type:"like",name:"はるみ@おふぱこ/プロフ見てね",handle:"@harumi",avatar:"は",avatarBg:"linear-gradient(135deg,#4facfe,#00f2fe)",text:"喜欢了你的回复",time:"4月19日",unread:false,target:"多大",multi:true,others:[{avatar:"は",avatarBg:"linear-gradient(135deg,#4facfe,#00f2fe)"}]},
-    {id:4,type:"like",name:"Amelia",handle:"@amelia",avatar:"A",avatarBg:"linear-gradient(135deg,#43e97b,#38f9d7)",text:"喜欢了你的回复",time:"4月19日",unread:false,target:"哪里的"},
-    {id:5,type:"like",name:"无",handle:"@wu",avatar:"无",avatarBg:"linear-gradient(135deg,#fa709a,#fee140)",text:"和另外 2 人喜欢了你的回复",time:"4月16日",unread:false,target:"无聊的一笔",multi:true,others:[{avatar:"",avatarBg:"#333"},{avatar:"",avatarBg:"#555"}]},
-    {id:6,type:"follow",name:"张伟",handle:"@zhangwei",avatar:"张",avatarBg:"linear-gradient(135deg,#f093fb,#f5576c)",text:"关注了你",time:"5小时前",unread:false},
-    {id:7,type:"like",name:"李娜",handle:"@lina_tech",avatar:"李",avatarBg:"linear-gradient(135deg,#4facfe,#00f2fe)",text:"赞了你的帖子",time:"1小时前",unread:true,target:"今天用 AI 写了一段代码..."},
-    {id:8,type:"reply",name:"王珊珊",handle:"@wangshanshan",avatar:"王",avatarBg:"linear-gradient(135deg,#fa709a,#fee140)",text:"回复了你的帖子：说的太对了！",time:"3小时前",unread:true,target:"创业第三年的感悟"},
-    {id:9,type:"mention",name:"科技日报",handle:"@techdaily",avatar:"科",avatarBg:"linear-gradient(135deg,#f093fb,#f5576c)",text:"提及了你：@wngkn5393218313",time:"6小时前",unread:false,target:"今天 AI 领域又有新突破"}
+    {id:3,type:"like",name:"あさの",handle:"@asano",avatar:"あ",avatarBg:"linear-gradient(135deg,#4facfe,#00f2fe)",text:"喜欢了你的回复",time:"4月22日",unread:false,target:"多大",multi:false},
+    {id:4,type:"like",name:"はるみ",handle:"@harumi",avatar:"は",avatarBg:"linear-gradient(135deg,#43e97b,#38f9d7)",text:"喜欢了你的回复",time:"4月19日",unread:false,target:"多大",multi:true,others:[{avatar:"は",avatarBg:"linear-gradient(135deg,#43e97b,#38f9d7)"}]},
+    {id:5,type:"like",name:"Amelia",handle:"@amelia",avatar:"A",avatarBg:"linear-gradient(135deg,#fa709a,#fee140)",text:"喜欢了你的回复",time:"4月19日",unread:false,target:"哪里的"},
+    {id:6,type:"like",name:"无",handle:"@wu",avatar:"无",avatarBg:"linear-gradient(135deg,#667eea,#764ba2)",text:"和另外 2 人喜欢了你的回复",time:"4月16日",unread:false,target:"无聊的一笔",multi:true,others:[{avatar:"",avatarBg:"#333"},{avatar:"",avatarBg:"#555"}]},
+    {id:7,type:"follow",name:"张伟",handle:"@zhangwei",avatar:"张",avatarBg:"linear-gradient(135deg,#f093fb,#f5576c)",text:"关注了你",time:"5小时前",unread:false},
+    {id:8,type:"like",name:"李娜",handle:"@lina_tech",avatar:"李",avatarBg:"linear-gradient(135deg,#4facfe,#00f2fe)",text:"赞了你的帖子",time:"1小时前",unread:true,target:"今天用 AI 写了一段代码..."},
+    {id:9,type:"reply",name:"王珊珊",handle:"@wangshanshan",avatar:"王",avatarBg:"linear-gradient(135deg,#fa709a,#fee140)",text:"回复了你的帖子",time:"3小时前",unread:true,target:"说的太对了！",original:"创业第三年的感悟"},
+    {id:10,type:"mention",name:"科技日报",handle:"@techdaily",avatar:"科",avatarBg:"linear-gradient(135deg,#f093fb,#f5576c)",text:"提及了你",time:"6小时前",unread:false,target:"今天 AI 领域又有新突破"}
   ],
   messages: [
     {id:1,name:"张伟",handle:"@zhangwei",avatar:"张",avatarBg:"linear-gradient(135deg,#f093fb,#f5576c)",preview:"好的，明天见！",time:"14:32",unread:1,online:true,messages:[
@@ -1334,31 +1336,53 @@ function renderNotifItem(notif){
     follow: `<svg viewBox="0 0 24 24"><path d="M5.651 19h12.698c-.337-1.8-1.023-3.21-1.945-4.19C15.318 13.65 13.838 13 12 13s-3.317.65-4.404 1.81c-.922.98-1.608 2.39-1.945 4.19zM12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm11 5h-2v-2h-2v2h-2v2h2v2h2v-2h2v-2z"/></svg>`,
     retweet: `<svg viewBox="0 0 24 24"><path d="M4.5 3.88l4.432 4.14-1.364 1.46L5.5 7.55V16c0 1.1.896 2 2 2H13v2H7.5c-2.209 0-4-1.79-4-4V7.55L1.432 9.48.068 8.02 4.5 3.88zM16.5 14.12l-4.432-4.14 1.364-1.46 2.068 1.97V2h2v9.45l2.068-1.97 1.364 1.46-4.432 4.14z"/></svg>`,
     reply: `<svg viewBox="0 0 24 24"><path d="M1.751 10c0-4.42 3.584-8 8.005-8h4.366c4.49 0 7.501 3.858 7.501 7.501 0 3.808-2.851 7.091-6.056 7.765.005.099.01.197.01.297 0 1.68-1.072 2.96-2.584 3.063C11.51 21.954 11.013 22 10.5 22c-4.394 0-8.75-3.519-8.75-8.5 0-1.085.225-2.107.625-3.025-.001-.075-.014-.155-.014-.237C2.361 10 2.056 10 1.75 10z"/></svg>`,
-    mention: `<svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-1-13h2v6h-2zm0 8h2v2h-2z"/></svg>`
+    mention: `<svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-1-13h2v6h-2zm0 8h2v2h-2z"/></svg>`,
+    summary: `<svg viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>`
   };
+
+  // Summary type notification (X-style highlight)
+  if(notif.type==='summary'){
+    return `
+      <div class="notif ${notif.unread?'unread':''}" onclick="handleNotif(${notif.id},'${notif.type}')">
+        <div class="notif-layout">
+          <div class="notif-icon-col">
+            <div class="nicon summary">${typeIcons.summary}</div>
+          </div>
+          <div class="nbody" style="padding-top:2px">
+            <div class="notif-summary-header">
+              <span>来自 ${notif.name} 的最新帖子</span>
+              <span style="color:var(--text2)"> · ${notif.time}</span>
+            </div>
+            <div class="notif-summary-text">${notif.text}</div>
+          </div>
+          ${notif.image?`<img src="${notif.image}" class="notif-summary-img" alt="">`:''}
+        </div>
+        <button class="notif-more" onclick="event.stopPropagation();openNotifMore(event)">
+          <svg viewBox="0 0 24 24"><path d="M3 12c0-1.1.9-2 2-2s2 .9 2 2-.9 2-2 2-2-.9-2-2zm9 2c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm7 0c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2z"/></svg>
+        </button>
+      </div>`;
+  }
+
   const iconClass = notif.type;
-  const extraIcon = notif.extra?.icon==='star'?`<div class="nicon mention"><svg viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg></div>`:'';
   const avatars = notif.multi && notif.others ? `
     <div class="notif-avatars-multi">
       <div class="ta" style="background:${notif.avatarBg}">${notif.avatar}</div>
       ${notif.others.map(o=>`<div class="ta" style="background:${o.avatarBg}">${o.avatar}</div>`).join('')}
     </div>` : `
     <div class="ta" style="background:${notif.avatarBg};width:40px;height:40px;font-size:16px">${notif.avatar}</div>`;
+
+  // Build notification text line: Name action · time
+  const actionText = `<span style="font-weight:700;font-size:15px">${notif.name}</span> <span style="color:var(--text2);font-size:15px">${notif.text} · ${notif.time}</span>`;
+
   return `
     <div class="notif ${notif.unread?'unread':''}" onclick="handleNotif(${notif.id},'${notif.type}')">
       <div class="notif-layout">
         <div class="notif-icon-col">
           <div class="nicon ${iconClass}">${typeIcons[notif.type]||typeIcons.mention}</div>
-          ${extraIcon}
           ${notif.type!=='follow'?avatars:''}
         </div>
         <div class="nbody" style="padding-top:2px">
-          <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
-            <span style="font-weight:700;font-size:15px">${notif.name}</span>
-            <span style="color:var(--text2);font-size:15px">${notif.handle}</span>
-            <span style="color:var(--text2);font-size:15px">· ${notif.time}</span>
-          </div>
-          <div class="ntext">${notif.text}</div>
+          <div class="notif-line">${actionText}</div>
           ${notif.target?`<div class="ntarget">${notif.target}</div>`:''}
         </div>
       </div>
