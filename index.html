@@ -577,9 +577,9 @@ textarea,input{font-family:inherit;outline:none;border:none;background:transpare
   <aside class="sidebar-right" id="sidebarRight" style="display:none">
     <div class="search-box">
       <div style="display:flex;align-items:center;gap:8px">
-        <div class="sbw" onclick="navigate('search')" style="cursor:pointer;flex:1">
+        <div class="sbw" style="cursor:text;flex:1" onclick="document.getElementById('rightSearchInput').focus()">
           <svg viewBox="0 0 24 24"><path d="M10.25 3.75c-3.59 0-6.5 2.91-6.5 6.5s2.91 6.5 6.5 6.5c1.795 0 3.419-.726 4.596-1.904 1.178-1.177 1.904-2.801 1.904-4.596 0-3.59-2.91-6.5-6.5-6.5z"/></svg>
-          <input class="sin" placeholder="搜索" readonly style="cursor:pointer">
+          <input class="sin" placeholder="搜索" id="rightSearchInput" style="cursor:text" onkeydown="if(event.key==='Enter'){navigate('search',this.value);this.value=''}">
         </div>
         <button class="back-btn" style="display:flex;width:36px;height:36px;flex-shrink:0" onclick="navigate('settings')" title="设置">
           <svg viewBox="0 0 24 24"><path d="M19.43 12.98c.04-.32.07-.64.07-.98s-.03-.66-.07-.98l2.1-1.65c.19-.15.24-.42.12-.64l-2-3.46c-.12-.22-.39-.3-.61-.22l-2.49 1c-.52-.4-1.08-.73-1.69-.98l-.38-2.65A.488.488 0 0014 2h-4c-.25 0-.46.18-.5.42l-.38 2.65c-.61.25-1.17.59-1.69.98l-2.49-1c-.23-.09-.49 0-.61.22l-2 3.46c-.13.22-.07.49.12.64l2.1 1.65c-.04.32-.07.65-.07.98s.03.66.07.98l-2.1 1.65c-.19.15-.24.42-.12.64l2 3.46c.12.22.39.3.61.22l2.49-1c.52.4 1.08.73 1.69.98l.38 2.65c.04.24.25.42.5.42h4c.25 0 .46-.18.5-.42l.38-2.65c.61-.25 1.17-.59 1.69-.98l2.49 1c.23.09.49 0 .61-.22l2-3.46c.12-.22.07-.49-.12-.64l-2.1-1.65zM12 15.5c-1.93 0-3.5-1.57-3.5-3.5s1.57-3.5 3.5-3.5 3.5 1.57 3.5 3.5-1.57 3.5-3.5 3.5z"/></svg>
@@ -696,7 +696,7 @@ textarea,input{font-family:inherit;outline:none;border:none;background:transpare
             <button class="tb" onclick="toggleEmoji()"><svg viewBox="0 0 24 24"><path d="M8 9.5C8 8.119 8.672 7 9.5 7S11 8.119 11 9.5 10.328 12 9.5 12 8 10.881 8 9.5zm6.5 0c0-1.381.672-2.5 1.5-2.5s1.5 1.119 1.5 2.5-.672 2.5-1.5 2.5-1.5-1.119-1.5-2.5z"/></svg></button>
             <button class="tb"><svg viewBox="0 0 24 24"><path d="M12 7c-1.381 0-2.5 1.119-2.5 2.5S10.619 12 12 12s2.5-1.119 2.5-2.5S13.381 7 12 7z"/></svg></button>
           </div>
-          <div class="emoji-picker" id="emojiPicker"></div>
+          <div class="emoji-picker" id="chatEmojiPicker"></div>
         </div>
       </div>
     </div>
@@ -1529,7 +1529,7 @@ function openChat(id){
       ${renderChatMessages(chat.messages)}
     </div>
     <div class="msg-chat-input" style="position:relative">
-      <div class="emoji-picker" id="emojiPicker">
+      <div class="emoji-picker" id="chatEmojiPicker">
         <button class="emoji-btn" onclick="insertEmoji('😀')">😀</button>
         <button class="emoji-btn" onclick="insertEmoji('😂')">😂</button>
         <button class="emoji-btn" onclick="insertEmoji('😍')">😍</button>
@@ -1588,13 +1588,14 @@ function getDateLabel(timeStr){
   return '更早';
 }
 function toggleEmojiPicker(){
-  document.getElementById('emojiPicker').classList.toggle('show');
+  const picker = document.getElementById('chatEmojiPicker') || document.getElementById('emojiPicker');
+  if(picker) picker.classList.toggle('show');
 }
 function insertEmoji(emoji){
   const input = document.getElementById('chatInput');
-  input.value += emoji;
-  input.focus();
-  toggleSendBtn();
+  if(input){input.value += emoji;input.focus();toggleSendBtn();}
+  const picker = document.getElementById('chatEmojiPicker') || document.getElementById('emojiPicker');
+  if(picker) picker.classList.remove('show');
 }
 function toggleSendBtn(){
   const input = document.getElementById('chatInput');
@@ -2390,11 +2391,18 @@ function renderSettings(){
 function setTheme(theme,el){
   state.theme=theme;
   document.querySelectorAll('.theme-opt').forEach(e=>e.classList.remove('active'));
-  el.classList.add('active');
-  document.documentElement.className='';
+  if(el) el.classList.add('active');
+  document.documentElement.classList.remove('theme-light','theme-dim');
   if(theme==='light') document.documentElement.classList.add('theme-light');
   if(theme==='dim') document.documentElement.classList.add('theme-dim');
+  try{localStorage.setItem('yan-theme',theme);}catch(e){}
 }
+(function(){
+  try{
+    const saved=localStorage.getItem('yan-theme');
+    if(saved&&saved!=='dark'){state.theme=saved;document.documentElement.classList.add('theme-'+saved);}
+  }catch(e){}
+})();
 
 // ===== SEARCH =====
 function renderSearch(q=''){
@@ -2520,7 +2528,44 @@ function toggleListFollow(btn){
   }
 }
 function openCreateListModal(){
-  showToast('创建列表功能即将上线');
+  const modal = document.getElementById('createListModal') || createCreateListModal();
+  modal.classList.add('active');
+  setTimeout(()=>document.getElementById('listNameInput')?.focus(),50);
+}
+function createCreateListModal(){
+  const div = document.createElement('div');
+  div.id = 'createListModal';
+  div.className = 'modal-overlay';
+  div.innerHTML = `
+    <div class="modal" style="max-width:480px">
+      <div class="modal-header">
+        <button class="modal-close" onclick="closeCreateListModal()"><svg viewBox="0 0 24 24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg></button>
+        <div class="modal-title">创建新列表</div>
+      </div>
+      <div class="modal-body">
+        <div class="ail" style="margin-bottom:12px"><label>列表名称</label><input type="text" id="listNameInput" placeholder="输入列表名称" style="font-size:16px;padding:8px 0"></div>
+        <div class="ail"><label>描述（可选）</label><input type="text" id="listDescInput" placeholder="简要描述这个列表" style="font-size:16px;padding:8px 0"></div>
+      </div>
+      <div class="modal-footer">
+        <button class="modal-btn" onclick="closeCreateListModal()">取消</button>
+        <button class="modal-btn primary" onclick="submitCreateList()">创建</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(div);
+  return div;
+}
+function closeCreateListModal(){
+  document.getElementById('createListModal')?.classList.remove('active');
+}
+function submitCreateList(){
+  const name = document.getElementById('listNameInput')?.value.trim();
+  if(!name){alert('请输入列表名称');return;}
+  const desc = document.getElementById('listDescInput')?.value.trim()||'暂无描述';
+  const newList = {id:Date.now(),name,description:desc,members:1,following:true,owner:true};
+  if(typeof LISTS_DATA !== 'undefined') LISTS_DATA.unshift(newList);
+  closeCreateListModal();
+  navigate('lists');
 }
 
 // ===== TOPICS =====
