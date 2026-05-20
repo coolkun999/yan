@@ -363,19 +363,10 @@ textarea,input{font-family:inherit;outline:none;border:none;background:transpare
 .explore-tab:hover{background:rgba(231,233,234,.05)}
 .explore-tab.active{color:var(--text);font-weight:700}
 .explore-tab.active::after{content:'';position:absolute;bottom:0;left:0;right:0;height:4px;background:var(--accent);border-radius:9999px 9999px 0 0}
-.explore-grid{display:grid;grid-template-columns:1fr 1fr;gap:2px;padding:2px}
-.explore-grid-item{position:relative;cursor:pointer;overflow:hidden;border-radius:0}
-.explore-grid-item:first-child{grid-column:1/-1}
-.ei-img{width:100%;display:block;aspect-ratio:16/9;object-fit:cover;min-height:120px;transition:opacity .2s}
-.explore-grid-item:first-child .ei-img{aspect-ratio:16/7}
-.ei-overlay{position:absolute;inset:0;background:rgba(0,0,0,.3);opacity:0;transition:opacity .2s;display:flex;align-items:flex-end;padding:12px;gap:16px;color:#fff;font-size:14px;font-weight:700}
-.explore-grid-item:hover .ei-overlay{opacity:1}
-.ei-item{position:relative;overflow:hidden;border-radius:0}
-.ei-item:first-child{grid-column:1/-1}
 
 /* Explore trending list - X style */
-.explore-trend-section{margin-top:16px;padding:0 16px}
-.explore-trend-card{background:var(--bg2);border-radius:16px;overflow:hidden;margin-bottom:16px}
+.explore-trend-section{margin-top:0}
+.explore-trend-card{background:var(--bg2);overflow:hidden}
 .explore-trend-header{padding:12px 16px;border-bottom:1px solid var(--border);font-size:18px;font-weight:800}
 .explore-trend-list{display:flex;flex-direction:column}
 .explore-trend-item{display:flex;align-items:flex-start;justify-content:space-between;padding:12px 16px;border-bottom:1px solid var(--border);cursor:pointer;transition:background .2s;position:relative}
@@ -391,16 +382,6 @@ textarea,input{font-family:inherit;outline:none;border:none;background:transpare
 .explore-trend-more:hover{background:rgba(29,155,240,.1);color:var(--accent)}
 .explore-trend-more svg{width:18px;height:18px;fill:currentColor}
 .explore-trend-img{width:60px;height:60px;border-radius:8px;object-fit:cover;flex-shrink:0;margin-left:12px}
-
-/* X-style content sections */
-.explore-section{padding:16px}
-.explore-section-title{font-size:20px;font-weight:800;margin-bottom:16px}
-.explore-news-card{padding:12px 16px;border-bottom:1px solid var(--border);cursor:pointer;transition:background .2s}
-.explore-news-card:hover{background:var(--hover)}
-.explore-news-card:last-child{border-bottom:none}
-.explore-news-cat{font-size:13px;color:var(--text2);margin-bottom:4px}
-.explore-news-title{font-size:15px;font-weight:700;line-height:1.4;margin-bottom:4px}
-.explore-news-meta{font-size:13px;color:var(--text2)}
 
 /* ===== SETTINGS ===== */
 .settings-list{max-width:600px;margin:0 auto;padding:16px}
@@ -511,9 +492,6 @@ textarea,input{font-family:inherit;outline:none;border:none;background:transpare
   .msg-layout{flex-direction:column;height:auto}
   .msg-list{min-width:100%;border-right:none;border-bottom:1px solid var(--border);max-height:40vh}
   .msg-chat{flex:1;min-height:300px}
-  .explore-grid{grid-template-columns:1fr}
-  .explore-grid-item:first-child{grid-column:1}
-  .ei-img{aspect-ratio:4/3 !important}
   .float-post-btn{display:flex}
 }
 
@@ -1209,120 +1187,34 @@ function renderExplore(){
   const tab = state.exploreTab;
   const tabs = [
     {key:'foryou',label:'推荐'},
-    {key:'trending',label:'热门'},
-    {key:'news',label:'新闻'},
-    {key:'sports',label:'体育'},
-    {key:'entertainment',label:'娱乐'}
+    {key:'trending',label:'热门'}
   ];
   let content = '';
   
   if(tab==='foryou'){
-    // 为你推荐：热门推文 + 趋势卡片
+    // 推荐：趋势列表
+    const forYou = getTrendsByTab('foryou');
     content = `
-      <div class="explore-grid">
-        ${DB.tweets.slice(0,4).map((t,i)=>`
-          <div class="explore-grid-item ${i===0?'first':''}" onclick="navigate('post',${t.id})">
-            <img class="ei-img" src="${t.media||t.images?.[0]||'https://picsum.photos/seed/'+t.id+'/600/400'}" alt="" onerror="this.src='https://picsum.photos/seed/${t.id}/600/400'">
-            <div class="ei-overlay">
-              <span>${t.likes||0} 喜欢</span>
-            </div>
-          </div>
-        `).join('')}
-      </div>
-      <div class="explore-trend-section">
-        <div class="explore-trend-card">
-          <div class="explore-trend-header">今日趋势</div>
-          ${getTrendsByTab('trending').slice(0,5).map((t,i)=>renderTrendItem(t,i+1)).join('')}
+      <div class="explore-trend-section" style="padding:0">
+        <div class="explore-trend-card" style="border-radius:0">
+          ${forYou.map((t,i)=>renderTrendItem(t,i+1)).join('')}
         </div>
-      </div>
-      <div class="explore-section">
-        <div class="explore-section-title">谁在关注</div>
-        ${DB.users.slice(0,3).map(u=>`
-          <div class="tweet" onclick="navigate('profile','${u.handle}')">
-            <div class="ta" style="background:${u.avatarBg}">${u.avatar}</div>
-            <div class="tbdy">
-              <div class="th">
-                <span class="tn">${u.name}</span>
-                <span class="thandle">@${u.handle}</span>
-              </div>
-              <button class="fbtn" onclick="event.stopPropagation();showToast('已关注 '+'${u.name}')">关注</button>
-            </div>
-          </div>
-        `).join('')}
       </div>
     `;
   } else if(tab==='trending'){
-    // 热门趋势列表 - X 风格
+    // 热门：趋势列表
     const trending = getTrendsByTab('trending');
     content = `
-      <div class="explore-trend-section">
-        <div class="explore-trend-card">
+      <div class="explore-trend-section" style="padding:0">
+        <div class="explore-trend-card" style="border-radius:0">
           ${trending.map((t,i)=>renderTrendItem(t,i+1)).join('')}
         </div>
-      </div>
-    `;
-  } else if(tab==='news'){
-    // 新闻列表 - X 风格
-    const newsItems = [
-      {cat:'科技 · 今日要闻',title:'ChatGPT 发布重大更新：新增多模态交互能力',meta:'12.3万 讨论 · 2小时前'},
-      {cat:'财经 · 实时',title:'A股三大指数集体上涨，沪指重返 3400 点',meta:'8.9万 讨论 · 4小时前'},
-      {cat:'国际 · 刚刚',title:'联合国气候峰会达成历史性协议',meta:'5.6万 讨论 · 6小时前'},
-      {cat:'科技 · 热门',title:'SpaceX 星舰完成第七次试飞',meta:'15.2万 讨论 · 1小时前'},
-      {cat:'社会 · 今日',title:'全国多地迎来强降雨天气',meta:'3.4万 讨论 · 3小时前'},
-    ];
-    content = `
-      <div class="explore-section">
-        ${newsItems.map(n=>`
-          <div class="explore-news-card">
-            <div class="explore-news-cat">${n.cat}</div>
-            <div class="explore-news-title">${n.title}</div>
-            <div class="explore-news-meta">${n.meta}</div>
-          </div>
-        `).join('')}
-      </div>
-    `;
-  } else if(tab==='sports'){
-    // 体育内容 - X 风格
-    const sportsItems = [
-      {cat:'足球 · 世界杯预选赛',title:'中国男足 3:1 战胜对手，成功晋级世界杯！',meta:'23.4万 讨论 · 刚刚'},
-      {cat:'NBA · 季后赛',title:'湖人队横扫太阳队，晋级西部决赛',meta:'12.1万 讨论 · 2小时前'},
-      {cat:'足球 · 英超',title:'曼城 4:0 大胜曼联，积分榜继续领跑',meta:'8.7万 讨论 · 5小时前'},
-      {cat:'篮球 · CBA',title:'辽宁队夺得 CBA 总冠军，实现三连冠',meta:'18.9万 讨论 · 1小时前'},
-    ];
-    content = `
-      <div class="explore-section">
-        ${sportsItems.map(n=>`
-          <div class="explore-news-card">
-            <div class="explore-news-cat">${n.cat}</div>
-            <div class="explore-news-title">${n.title}</div>
-            <div class="explore-news-meta">${n.meta}</div>
-          </div>
-        `).join('')}
-      </div>
-    `;
-  } else if(tab==='entertainment'){
-    // 娱乐内容 - X 风格
-    const entertainmentItems = [
-      {cat:'电影 · 热门',title:'《阿凡达3》定档明年春节，全球首映礼阵容曝光',meta:'25.6万 讨论 · 刚刚'},
-      {cat:'音乐 · 新歌',title:'周杰伦新专辑《最伟大的作品2》正式发布',meta:'18.3万 讨论 · 3小时前'},
-      {cat:'综艺 · 热播',title:'《歌手2024》总决赛收视率创新高',meta:'9.2万 讨论 · 5小时前'},
-      {cat:'明星 · 八卦',title:'某顶流明星官宣恋情，微博服务器一度崩溃',meta:'45.7万 讨论 · 1小时前'},
-    ];
-    content = `
-      <div class="explore-section">
-        ${entertainmentItems.map(n=>`
-          <div class="explore-news-card">
-            <div class="explore-news-cat">${n.cat}</div>
-            <div class="explore-news-title">${n.title}</div>
-            <div class="explore-news-meta">${n.meta}</div>
-          </div>
-        `).join('')}
       </div>
     `;
   }
   
   main.innerHTML = `
-    <div class="explore-tabs">
+    <div class="explore-tabs" style="position:relative;background:transparent">
       ${tabs.map(t=>`<div class="explore-tab ${tab===t.key?'active':''}" data-tab="${t.key}" onclick="switchExploreTab('${t.key}')">${t.label}</div>`).join('')}
     </div>
     <div>
@@ -1353,10 +1245,6 @@ function getTrendsByTab(tab){
     {cat:'体育 · 趋势',name:'#NBA季后赛',posts:'3.9万'},
     {cat:'科技 · 趋势',name:'#SpaceX',posts:'2.8万'}
   ];
-  if(tab==='news') return allTrends.filter(t=>t.name.includes('AI')||t.name.includes('ChatGPT')||t.name.includes('mcp'));
-  if(tab==='sports') return allTrends.filter(t=>t.name.includes('世界杯')||t.name.includes('NBA'));
-  if(tab==='entertainment') return allTrends.filter(t=>t.name.includes('演唱会')||t.name.includes('剧'));
-  if(tab==='trending') return allTrends.slice(0, 12);
   return allTrends;
 }
 function renderTrendItem(t, rank){
