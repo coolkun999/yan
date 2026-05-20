@@ -629,19 +629,11 @@ textarea,input{font-family:inherit;outline:none;border:none;background:transpare
     <!-- Trending Widget -->
     <div class="widget" id="trendingWidget">
       <div class="wt">有什么新鲜事</div>
-      <div class="trend-tabs" id="trendTabs">
-        <span class="trend-tab active" data-cat="all" onclick="filterTrends('all')">综合</span>
-        <span class="trend-tab" data-cat="tech" onclick="filterTrends('tech')">科技</span>
-        <span class="trend-tab" data-cat="ent" onclick="filterTrends('ent')">娱乐</span>
-        <span class="trend-tab" data-cat="sport" onclick="filterTrends('sport')">体育</span>
-        <span class="trend-tab" data-cat="fin" onclick="filterTrends('fin')">财经</span>
-      </div>
       <div id="trendList">
-      <div class="trend-item" onclick="navigate('trending')"><div style="display:flex;justify-content:space-between"><span class="tm">科技 · 趋势</span><span style="color:var(--text2)">···</span></div><div class="tn2">#AI大模型</div><div class="tc">12.3万 条帖子</div></div>
-      <div class="trend-item" onclick="navigate('trending')"><div style="display:flex;justify-content:space-between"><span class="tm">娱乐 · 趋势</span><span style="color:var(--text2)">···</span></div><div class="tn2">#新剧热播</div><div class="tc">9.8万 条帖子</div></div>
-      <div class="trend-item" onclick="navigate('trending')"><div style="display:flex;justify-content:space-between"><span class="tm">体育 · 趋势</span><span style="color:var(--text2)">···</span></div><div class="tn2">#世界杯预选赛</div><div class="tc">7.2万 条帖子</div></div>
-      <div class="trend-item" onclick="navigate('trending')"><div style="display:flex;justify-content:space-between"><span class="tm">财经 · 趋势</span><span style="color:var(--text2)">···</span></div><div class="tn2">#A股行情</div><div class="tc">5.6万 条帖子</div></div>
-      <div class="trend-item" onclick="navigate('trending')"><div style="display:flex;justify-content:space-between"><span class="tm">科技 · 趋势</span><span style="color:var(--text2)">···</span></div><div class="tn2">#开源项目</div><div class="tc">4.3万 条帖子</div></div>
+      <div class="trend-item" onclick="navigate('trending')"><div style="display:flex;justify-content:space-between;align-items:flex-start"><div><div class="tm">科技 · 趋势</div><div class="tn2">ChatGPT</div></div><button class="explore-trend-more" onclick="event.stopPropagation();showCtxMenu(event,'ChatGPT')" style="margin-top:0"><svg viewBox="0 0 24 24"><path d="M3 12c0-1.1.9-2 2-2s2 .9 2 2-.9 2-2 2-2-.9-2-2zm9 2c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm7 0c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2z"/></svg></button></div></div>
+      <div class="trend-item" onclick="navigate('trending')"><div style="display:flex;justify-content:space-between;align-items:flex-start"><div><div class="tm">中国香港特别行政区 的趋势</div><div class="tn2">Happy 520</div></div><button class="explore-trend-more" onclick="event.stopPropagation();showCtxMenu(event,'Happy 520')" style="margin-top:0"><svg viewBox="0 0 24 24"><path d="M3 12c0-1.1.9-2 2-2s2 .9 2 2-.9 2-2 2-2-.9-2-2zm9 2c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm7 0c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2z"/></svg></button></div></div>
+      <div class="trend-item" onclick="navigate('trending')"><div style="display:flex;justify-content:space-between;align-items:flex-start"><div><div class="tm">中国香港特别行政区 的趋势</div><div class="tn2">#Konnex</div></div><button class="explore-trend-more" onclick="event.stopPropagation();showCtxMenu(event,'#Konnex')" style="margin-top:0"><svg viewBox="0 0 24 24"><path d="M3 12c0-1.1.9-2 2-2s2 .9 2 2-.9 2-2 2-2-.9-2-2zm9 2c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm7 0c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2z"/></svg></button></div></div>
+      <div class="trend-item" onclick="navigate('trending')"><div style="display:flex;justify-content:space-between;align-items:flex-start"><div><div class="tm">中国香港特别行政区 的趋势</div><div class="tn2">#TicketToHeaven</div></div><button class="explore-trend-more" onclick="event.stopPropagation();showCtxMenu(event,'#TicketToHeaven')" style="margin-top:0"><svg viewBox="0 0 24 24"><path d="M3 12c0-1.1.9-2 2-2s2 .9 2 2-.9 2-2 2-2-.9-2-2zm9 2c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm7 0c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2z"/></svg></button></div></div>
       </div>
       <a class="show-more" onclick="navigate('trending')">显示更多</a>
     </div>
@@ -650,44 +642,22 @@ textarea,input{font-family:inherit;outline:none;border:none;background:transpare
       <div class="wt">推荐关注</div>
       <div class="fi" onclick="navigate('user','@stevenmarkryan')">
         <div class="fa" style="background:linear-gradient(135deg,#1d9bf0,#0d8ecf)">S</div>
-        <div class="fi-info"><div class="fi-name">stevenmarkryan <span style="color:var(--accent);display:inline-flex"><svg width="14" height="14" viewBox="0 0 24 24"><path fill="var(--accent)" d="M20.396 11c-.018-.646-.215-1.275-.57-1.816-.354-.54-.852-.972-1.438-1.246.223-.607.27-1.264.14-1.897-.131-.634-.437-1.218-.882-1.687-.47-.445-1.053-.75-1.687-.882-.633-.13-1.29-.083-1.897.14-.273-.587-.704-1.086-1.245-1.44S11.647 1.62 11 1.604c-.646.017-1.273.213-1.813.568s-.969.854-1.24 1.441c-.608-.223-1.267-.272-1.902-.14-.635.13-1.22.436-1.69.882-.445.47-.749 1.055-.878 1.688-.13.633-.08 1.29.144 1.896-.587.274-1.087.705-1.443 1.245-.356.54-.555 1.17-.574 1.817.02.647.218 1.276.574 1.817.356.54.856.972 1.443 1.245-.224.606-.274 1.263-.144 1.896.13.634.433 1.218.877 1.688.47.443 1.054.747 1.687.878.633.132 1.29.084 1.897-.136.274.586.705 1.084 1.246 1.439.54.354 1.17.551 1.816.569.647-.016 1.276-.213 1.817-.567s.972-.854 1.245-1.44c.604.239 1.266.296 1.903.164.636-.132 1.22-.447 1.68-.907.46-.46.776-1.044.908-1.681s.075-1.299-.165-1.903c.586-.274 1.084-.705 1.439-1.246.354-.54.551-1.17.569-1.816z"/></svg></span></div><div class="fi-handle">@stevenmarkryan</div><div class="fi-meta">32.1万 粉丝</div></div>
+        <div class="fi-info"><div class="fi-name">stevenmarkryan <span style="color:var(--accent);display:inline-flex"><svg width="14" height="14" viewBox="0 0 24 24"><path fill="var(--accent)" d="M20.396 11c-.018-.646-.215-1.275-.57-1.816-.354-.54-.852-.972-1.438-1.246.223-.607.27-1.264.14-1.897-.131-.634-.437-1.218-.882-1.687-.47-.445-1.053-.75-1.687-.882-.633-.13-1.29-.083-1.897.14-.273-.587-.704-1.086-1.245-1.44S11.647 1.62 11 1.604c-.646.017-1.273.213-1.813.568s-.969.854-1.24 1.441c-.608-.223-1.267-.272-1.902-.14-.635.13-1.22.436-1.69.882-.445.47-.749 1.055-.878 1.688-.13.633-.08 1.29.144 1.896-.587.274-1.087.705-1.443 1.245-.356.54-.555 1.17-.574 1.817.02.647.218 1.276.574 1.817.356.54.856.972 1.443 1.245-.224.606-.274 1.263-.144 1.896.13.634.433 1.218.877 1.688.47.443 1.054.747 1.687.878.633.132 1.29.084 1.897-.136.274.586.705 1.084 1.246 1.439.54.354 1.17.551 1.816.569.647-.016 1.276-.213 1.817-.567s.972-.854 1.245-1.44c.604.239 1.266.296 1.903.164.636-.132 1.22-.447 1.68-.907.46-.46.776-1.044.908-1.681s.075-1.299-.165-1.903c.586-.274 1.084-.705 1.439-1.246.354-.54.551-1.17.569-1.816z"/></svg></span></div><div class="fi-handle">@stevenmarkryan</div></div>
         <button class="fbtn" onclick="event.stopPropagation();toggleFollow(this)">关注</button>
       </div>
       <div class="fi" onclick="navigate('user','@ksi')">
         <div class="fa" style="background:linear-gradient(135deg,#f093fb,#f5576c)">K</div>
-        <div class="fi-info"><div class="fi-name">KSI <span style="color:var(--accent);display:inline-flex"><svg width="14" height="14" viewBox="0 0 24 24"><path fill="var(--accent)" d="M20.396 11c-.018-.646-.215-1.275-.57-1.816-.354-.54-.852-.972-1.438-1.246.223-.607.27-1.264.14-1.897-.131-.634-.437-1.218-.882-1.687-.47-.445-1.053-.75-1.687-.882-.633-.13-1.29-.083-1.897.14-.273-.587-.704-1.086-1.245-1.44S11.647 1.62 11 1.604c-.646.017-1.273.213-1.813.568s-.969.854-1.24 1.441c-.608-.223-1.267-.272-1.902-.14-.635.13-1.22.436-1.69.882-.445.47-.749 1.055-.878 1.688-.13.633-.08 1.29.144 1.896-.587.274-1.087.705-1.443 1.245-.356.54-.555 1.17-.574 1.817.02.647.218 1.276.574 1.817.356.54.856.972 1.443 1.245-.224.606-.274 1.263-.144 1.896.13.634.433 1.218.877 1.688.47.443 1.054.747 1.687.878.633.132 1.29.084 1.897-.136.274.586.705 1.084 1.246 1.439.54.354 1.17.551 1.816.569.647-.016 1.276-.213 1.817-.567s.972-.854 1.245-1.44c.604.239 1.266.296 1.903.164.636-.132 1.22-.447 1.68-.907.46-.46.776-1.044.908-1.681s.075-1.299-.165-1.903c.586-.274 1.084-.705 1.439-1.246.354-.54.551-1.17.569-1.816z"/></svg></span></div><div class="fi-handle">@KSI</div><div class="fi-meta">189万 粉丝</div></div>
+        <div class="fi-info"><div class="fi-name">KSI <span style="color:var(--accent);display:inline-flex"><svg width="14" height="14" viewBox="0 0 24 24"><path fill="var(--accent)" d="M20.396 11c-.018-.646-.215-1.275-.57-1.816-.354-.54-.852-.972-1.438-1.246.223-.607.27-1.264.14-1.897-.131-.634-.437-1.218-.882-1.687-.47-.445-1.053-.75-1.687-.882-.633-.13-1.29-.083-1.897.14-.273-.587-.704-1.086-1.245-1.44S11.647 1.62 11 1.604c-.646.017-1.273.213-1.813.568s-.969.854-1.24 1.441c-.608-.223-1.267-.272-1.902-.14-.635.13-1.22.436-1.69.882-.445.47-.749 1.055-.878 1.688-.13.633-.08 1.29.144 1.896-.587.274-1.087.705-1.443 1.245-.356.54-.555 1.17-.574 1.817.02.647.218 1.276.574 1.817.356.54.856.972 1.443 1.245-.224.606-.274 1.263-.144 1.896.13.634.433 1.218.877 1.688.47.443 1.054.747 1.687.878.633.132 1.29.084 1.897-.136.274.586.705 1.084 1.246 1.439.54.354 1.17.551 1.816.569.647-.016 1.276-.213 1.817-.567s.972-.854 1.245-1.44c.604.239 1.266.296 1.903.164.636-.132 1.22-.447 1.68-.907.46-.46.776-1.044.908-1.681s.075-1.299-.165-1.903c.586-.274 1.084-.705 1.439-1.246.354-.54.551-1.17.569-1.816z"/></svg></span></div><div class="fi-handle">@KSI</div></div>
         <button class="fbtn" onclick="event.stopPropagation();toggleFollow(this)">关注</button>
       </div>
       <div class="fi" onclick="navigate('user','@ai_hub')">
         <div class="fa" style="background:linear-gradient(135deg,#43e97b,#38f9d7)">
           <svg viewBox="0 0 24 24" width="20" height="20" fill="#fff"><path d="M21 10.12h-6.78l2.74 2.74L15.12 21 12 17.88l-3.12 3.12-1.84-1.84 2.74-2.74H3a1 1 0 01-1-1V11a1 1 0 011-1h7.06a8.07 8.07 0 013.22-.78A8 8 0 0121 10.12z"/></svg>
         </div>
-        <div class="fi-info"><div class="fi-name">AI Hub <span style="background:rgba(29,155,240,.15);color:var(--accent);font-size:11px;font-weight:700;padding:1px 6px;border-radius:4px">官方</span></div><div class="fi-handle">@ai_hub</div><div class="fi-meta">56.7万 粉丝</div></div>
+        <div class="fi-info"><div class="fi-name">AI Hub <span style="background:rgba(29,155,240,.15);color:var(--accent);font-size:11px;font-weight:700;padding:1px 6px;border-radius:4px">官方</span></div><div class="fi-handle">@ai_hub</div></div>
         <button class="fbtn" onclick="event.stopPropagation();toggleFollow(this)">关注</button>
       </div>
       <a class="show-more" onclick="navigate('explore')">显示更多</a>
-    </div>
-    <!-- Topics Widget -->
-    <div class="widget">
-      <div class="wt">推荐话题</div>
-      <div class="topic-pill-row">
-        <div class="topic-pill" onclick="navigate('topic','AI大模型')">
-          <span class="tp-icon">🤖</span>
-          <div class="tp-info"><div class="tp-name">AI大模型</div><div class="tp-count">12.3万人关注</div></div>
-          <button class="tp-btn" onclick="event.stopPropagation();this.textContent=this.textContent==='关注'?'已关注':'关注'">关注</button>
-        </div>
-        <div class="topic-pill" onclick="navigate('topic','开发生态')">
-          <span class="tp-icon">🛠️</span>
-          <div class="tp-info"><div class="tp-name">开发生态</div><div class="tp-count">8.9万人关注</div></div>
-          <button class="tp-btn" onclick="event.stopPropagation();this.textContent=this.textContent==='关注'?'已关注':'关注'">关注</button>
-        </div>
-        <div class="topic-pill" onclick="navigate('topic','数字艺术')">
-          <span class="tp-icon">🎨</span>
-          <div class="tp-info"><div class="tp-name">数字艺术</div><div class="tp-count">6.4万人关注</div></div>
-          <button class="tp-btn" onclick="event.stopPropagation();this.textContent=this.textContent==='关注'?'已关注':'关注'">关注</button>
-        </div>
-      </div>
-      <a class="show-more" onclick="navigate('explore')">查看更多话题</a>
     </div>
     <div class="footer-links">
       <a href="#">服务条款</a><a href="#">隐私政策</a><a href="#">Cookie 政策</a><a href="#">辅助功能</a><a href="#">广告信息</a><a href="#">更多</a><span>© 2026 言 Corp.</span>
@@ -1020,10 +990,7 @@ function renderHome(){
   const forYouActive = state.homeTab !== 'following';
   main.innerHTML = `
     <div class="ct">
-      <div class="main-header" style="padding:0 16px;flex-direction:column;align-items:stretch;gap:0">
-        <div style="display:flex;align-items:center;gap:20px;padding:12px 0">
-          <div class="page-title" style="font-size:20px;font-weight:800">主页</div>
-        </div>
+      <div class="main-header" style="padding:0;flex-direction:column;align-items:stretch;gap:0">
         <div class="tab-row" style="border-bottom:none">
           <div class="tab ${forYouActive?'active':''}" onclick="switchHomeTab('foryou')">为你推荐</div>
           <div class="tab ${!forYouActive?'active':''}" onclick="switchHomeTab('following')">正在关注</div>
@@ -1231,10 +1198,8 @@ const TREND_DATA = {
 };
 
 function filterTrends(cat){
-  document.querySelectorAll('.trend-tab').forEach(t => t.classList.remove('active'));
-  document.querySelector('.trend-tab[data-cat="'+cat+'"]').classList.add('active');
   const list = TREND_DATA[cat] || TREND_DATA.all;
-  const html = list.map(t => '<div class="trend-item" onclick="navigate(\'trending\')"><div style="display:flex;justify-content:space-between"><span class="tm">'+t.cat+'</span><span style="color:var(--text2)">···</span></div><div class="tn2">'+t.name+'</div><div class="tc">'+t.count+'</div></div>').join('');
+  const html = list.map(t => '<div class="trend-item" onclick="navigate(\'trending\')"><div style="display:flex;justify-content:space-between;align-items:flex-start"><div><div class="tm">'+t.cat+'</div><div class="tn2">'+t.name+'</div></div><button class="explore-trend-more" onclick="event.stopPropagation();showCtxMenu(event,\''+t.name+'\')" style="margin-top:0"><svg viewBox="0 0 24 24"><path d="M3 12c0-1.1.9-2 2-2s2 .9 2 2-.9 2-2 2-2-.9-2-2zm9 2c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm7 0c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2z"/></svg></button></div></div>').join('');
   document.getElementById('trendList').innerHTML = html;
 }
 
@@ -3035,6 +3000,23 @@ function openMoreMenu(id,event){
   const vw=window.innerWidth, vh=window.innerHeight;
   let left=rect.left, top=rect.bottom+4;
   const menuW=288, menuH=260;
+  if(left+menuW>vw-12) left=vw-menuW-12;
+  if(top+menuH>vh-12) top=rect.top-menuH-4;
+  menu.style.left=left+'px';
+  menu.style.top=top+'px';
+  menu.classList.add('active');
+}
+function showCtxMenu(event,name){
+  const menu=document.getElementById('ctxMenu');
+  menu.innerHTML=`
+    <div class="d-item" onclick="closeCtxMenu();showToast('已隐藏此趋势')"><svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg> 对此不感兴趣</div>
+    <div class="d-item" onclick="closeCtxMenu();showToast('已屏蔽 '+name)"><svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/></svg> 屏蔽 ${name}</div>
+    <div class="d-item" onclick="closeCtxMenu();showToast('已举报')"><svg viewBox="0 0 24 24"><path d="M3 2h18v18H3z" fill="none"/><path d="M21 7L7 7l-.01-1.2C7 5.36 6.36 5 5.72 5 5.08 5 4 5.36 4 6.01V19h2V13h15l-2-3 2-3z"/></svg> 举报</div>
+  `;
+  const rect=event.target.closest('button')?.getBoundingClientRect()||event.target.getBoundingClientRect();
+  const vw=window.innerWidth, vh=window.innerHeight;
+  let left=rect.left, top=rect.bottom+4;
+  const menuW=260, menuH=140;
   if(left+menuW>vw-12) left=vw-menuW-12;
   if(top+menuH>vh-12) top=rect.top-menuH-4;
   menu.style.left=left+'px';
