@@ -353,12 +353,13 @@ textarea,input{font-family:inherit;outline:none;border:none;background:transpare
 .emoji-btn:hover{background:var(--bg3)}
 
 /* ===== EXPLORE ===== */
-.explore-search{padding:12px 16px;border-bottom:1px solid var(--border);position:sticky;top:61px;background:var(--bg);z-index:8}
-.es-input{display:flex;align-items:center;background:var(--bg2);border-radius:var(--r);padding:0 16px;gap:12px}
-.es-input svg{width:18px;height:18px;fill:var(--text2)}
-.es-input input{flex:1;background:transparent;border:none;outline:none;color:var(--text);font-size:15px;padding:12px 0;font-family:inherit}
-.es-input input::placeholder{color:var(--text2)}
-.explore-tabs{position:sticky;top:0;background:var(--bg);z-index:9;border-bottom:1px solid var(--border);display:flex;overflow-x:auto}
+.explore-header{position:sticky;top:0;background:rgba(0,0,0,.9);backdrop-filter:blur(12px);z-index:10;border-bottom:1px solid var(--border)}
+.explore-search{padding:8px 16px;border-bottom:1px solid var(--border);background:var(--bg)}
+.explore-search-inner{display:flex;align-items:center;background:var(--bg2);border-radius:9999px;padding:0 16px;gap:12px}
+.explore-search-inner svg{width:18px;height:18px;fill:var(--text2);flex-shrink:0}
+.explore-search-inner input{flex:1;background:transparent;border:none;outline:none;color:var(--text);font-size:15px;padding:12px 0;font-family:inherit}
+.explore-search-inner input::placeholder{color:var(--text2)}
+.explore-tabs{position:relative;background:var(--bg);display:flex;z-index:9}
 .explore-tabs::-webkit-scrollbar{display:none}
 .explore-tab{flex:1;min-width:0;padding:16px 20px;text-align:center;font-size:15px;font-weight:500;color:var(--text2);cursor:pointer;position:relative;transition:color .2s,background .2s;white-space:nowrap}
 .explore-tab:hover{background:rgba(231,233,234,.05)}
@@ -383,6 +384,13 @@ textarea,input{font-family:inherit;outline:none;border:none;background:transpare
 .explore-trend-more:hover{background:rgba(29,155,240,.1);color:var(--accent)}
 .explore-trend-more svg{width:18px;height:18px;fill:currentColor}
 .explore-trend-img{width:60px;height:60px;border-radius:8px;object-fit:cover;flex-shrink:0;margin-left:12px}
+
+/* Explore filter row */
+.explore-filter-row{display:flex;padding:8px 0;border-bottom:1px solid var(--border);overflow-x:auto;scrollbar-width:none}
+.explore-filter-row::-webkit-scrollbar{display:none}
+.explore-filter{flex-shrink:0;padding:6px 16px;font-size:14px;font-weight:500;color:var(--text2);cursor:pointer;transition:background .2s,color .2s;border-radius:20px;margin:0 4px}
+.explore-filter:hover{background:rgba(231,233,234,.1)}
+.explore-filter.active{background:var(--text);color:var(--bg)}
 
 /* ===== SETTINGS ===== */
 .settings-list{max-width:600px;margin:0 auto;padding:16px}
@@ -796,6 +804,7 @@ const state = {
   homeTab: 'foryou',
   notifTab: 'all',
   exploreTab: 'foryou',
+  exploreFilter: 'all',
   profileTab: 'posts',
   theme: 'dark',
   user: { name:'王坤', handle:'@wngkn5393218313', bio:'我在中国 我是中国人，有没有交朋友', location:'中国 湖北', joinedDate:'2023年7月', followers:7, following:64, posts:392, liked:1562, verified:false },
@@ -1209,74 +1218,170 @@ function filterTrends(cat){
 }
 
 // ===== EXPLORE PAGE =====
+const EXPLORE_TABS = [
+  {key:'foryou', label:'推荐'},
+  {key:'trending', label:'热门'},
+  {key:'latest', label:'最新'},
+  {key:'media', label:'媒体'}
+];
+const EXPLORE_FILTERS = {
+  all: {label:'全部'},
+  tech: {label:'科技'},
+  ent: {label:'娱乐'},
+  sport: {label:'体育'},
+  fin: {label:'财经'}
+};
 function renderExplore(){
   const main = document.getElementById('mainContent');
   const tab = state.exploreTab;
-  const tabs = [
-    {key:'foryou',label:'推荐'},
-    {key:'trending',label:'热门'}
-  ];
-  let content = '';
-  
-  if(tab==='foryou'){
-    // 推荐：趋势列表
-    const forYou = getTrendsByTab('foryou');
-    content = `
-      <div class="explore-trend-section" style="padding:0">
-        <div class="explore-trend-card" style="border-radius:0">
-          ${forYou.map((t,i)=>renderTrendItem(t,i+1)).join('')}
-        </div>
-      </div>
-    `;
-  } else if(tab==='trending'){
-    // 热门：趋势列表
-    const trending = getTrendsByTab('trending');
-    content = `
-      <div class="explore-trend-section" style="padding:0">
-        <div class="explore-trend-card" style="border-radius:0">
-          ${trending.map((t,i)=>renderTrendItem(t,i+1)).join('')}
-        </div>
-      </div>
-    `;
-  }
+  const filter = state.exploreFilter;
   
   main.innerHTML = `
-    <div class="explore-tabs" style="position:relative;background:transparent">
-      ${tabs.map(t=>`<div class="explore-tab ${tab===t.key?'active':''}" data-tab="${t.key}" onclick="switchExploreTab('${t.key}')">${t.label}</div>`).join('')}
+    <div class="explore-header">
+      <div class="explore-search">
+        <div class="explore-search-inner">
+          <svg viewBox="0 0 24 24"><path d="M10.25 3.75c-3.59 0-6.5 2.91-6.5 6.5s2.91 6.5 6.5 6.5c1.795 0 3.419-.726 4.596-1.904 1.178-1.177 1.904-2.801 1.904-4.596 0-3.59-2.91-6.5-6.5-6.5z"/></svg>
+          <input type="text" placeholder="搜索" id="exploreSearchInput" onkeydown="if(event.key==='Enter'&&this.value.trim()){navigate('search',this.value.trim());this.value=''}">
+        </div>
+      </div>
+      <div class="explore-tabs">
+        ${EXPLORE_TABS.map(t=>`<div class="explore-tab ${tab===t.key?'active':''}" data-tab="${t.key}" onclick="switchExploreTab('${t.key}')">${t.label}</div>`).join('')}
+      </div>
     </div>
-    <div>
-      ${content}
-    </div>
+    ${renderExploreContent(tab, filter)}
   `;
-  // 滚动到顶部
   document.getElementById('mainContent').scrollTop = 0;
 }
-function getTrendsByTab(tab){
-  const allTrends = [
-    {cat:'科技 · 趋势',name:'#Automation',posts:'23.4万'},
-    {cat:'',name:'Freedom',region:'中国香港'},
-    {cat:'',name:'#Peatwasu',posts:'12.1万'},
-    {cat:'',name:'Starship',region:'全球'},
-    {cat:'',name:'#InterLink',posts:'8.9万'},
-    {cat:'科技 · 趋势',name:'#AI大模型',posts:'12.3万'},
-    {cat:'娱乐 · 趋势',name:'#新剧热播',posts:'9.8万'},
-    {cat:'体育 · 趋势',name:'#世界杯预选赛',posts:'7.2万'},
-    {cat:'财经 · 趋势',name:'#A股行情',posts:'5.6万'},
-    {cat:'科技 · 趋势',name:'#开源项目',posts:'4.3万'},
-    {cat:'科技 · 趋势',name:'native mcp',posts:'3.8万'},
-    {cat:'',name:'Excellent',region:'全球'},
-    {cat:'',name:'Shanghai',region:'中国'},
-    {cat:'科技 · 趋势',name:'#ChatGPT5',posts:'15.6万'},
-    {cat:'娱乐 · 趋势',name:'#演唱会',posts:'6.7万'},
-    {cat:'财经 · 趋势',name:'#比特币',posts:'4.2万'},
-    {cat:'体育 · 趋势',name:'#NBA季后赛',posts:'3.9万'},
-    {cat:'科技 · 趋势',name:'#SpaceX',posts:'2.8万'}
-  ];
-  return allTrends;
+function renderExploreContent(tab, filter){
+  if(tab === 'foryou'){
+    return renderExploreForYou(filter);
+  } else if(tab === 'trending'){
+    return renderExploreTrending(filter);
+  } else if(tab === 'latest'){
+    return renderExploreLatest();
+  } else if(tab === 'media'){
+    return renderExploreMedia();
+  }
+  return '';
+}
+function renderExploreForYou(filter){
+  const trends = getExploreTrends(tab, filter);
+  return `
+    <div class="explore-trend-section">
+      <div class="explore-filter-row" style="padding:12px 8px">
+        ${Object.entries(EXPLORE_FILTERS).map(([key, val])=>`
+          <div class="explore-filter ${filter===key?'active':''}" onclick="switchExploreFilter('${key}')">${val.label}</div>
+        `).join('')}
+      </div>
+      <div class="explore-trend-card" style="border-radius:0">
+        ${trends.map((t,i)=>renderTrendItem(t, i+1)).join('')}
+      </div>
+    </div>
+  `;
+}
+function renderExploreTrending(filter){
+  const trends = getExploreTrends(tab, filter);
+  return `
+    <div class="explore-trend-section">
+      <div class="explore-filter-row" style="padding:12px 8px">
+        ${Object.entries(EXPLORE_FILTERS).map(([key, val])=>`
+          <div class="explore-filter ${filter===key?'active':''}" onclick="switchExploreFilter('${key}')">${val.label}</div>
+        `).join('')}
+      </div>
+      <div class="explore-trend-card" style="border-radius:0">
+        ${trends.map((t,i)=>renderTrendItem(t, i+1)).join('')}
+      </div>
+    </div>
+  `;
+}
+function renderExploreLatest(){
+  const latestTweets = DB.tweets.slice(0, 10);
+  return `
+    <div class="explore-trend-section">
+      <div class="explore-trend-card" style="border-radius:0">
+        ${latestTweets.map(t=>renderTweet(t)).join('')}
+      </div>
+    </div>
+  `;
+}
+function renderExploreMedia(){
+  const mediaTweets = DB.tweets.filter(t => t.hasMedia).slice(0, 9);
+  if(mediaTweets.length === 0){
+    return `<div class="empty-state"><svg viewBox="0 0 24 24"><path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"/></svg><h3>暂无媒体内容</h3><p>关注发布图片和视频的用户，在这里发现更多精彩内容</p></div>`;
+  }
+  // Grid layout for media
+  return `
+    <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:2px;padding:2px">
+      ${mediaTweets.map(t=>`
+        <div style="aspect-ratio:1;overflow:hidden;cursor:pointer;position:relative" onclick="navigate('post',${t.id})">
+          <div style="width:100%;height:100%;background:${t.mediaBg||'var(--bg2)'};display:flex;align-items:center;justify-content:center">
+            <span style="font-size:48px;font-weight:900;color:rgba(255,255,255,0.5)">${t.avatar}</span>
+          </div>
+        </div>
+      `).join('')}
+    </div>
+  `;
+}
+function getExploreTrends(tab, filter){
+  const allTrends = {
+    foryou: [
+      {cat:'科技 · 趋势', name:'#AI大模型', posts:'12.3万'},
+      {cat:'娱乐 · 趋势', name:'#新剧热播', posts:'9.8万'},
+      {cat:'体育 · 趋势', name:'#世界杯预选赛', posts:'7.2万'},
+      {cat:'财经 · 趋势', name:'#A股行情', posts:'5.6万'},
+      {cat:'科技 · 趋势', name:'#开源项目', posts:'4.3万'},
+      {cat:'娱乐 · 趋势', name:'#演唱会', posts:'6.7万'},
+      {cat:'财经 · 趋势', name:'#比特币', posts:'4.2万'},
+      {cat:'体育 · 趋势', name:'#NBA季后赛', posts:'3.9万'},
+      {cat:'科技 · 趋势', name:'#ChatGPT5', posts:'15.6万'},
+      {cat:'娱乐 · 趋势', name:'#电影上映', posts:'5.2万'}
+    ],
+    trending: [
+      {cat:'科技 · 趋势', name:'#Automation', posts:'23.4万'},
+      {cat:'科技 · 趋势', name:'#native mcp', posts:'3.8万'},
+      {cat:'娱乐 · 趋势', name:'#Peatwasu', posts:'12.1万'},
+      {cat:'体育 · 趋势', name:'Starship', posts:'8.9万'},
+      {cat:'科技 · 趋势', name:'#InterLink', posts:'8.9万'},
+      {cat:'娱乐 · 趋势', name:'Excellent', region:'全球'},
+      {cat:'体育 · 趋势', name:'Shanghai', region:'中国'},
+      {cat:'娱乐 · 趋势', name:'Freedom', region:'中国香港'},
+      {cat:'科技 · 趋势', name:'#SpaceX', posts:'2.8万'},
+      {cat:'娱乐 · 趋势', name:'#演唱会', posts:'6.5万'}
+    ],
+    latest: [
+      {cat:'最新', name:'#AI大模型', posts:'12.3万'},
+      {cat:'最新', name:'#ChatGPT5', posts:'15.6万'},
+      {cat:'最新', name:'#开源项目', posts:'4.3万'},
+      {cat:'最新', name:'#量子计算', posts:'1.9万'},
+      {cat:'最新', name:'#云计算', posts:'2.8万'}
+    ],
+    media: [
+      {cat:'媒体 · 趋势', name:'#摄影技巧', posts:'3.2万'},
+      {cat:'媒体 · 趋势', name:'#电影上映', posts:'5.2万'},
+      {cat:'媒体 · 趋势', name:'#演唱会', posts:'6.5万'},
+      {cat:'媒体 · 趋势', name:'#短视频', posts:'8.9万'},
+      {cat:'媒体 · 趋势', name:'#纪录片', posts:'2.1万'}
+    ]
+  };
+  
+  const filterData = {
+    all: null,
+    tech: ['科技'],
+    ent: ['娱乐'],
+    sport: ['体育'],
+    fin: ['财经']
+  };
+  
+  let trends = allTrends[tab] || allTrends.foryou;
+  const catFilter = filterData[filter];
+  if(catFilter){
+    trends = trends.filter(t => catFilter.some(c => t.cat && t.cat.includes(c)));
+  }
+  return trends;
 }
 function renderTrendItem(t, rank){
-  const topLine = t.cat ? `<div class="explore-trend-cat">${t.cat}</div>` : (t.region ? `<div class="explore-trend-cat">${t.region}</div>` : '');
-  const postsLine = t.posts ? `<div class="explore-trend-posts">${t.posts} 条帖子</div>` : '';
+  const topLine = t.cat ? `<div class="explore-trend-cat">${t.cat}</div>` : '';
+  const postsLine = t.posts ? `<div class="explore-trend-posts">${t.posts} 条帖子</div>` : (t.region ? `<div class="explore-trend-posts">${t.region} 的趋势</div>` : '');
   return `
     <div class="explore-trend-item" onclick="navigate('trending')">
       <div class="explore-trend-info">
@@ -1292,15 +1397,12 @@ function renderTrendItem(t, rank){
 }
 function switchExploreTab(tab){
   state.exploreTab = tab;
+  state.exploreFilter = 'all';
   renderExplore();
 }
-function switchExploreFilter(el,cat){
-  document.querySelectorAll('.explore-filter').forEach(f=>f.classList.remove('active'));
-  el.classList.add('active');
-}
-function searchExplore(q){
-  if(!q) return;
-  navigate('search',q);
+function switchExploreFilter(filter){
+  state.exploreFilter = filter;
+  renderExplore();
 }
 
 // ===== NOTIFICATIONS =====
