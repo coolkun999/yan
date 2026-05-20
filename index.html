@@ -352,14 +352,14 @@ textarea,input{font-family:inherit;outline:none;border:none;background:transpare
 .emoji-btn:hover{background:var(--bg3)}
 
 /* ===== EXPLORE ===== */
-.explore-search{padding:12px 16px;border-bottom:1px solid var(--border)}
+.explore-search{padding:12px 16px;border-bottom:1px solid var(--border);position:sticky;top:61px;background:var(--bg);z-index:8}
 .es-input{display:flex;align-items:center;background:var(--bg2);border-radius:var(--r);padding:0 16px;gap:12px}
 .es-input svg{width:18px;height:18px;fill:var(--text2)}
 .es-input input{flex:1;background:transparent;border:none;outline:none;color:var(--text);font-size:15px;padding:12px 0;font-family:inherit}
 .es-input input::placeholder{color:var(--text2)}
-.explore-tabs{position:sticky;top:60px;background:rgba(0,0,0,.9);backdrop-filter:blur(12px);z-index:9;border-bottom:1px solid var(--border)}
-.explore-tabs-inner{display:flex}
-.explore-tab{flex:1;padding:16px 0;text-align:center;font-size:15px;font-weight:500;color:var(--text2);cursor:pointer;position:relative;transition:color .2s,background .2s}
+.explore-tabs{position:sticky;top:0;background:var(--bg);z-index:9;border-bottom:1px solid var(--border);display:flex;overflow-x:auto}
+.explore-tabs::-webkit-scrollbar{display:none}
+.explore-tab{flex:1;min-width:0;padding:16px 20px;text-align:center;font-size:15px;font-weight:500;color:var(--text2);cursor:pointer;position:relative;transition:color .2s,background .2s;white-space:nowrap}
 .explore-tab:hover{background:rgba(231,233,234,.05)}
 .explore-tab.active{color:var(--text);font-weight:700}
 .explore-tab.active::after{content:'';position:absolute;bottom:0;left:0;right:0;height:4px;background:var(--accent);border-radius:9999px 9999px 0 0}
@@ -373,16 +373,34 @@ textarea,input{font-family:inherit;outline:none;border:none;background:transpare
 .ei-item{position:relative;overflow:hidden;border-radius:0}
 .ei-item:first-child{grid-column:1/-1}
 
-/* Explore trending list */
+/* Explore trending list - X style */
+.explore-trend-section{margin-top:16px;padding:0 16px}
+.explore-trend-card{background:var(--bg2);border-radius:16px;overflow:hidden;margin-bottom:16px}
+.explore-trend-header{padding:12px 16px;border-bottom:1px solid var(--border);font-size:18px;font-weight:800}
 .explore-trend-list{display:flex;flex-direction:column}
 .explore-trend-item{display:flex;align-items:flex-start;justify-content:space-between;padding:12px 16px;border-bottom:1px solid var(--border);cursor:pointer;transition:background .2s;position:relative}
-.explore-trend-item:hover{background:var(--hover)}
+.explore-trend-item:last-child{border-bottom:none}
+.explore-trend-item:hover{background:rgba(231,233,234,.05)}
 .explore-trend-info{flex:1;min-width:0;padding-right:8px}
 .explore-trend-cat{color:var(--text2);font-size:13px;margin-bottom:2px}
 .explore-trend-name{font-weight:700;font-size:15px;line-height:1.4}
-.explore-trend-more{width:34px;height:34px;border-radius:50%;border:none;background:transparent;color:var(--text2);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background .2s;flex-shrink:0;margin-top:-4px}
+.explore-trend-name a{color:inherit}
+.explore-trend-name a:hover{text-decoration:underline}
+.explore-trend-posts{color:var(--text2);font-size:13px;margin-top:2px}
+.explore-trend-more{width:34px;height:34px;border-radius:50%;border:none;background:transparent;color:var(--text2);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background .2s,color .2s;flex-shrink:0;margin-top:-4px}
 .explore-trend-more:hover{background:rgba(29,155,240,.1);color:var(--accent)}
 .explore-trend-more svg{width:18px;height:18px;fill:currentColor}
+.explore-trend-img{width:60px;height:60px;border-radius:8px;object-fit:cover;flex-shrink:0;margin-left:12px}
+
+/* X-style content sections */
+.explore-section{padding:16px}
+.explore-section-title{font-size:20px;font-weight:800;margin-bottom:16px}
+.explore-news-card{padding:12px 16px;border-bottom:1px solid var(--border);cursor:pointer;transition:background .2s}
+.explore-news-card:hover{background:var(--hover)}
+.explore-news-card:last-child{border-bottom:none}
+.explore-news-cat{font-size:13px;color:var(--text2);margin-bottom:4px}
+.explore-news-title{font-size:15px;font-weight:700;line-height:1.4;margin-bottom:4px}
+.explore-news-meta{font-size:13px;color:var(--text2)}
 
 /* ===== SETTINGS ===== */
 .settings-list{max-width:600px;margin:0 auto;padding:16px}
@@ -1225,82 +1243,129 @@ function renderExplore(){
   const main = document.getElementById('mainContent');
   const tab = state.exploreTab;
   const tabs = [
-    {key:'foryou',label:'为你推荐'},
+    {key:'foryou',label:'推荐'},
     {key:'trending',label:'热门'},
     {key:'news',label:'新闻'},
     {key:'sports',label:'体育'},
     {key:'entertainment',label:'娱乐'}
   ];
-  let trends = getTrendsByTab(tab);
   let content = '';
   
   if(tab==='foryou'){
-    // 为你推荐：热门推文
-    content = DB.tweets.slice(0,6).map(t=>renderTweet(t)).join('');
-  } else if(tab==='trending'){
-    // 热门趋势列表
-    content = trends.map(t=>renderTrendItem(t)).join('');
-  } else if(tab==='news'){
-    // 新闻：带图标的卡片
+    // 为你推荐：热门推文 + 趋势卡片
     content = `
-      <div style="padding:16px;border-bottom:1px solid var(--border);cursor:pointer" onclick="navigate('trending')">
-        <div style="font-size:13px;color:var(--text2);margin-bottom:8px">科技 · 今日要闻</div>
-        <div style="font-size:17px;font-weight:800;line-height:1.4;margin-bottom:8px">ChatGPT 发布重大更新：新增多模态交互能力</div>
-        <div style="font-size:14px;color:var(--text2);line-height:1.5">OpenAI 宣布 ChatGPT 将支持语音、图像和视频交互，用户可以更自然地与 AI 对话...</div>
+      <div class="explore-grid">
+        ${DB.tweets.slice(0,4).map((t,i)=>`
+          <div class="explore-grid-item ${i===0?'first':''}" onclick="navigate('post',${t.id})">
+            <img class="ei-img" src="${t.media||t.images?.[0]||'https://picsum.photos/seed/'+t.id+'/600/400'}" alt="" onerror="this.src='https://picsum.photos/seed/${t.id}/600/400'">
+            <div class="ei-overlay">
+              <span>${t.likes||0} 喜欢</span>
+            </div>
+          </div>
+        `).join('')}
       </div>
-      <div style="padding:16px;border-bottom:1px solid var(--border);cursor:pointer" onclick="navigate('trending')">
-        <div style="font-size:13px;color:var(--text2);margin-bottom:8px">财经 · 实时</div>
-        <div style="font-size:17px;font-weight:800;line-height:1.4;margin-bottom:8px">A股三大指数集体上涨，沪指重返 3400 点</div>
-        <div style="font-size:14px;color:var(--text2);line-height:1.5">今日开盘后，A股市场表现强劲，科技股和新能源板块领涨...</div>
+      <div class="explore-trend-section">
+        <div class="explore-trend-card">
+          <div class="explore-trend-header">今日趋势</div>
+          ${getTrendsByTab('trending').slice(0,5).map((t,i)=>renderTrendItem(t,i+1)).join('')}
+        </div>
       </div>
-      <div style="padding:16px;border-bottom:1px solid var(--border);cursor:pointer" onclick="navigate('trending')">
-        <div style="font-size:13px;color:var(--text2);margin-bottom:8px">国际 · 刚刚</div>
-        <div style="font-size:17px;font-weight:800;line-height:1.4;margin-bottom:8px">联合国气候峰会达成历史性协议</div>
-        <div style="font-size:14px;color:var(--text2);line-height:1.5">各国代表在峰会上承诺减少碳排放，共同应对气候变化挑战...</div>
+      <div class="explore-section">
+        <div class="explore-section-title">谁在关注</div>
+        ${DB.users.slice(0,3).map(u=>`
+          <div class="tweet" onclick="navigate('profile','${u.handle}')">
+            <div class="ta" style="background:${u.avatarBg}">${u.avatar}</div>
+            <div class="tbdy">
+              <div class="th">
+                <span class="tn">${u.name}</span>
+                <span class="thandle">@${u.handle}</span>
+              </div>
+              <button class="fbtn" onclick="event.stopPropagation();showToast('已关注 '+'${u.name}')">关注</button>
+            </div>
+          </div>
+        `).join('')}
+      </div>
+    `;
+  } else if(tab==='trending'){
+    // 热门趋势列表 - X 风格
+    const trending = getTrendsByTab('trending');
+    content = `
+      <div class="explore-trend-section">
+        <div class="explore-trend-card">
+          ${trending.map((t,i)=>renderTrendItem(t,i+1)).join('')}
+        </div>
+      </div>
+    `;
+  } else if(tab==='news'){
+    // 新闻列表 - X 风格
+    const newsItems = [
+      {cat:'科技 · 今日要闻',title:'ChatGPT 发布重大更新：新增多模态交互能力',meta:'12.3万 讨论 · 2小时前'},
+      {cat:'财经 · 实时',title:'A股三大指数集体上涨，沪指重返 3400 点',meta:'8.9万 讨论 · 4小时前'},
+      {cat:'国际 · 刚刚',title:'联合国气候峰会达成历史性协议',meta:'5.6万 讨论 · 6小时前'},
+      {cat:'科技 · 热门',title:'SpaceX 星舰完成第七次试飞',meta:'15.2万 讨论 · 1小时前'},
+      {cat:'社会 · 今日',title:'全国多地迎来强降雨天气',meta:'3.4万 讨论 · 3小时前'},
+    ];
+    content = `
+      <div class="explore-section">
+        ${newsItems.map(n=>`
+          <div class="explore-news-card">
+            <div class="explore-news-cat">${n.cat}</div>
+            <div class="explore-news-title">${n.title}</div>
+            <div class="explore-news-meta">${n.meta}</div>
+          </div>
+        `).join('')}
       </div>
     `;
   } else if(tab==='sports'){
+    // 体育内容 - X 风格
+    const sportsItems = [
+      {cat:'足球 · 世界杯预选赛',title:'中国男足 3:1 战胜对手，成功晋级世界杯！',meta:'23.4万 讨论 · 刚刚'},
+      {cat:'NBA · 季后赛',title:'湖人队横扫太阳队，晋级西部决赛',meta:'12.1万 讨论 · 2小时前'},
+      {cat:'足球 · 英超',title:'曼城 4:0 大胜曼联，积分榜继续领跑',meta:'8.7万 讨论 · 5小时前'},
+      {cat:'篮球 · CBA',title:'辽宁队夺得 CBA 总冠军，实现三连冠',meta:'18.9万 讨论 · 1小时前'},
+    ];
     content = `
-      <div style="padding:16px;border-bottom:1px solid var(--border);cursor:pointer" onclick="navigate('trending')">
-        <div style="font-size:13px;color:var(--text2);margin-bottom:8px">足球 · 世界杯预选赛</div>
-        <div style="font-size:17px;font-weight:800;line-height:1.4;margin-bottom:8px">中国男足 3:1 战胜对手，成功晋级世界杯！</div>
-        <div style="display:flex;align-items:center;gap:12px;font-size:14px;color:var(--text2)">
-          <span>12.3万 讨论</span><span>8.9万 关注</span>
-        </div>
-      </div>
-      <div style="padding:16px;border-bottom:1px solid var(--border);cursor:pointer" onclick="navigate('trending')">
-        <div style="font-size:13px;color:var(--text2);margin-bottom:8px">NBA · 季后赛</div>
-        <div style="font-size:17px;font-weight:800;line-height:1.4;margin-bottom:8px">湖人队横扫太阳队，晋级西部决赛</div>
-        <div style="display:flex;align-items:center;gap:12px;font-size:14px;color:var(--text2)">
-          <span>5.6万 讨论</span><span>3.2万 关注</span>
-        </div>
+      <div class="explore-section">
+        ${sportsItems.map(n=>`
+          <div class="explore-news-card">
+            <div class="explore-news-cat">${n.cat}</div>
+            <div class="explore-news-title">${n.title}</div>
+            <div class="explore-news-meta">${n.meta}</div>
+          </div>
+        `).join('')}
       </div>
     `;
   } else if(tab==='entertainment'){
+    // 娱乐内容 - X 风格
+    const entertainmentItems = [
+      {cat:'电影 · 热门',title:'《阿凡达3》定档明年春节，全球首映礼阵容曝光',meta:'25.6万 讨论 · 刚刚'},
+      {cat:'音乐 · 新歌',title:'周杰伦新专辑《最伟大的作品2》正式发布',meta:'18.3万 讨论 · 3小时前'},
+      {cat:'综艺 · 热播',title:'《歌手2024》总决赛收视率创新高',meta:'9.2万 讨论 · 5小时前'},
+      {cat:'明星 · 八卦',title:'某顶流明星官宣恋情，微博服务器一度崩溃',meta:'45.7万 讨论 · 1小时前'},
+    ];
     content = `
-      <div style="padding:16px;border-bottom:1px solid var(--border);cursor:pointer" onclick="navigate('trending')">
-        <div style="font-size:13px;color:var(--text2);margin-bottom:8px">电影 · 热门</div>
-        <div style="font-size:17px;font-weight:800;line-height:1.4;margin-bottom:8px">《阿凡达3》定档明年春节，全球首映礼阵容曝光</div>
-        <div style="font-size:14px;color:var(--text2);line-height:1.5">詹姆斯·卡梅隆携主演亮相发布会，透露续集将带来前所未有的视觉体验...</div>
-      </div>
-      <div style="padding:16px;border-bottom:1px solid var(--border);cursor:pointer" onclick="navigate('trending')">
-        <div style="font-size:13px;color:var(--text2);margin-bottom:8px">音乐 · 新歌</div>
-        <div style="font-size:17px;font-weight:800;line-height:1.4;margin-bottom:8px">周杰伦新专辑《最伟大的作品2》正式发布</div>
-        <div style="font-size:14px;color:var(--text2);line-height:1.5">暌违六年，周杰伦携新专辑回归，首日销量突破百万...</div>
+      <div class="explore-section">
+        ${entertainmentItems.map(n=>`
+          <div class="explore-news-card">
+            <div class="explore-news-cat">${n.cat}</div>
+            <div class="explore-news-title">${n.title}</div>
+            <div class="explore-news-meta">${n.meta}</div>
+          </div>
+        `).join('')}
       </div>
     `;
   }
   
   main.innerHTML = `
     <div class="explore-tabs">
-      <div class="explore-tabs-inner">
-        ${tabs.map(t=>`<div class="explore-tab ${tab===t.key?'active':''}" onclick="switchExploreTab('${t.key}')">${t.label}</div>`).join('')}
-      </div>
+      ${tabs.map(t=>`<div class="explore-tab ${tab===t.key?'active':''}" data-tab="${t.key}" onclick="switchExploreTab('${t.key}')">${t.label}</div>`).join('')}
     </div>
     <div>
       ${content}
     </div>
   `;
+  // 滚动到顶部
+  document.getElementById('mainContent').scrollTop = 0;
 }
 function getTrendsByTab(tab){
   const allTrends = [
@@ -1329,17 +1394,18 @@ function getTrendsByTab(tab){
   if(tab==='trending') return allTrends.slice(0, 12);
   return allTrends;
 }
-function renderTrendItem(t){
+function renderTrendItem(t, rank){
   const topLine = t.cat ? `<div class="explore-trend-cat">${t.cat}</div>` : (t.region ? `<div class="explore-trend-cat">${t.region}</div>` : '');
-  const postsLine = t.posts ? `<div class="explore-trend-cat">${t.posts} 条帖子</div>` : '';
+  const postsLine = t.posts ? `<div class="explore-trend-posts">${t.posts} 条帖子</div>` : '';
   return `
     <div class="explore-trend-item" onclick="navigate('trending')">
       <div class="explore-trend-info">
+        ${rank ? `<div class="explore-trend-cat">趋势 ${rank}</div>` : ''}
         ${topLine}
         <div class="explore-trend-name">${t.name}</div>
         ${postsLine}
       </div>
-      <button class="explore-trend-more" onclick="event.stopPropagation()">
+      <button class="explore-trend-more" onclick="event.stopPropagation();showCtxMenu(event, '${t.name}')">
         <svg viewBox="0 0 24 24"><path d="M3 12c0-1.1.9-2 2-2s2 .9 2 2-.9 2-2 2-2-.9-2-2zm9 2c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm7 0c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2z"/></svg>
       </button>
     </div>`;
