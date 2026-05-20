@@ -396,6 +396,15 @@ textarea,input{font-family:inherit;outline:none;border:none;background:transpare
 .theme-opt.light{background:#fff;border:2px solid #ccc}
 .theme-opt.dim{background:#15202b;border:2px solid var(--border)}
 
+/* ===== TOAST ===== */
+#toast-wrap{position:fixed;bottom:80px;left:50%;transform:translateX(-50%);z-index:9999;display:flex;flex-direction:column;align-items:center;gap:8px;pointer-events:none}
+.toast{background:#e7e9ea;color:#000;padding:13px 20px;border-radius:9999px;font-size:15px;font-weight:500;opacity:0;transform:translateY(10px);transition:opacity .22s,transform .22s;pointer-events:none;white-space:nowrap;max-width:360px;text-align:center;box-shadow:0 4px 18px rgba(0,0,0,.25)}
+.toast.show{opacity:1;transform:translateY(0)}
+
+/* ===== CONTEXT MENU (帖子三点菜单浮层) ===== */
+#ctxMenu{position:fixed;background:var(--bg2);border-radius:16px;box-shadow:0 8px 32px rgba(0,0,0,.5);z-index:2000;min-width:280px;overflow:hidden;display:none;padding:4px 0}
+#ctxMenu.active{display:block}
+
 /* ===== MODAL / DROPDOWN ===== */
 .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:1000;display:none;align-items:center;justify-content:center}
 .modal-overlay.active{display:flex}
@@ -715,7 +724,13 @@ textarea,input{font-family:inherit;outline:none;border:none;background:transpare
   </div>
 </div>
 
-<!-- MODAL: MORE ACTIONS -->
+<!-- TOAST -->
+<div id="toast-wrap"></div>
+
+<!-- CONTEXT MENU: 帖子三点菜单（靠近点击位置弹出） -->
+<div id="ctxMenu" onclick="event.stopPropagation()"></div>
+
+<!-- MODAL: MORE ACTIONS（通知设置/广告/空间等大菜单用） -->
 <div class="modal-overlay" id="moreModal" onclick="closeMoreMenu()">
   <div class="modal" style="max-width:400px" onclick="event.stopPropagation()">
     <div class="modal-body" style="padding:8px" id="moreModalBody"></div>
@@ -1365,7 +1380,15 @@ function renderNotifications(){
 }
 function openNotifSettings(){
   const body = document.getElementById('moreModalBody');
-  body.innerHTML='<div class="d-item" onclick="closeMoreMenu()"><svg viewBox="0 0 24 24"><path d="M19.993 9.042C19.48 5.017 16.054 2 11.996 2s-7.49 3.021-7.999 7.051L2.866 18H7.1c.463 2.282 2.481 4 4.9 4s4.437-1.718 4.9-4h4.236l-1.143-8.958z"/></svg> 所有通知</div><div class="d-item" onclick="closeMoreMenu()"><svg viewBox="0 0 24 24"><path d="M5.651 19h12.698c-.337-1.8-1.023-3.21-1.945-4.19C15.318 13.65 13.838 13 12 13s-3.317.65-4.404 1.81c-.922.98-1.608 2.39-1.945 4.19z"/></svg> 新粉丝</div><div class="d-item" onclick="closeMoreMenu()"><svg viewBox="0 0 24 24"><path d="M16.697 5.5c-1.222-.06-2.679.51-3.89 2.16l-.805 1.09-.806-1.09C9.984 6.01 8.526 5.44 7.304 5.5c-1.243.07-2.349.78-2.91 1.91-.552 1.12-.633 2.78.479 4.82 1.074 1.97 3.257 4.27 7.129 6.61 3.87-2.34 6.052-4.64 7.126-6.61 1.111-2.04 1.03-3.7.477-4.82-.561-1.13-1.666-1.84-2.908-1.91z"/></svg> 喜欢</div><div class="d-item" onclick="closeMoreMenu()"><svg viewBox="0 0 24 24"><path d="M4.5 3.88l4.432 4.14-1.364 1.46L5.5 7.55V16c0 1.1.896 2 2 2H13v2H7.5c-2.209 0-4-1.79-4-4V7.55L1.432 9.48.068 8.02 4.5 3.88z"/></svg> 转帖</div><div class="d-item" onclick="closeMoreMenu()"><svg viewBox="0 0 24 24"><path d="M1.751 10c0-4.42 3.584-8 8.005-8h4.366c4.49 0 7.501 3.858 7.501 7.501 0 3.808-2.851 7.091-6.056 7.765 .005.099.01.197.01.297 0 1.68-1.072 2.96-2.584 3.063C11.51 21.954 11.013 22 10.5 22c-4.394 0-8.75-3.519-8.75-8.5 0-1.085.225-2.107.625-3.025-.001-.075-.014-.155-.014-.237C2.361 10 2.056 10 1.75 10z"/></svg> 回复和提及</div><div class="d-divider"></div><div class="d-item" onclick="alert(\'通知设置功能即将上线\');closeMoreMenu()"><svg viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.31.06-.63.06-.94 0-.31-.02-.63-.06-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.04.31-.06.63-.06.94s.02.63.06.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg> 通知设置</div>';
+  body.innerHTML=`
+    <div class="d-item" onclick="showToast('已开启所有通知');closeMoreMenu()"><svg viewBox="0 0 24 24"><path d="M19.993 9.042C19.48 5.017 16.054 2 11.996 2s-7.49 3.021-7.999 7.051L2.866 18H7.1c.463 2.282 2.481 4 4.9 4s4.437-1.718 4.9-4h4.236l-1.143-8.958z"/></svg> 所有通知</div>
+    <div class="d-item" onclick="showToast('已开启新粉丝通知');closeMoreMenu()"><svg viewBox="0 0 24 24"><path d="M5.651 19h12.698c-.337-1.8-1.023-3.21-1.945-4.19C15.318 13.65 13.838 13 12 13s-3.317.65-4.404 1.81c-.922.98-1.608 2.39-1.945 4.19z"/></svg> 新粉丝</div>
+    <div class="d-item" onclick="showToast('已开启喜欢通知');closeMoreMenu()"><svg viewBox="0 0 24 24"><path d="M16.697 5.5c-1.222-.06-2.679.51-3.89 2.16l-.805 1.09-.806-1.09C9.984 6.01 8.526 5.44 7.304 5.5c-1.243.07-2.349.78-2.91 1.91-.552 1.12-.633 2.78.479 4.82 1.074 1.97 3.257 4.27 7.129 6.61 3.87-2.34 6.052-4.64 7.126-6.61 1.111-2.04 1.03-3.7.477-4.82-.561-1.13-1.666-1.84-2.908-1.91z"/></svg> 喜欢</div>
+    <div class="d-item" onclick="showToast('已开启转帖通知');closeMoreMenu()"><svg viewBox="0 0 24 24"><path d="M4.5 3.88l4.432 4.14-1.364 1.46L5.5 7.55V16c0 1.1.896 2 2 2H13v2H7.5c-2.209 0-4-1.79-4-4V7.55L1.432 9.48.068 8.02 4.5 3.88z"/></svg> 转帖</div>
+    <div class="d-item" onclick="showToast('已开启回复提及通知');closeMoreMenu()"><svg viewBox="0 0 24 24"><path d="M1.751 10c0-4.42 3.584-8 8.005-8h4.366c4.49 0 7.501 3.858 7.501 7.501 0 3.808-2.851 7.091-6.056 7.765.005.099.01.197.01.297 0 1.68-1.072 2.96-2.584 3.063C11.51 21.954 11.013 22 10.5 22c-4.394 0-8.75-3.519-8.75-8.5 0-1.085.225-2.107.625-3.025-.001-.075-.014-.155-.014-.237C2.361 10 2.056 10 1.75 10z"/></svg> 回复和提及</div>
+    <div class="d-divider"></div>
+    <div class="d-item" onclick="navigate('settings');closeMoreMenu()"><svg viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.31.06-.63.06-.94 0-.31-.02-.63-.06-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.04.31-.06.63-.06.94s.02.63.06.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg> 通知设置</div>
+  `;
   document.getElementById('moreModal').classList.add('active');
 }
 function renderPushNotifCard(){
@@ -1422,7 +1445,23 @@ function switchNotifTab(tab){
   state.notifTab = tab;
   renderNotifications();
 }
-function openNotifMore(e){}
+function openNotifMore(e){
+  const menu=document.getElementById('ctxMenu');
+  menu.innerHTML=`
+    <div class="d-item" onclick="closeCtxMenu();showToast('已关闭此类通知')"><svg viewBox="0 0 24 24"><path d="M19.993 9.042C19.48 5.017 16.054 2 11.996 2s-7.49 3.021-7.999 7.051L2.866 18H7.1c.463 2.282 2.481 4 4.9 4s4.437-1.718 4.9-4h4.236l-1.143-8.958z"/></svg> 关闭此类通知</div>
+    <div class="d-item" onclick="closeCtxMenu();showToast('已举报')"><svg viewBox="0 0 24 24"><path d="M3 2h18v18H3z" fill="none"/><path d="M21 7L7 7l-.01-1.2C7 5.36 6.36 5 5.72 5 5.08 5 4 5.36 4 6.01V19h2V13h15l-2-3 2-3z"/></svg> 举报</div>
+    <div class="d-item" onclick="closeCtxMenu();showToast('已设为不感兴趣')"><svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg> 不感兴趣</div>
+  `;
+  const rect=e.target.closest('button')?.getBoundingClientRect()||e.target.getBoundingClientRect();
+  const vw=window.innerWidth, vh=window.innerHeight;
+  let left=rect.left, top=rect.bottom+4;
+  const menuW=220, menuH=140;
+  if(left+menuW>vw-12) left=vw-menuW-12;
+  if(top+menuH>vh-12) top=rect.top-menuH-4;
+  menu.style.left=left+'px';
+  menu.style.top=top+'px';
+  menu.classList.add('active');
+}
 function handleNotif(id,type){
   const n = DB.notifications.find(x=>x.id===id);
   if(n) n.unread = false;
@@ -1508,7 +1547,7 @@ function openChat(id){
         <button class="chat-tool" onclick="toggleEmojiPicker()" title="表情">
           <svg viewBox="0 0 24 24"><path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm3.5-9c.83 0 1.5-.67 1.5-1.5S16.33 8 15.5 8 14 8.67 14 9.5s.67 1.5 1.5 1.5zm-7 0c.83 0 1.5-.67 1.5-1.5S9.33 8 8.5 8 7 8.67 7 9.5 7.67 11 8.5 11zm3.5 6.5c2.33 0 4.31-1.46 5.11-3.5H6.89c.8 2.04 2.78 3.5 5.11 3.5z"/></svg>
         </button>
-        <button class="chat-tool" onclick="alert('图片功能开发中')" title="图片">
+        <button class="chat-tool" onclick="showToast('图片功能开发中')" title="图片">
           <svg viewBox="0 0 24 24"><path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"/></svg>
         </button>
       </div>
@@ -1662,6 +1701,15 @@ function bookmark(id,btn){
   else DB.bookmarks = DB.bookmarks.filter(x=>x.id!==id);
   const svg = btn.querySelector('svg');
   svg.setAttribute('fill', t.bookmarked ? 'var(--accent)' : 'var(--text2)');
+  showToast(t.bookmarked ? '已添加到书签' : '已从书签中移除');
+}
+function toggleBookmarkFromMore(id){
+  const t = DB.tweets.find(x=>x.id===id);
+  if(!t) return;
+  t.bookmarked = !t.bookmarked;
+  if(t.bookmarked) DB.bookmarks.push(t);
+  else DB.bookmarks = DB.bookmarks.filter(x=>x.id!==id);
+  showToast(t.bookmarked ? '已添加到书签' : '已从书签中移除');
 }
 
 // ===== PLACEHOLDER PAGES =====
@@ -1785,7 +1833,7 @@ function renderMonetization(){
           <div style="display:flex;flex-wrap:wrap;gap:8px">
             ${m.features.map(f=>`<span style="background:var(--bg);padding:4px 10px;border-radius:12px;font-size:12px;color:var(--text2)">✓ ${f}</span>`).join('')}
           </div>
-          <button class="fbtn" style="margin-top:16px;width:100%" onclick="alert('功能即将上线')">${m.price==='免费'?'立即开通':'立即订阅'}</button>
+          <button class="fbtn" style="margin-top:16px;width:100%" onclick="showToast('功能即将上线，敬请期待')">${m.price==='免费'?'立即开通':'立即订阅'}</button>
         </div>
       `).join('')}
       <div style="background:linear-gradient(135deg,rgba(102,126,234,.2),rgba(118,75,162,.2));border-radius:16px;padding:24px;text-align:center;border:1px solid var(--border)">
@@ -1858,7 +1906,7 @@ function renderAds(){
   `;
 }
 function toggleAdStatus(id){const a=ADS_DATA.find(x=>x.id===id);if(a)a.status=a.status==='active'?'paused':'active';renderAds();}
-function editAd(id){alert('广告编辑功能即将上线')}
+function editAd(id){showToast('广告编辑功能即将上线')}
 function openNewAdModal(){
   const body=document.getElementById('moreModalBody');
   body.innerHTML=`
@@ -1867,7 +1915,7 @@ function openNewAdModal(){
       <div style="margin-bottom:12px"><label style="font-size:13px;color:var(--text2)">广告名称</label><input type="text" placeholder="输入广告名称" style="width:100%;padding:10px;background:var(--bg);border:1px solid var(--border);border-radius:8px;color:var(--text);margin-top:4px"></div>
       <div style="margin-bottom:12px"><label style="font-size:13px;color:var(--text2)">每日预算</label><input type="text" placeholder="¥100" style="width:100%;padding:10px;background:var(--bg);border:1px solid var(--border);border-radius:8px;color:var(--text);margin-top:4px"></div>
       <div style="margin-bottom:12px"><label style="font-size:13px;color:var(--text2)">投放日期</label><input type="date" style="width:100%;padding:10px;background:var(--bg);border:1px solid var(--border);border-radius:8px;color:var(--text);margin-top:4px"></div>
-      <button class="fbtn" style="width:100%;margin-top:16px" onclick="alert('广告创建成功！');closeMoreMenu()">创建广告</button>
+      <button class="fbtn" style="width:100%;margin-top:16px" onclick="showToast('广告创建成功！');closeMoreMenu()">创建广告</button>
     </div>
   `;
   document.getElementById('moreModal').classList.add('active');
@@ -1927,7 +1975,7 @@ function renderSpaces(){
           <div style="font-weight:700;margin-bottom:8px">${s.title}</div>
           <div style="display:flex;justify-content:space-between;align-items:center">
             <div style="font-size:13px;color:var(--text2)">主持人：${s.host} · 👥 ${s.listeners}人感兴趣</div>
-            <button class="fbtn" onclick="alert('已预约提醒')">预约</button>
+            <button class="fbtn" onclick="showToast('已预约提醒，开播时通知你')">预约</button>
           </div>
         </div>
       `).join('')}
@@ -1956,7 +2004,7 @@ function openSpace(id){
       <div style="margin:16px 0">
         ${s.speakers.map(sp=>`<div style="display:inline-block;text-align:center;margin:8px"><div class="av" style="width:48px;height:48px;font-size:18px">${sp[0]}</div><div style="font-size:11px;margin-top:4px">${sp}</div></div>`).join('')}
       </div>
-      <button class="fbtn" style="width:200px;margin-top:16px" onclick="alert('已加入空间')">加入收听</button>
+      <button class="fbtn" style="width:200px;margin-top:16px" onclick="showToast('已加入空间收听')">加入收听</button>
     </div>
   `;
 }
@@ -1967,7 +2015,7 @@ function openCreateSpaceModal(){
       <div style="font-size:18px;font-weight:700;margin-bottom:16px">创建空间</div>
       <div style="margin-bottom:12px"><label style="font-size:13px;color:var(--text2)">空间标题</label><input type="text" placeholder="给你的空间起个名字" style="width:100%;padding:10px;background:var(--bg);border:1px solid var(--border);border-radius:8px;color:var(--text);margin-top:4px"></div>
       <div style="margin-bottom:12px"><label style="font-size:13px;color:var(--text2)">话题标签</label><input type="text" placeholder="#话题" style="width:100%;padding:10px;background:var(--bg);border:1px solid var(--border);border-radius:8px;color:var(--text);margin-top:4px"></div>
-      <button class="fbtn" style="width:100%;margin-top:16px" onclick="alert('空间创建成功！');closeMoreMenu()">开始直播</button>
+      <button class="fbtn" style="width:100%;margin-top:16px" onclick="showToast('空间创建成功！开始直播中');closeMoreMenu()">开始直播</button>
     </div>
   `;
   document.getElementById('moreModal').classList.add('active');
@@ -2111,7 +2159,7 @@ function renderVerifyBanner(){
       <div class="verif-banner-content">
         <h3>你尚未通过认证 <span style="color:var(--accent);display:inline-flex;vertical-align:middle"><svg width="18" height="18" viewBox="0 0 24 24"><path fill="var(--accent)" d="M20.396 11c-.018-.646-.215-1.275-.57-1.816-.354-.54-.852-.972-1.438-1.246.223-.607.27-1.264.14-1.897-.131-.634-.437-1.218-.882-1.687-.47-.445-1.053-.75-1.687-.882-.633-.13-1.29-.083-1.897.14-.273-.587-.704-1.086-1.245-1.44S11.647 1.62 11 1.604c-.646.017-1.273.213-1.813.568s-.969.854-1.24 1.441c-.608-.223-1.267-.272-1.902-.14-.635.13-1.22.436-1.69.882-.445.47-.749 1.055-.878 1.688-.13.633-.08 1.29.144 1.896-.587.274-1.087.705-1.443 1.245-.356.54-.555 1.17-.574 1.817.02.647.218 1.276.574 1.817.356.54.856.972 1.443 1.245-.224.606-.274 1.263-.144 1.896.13.634.433 1.218.877 1.688.47.443 1.054.747 1.687.878.633.132 1.29.084 1.897-.136.274.586.705 1.084 1.246 1.439.54.354 1.17.551 1.816.569.647-.016 1.276-.213 1.817-.567s.972-.854 1.245-1.44c.604.239 1.266.296 1.903.164.636-.132 1.22-.447 1.68-.907.46-.46.776-1.044.908-1.681s.075-1.299-.165-1.903c.586-.274 1.084-.705 1.439-1.246.354-.54.551-1.17.569-1.816z"/></svg></span></h3>
         <p>通过认证即可获得推广回复、分析、免广告浏览等功能。立即升级你的个人资料。</p>
-        <button class="verif-banner-btn" onclick="alert('认证功能即将上线')">获得认证</button>
+        <button class="verif-banner-btn" onclick="showToast('认证功能即将上线，敬请期待')">获得认证</button>
       </div>
       <button class="verif-banner-close" onclick="document.getElementById('verifBanner').style.display='none'">
         <svg viewBox="0 0 24 24"><path d="M10.59 12L4.54 5.96l1.42-1.42L12 10.59l6.04-6.05 1.42 1.42L13.41 12l6.05 6.04-1.42 1.42L12 13.41l-6.04 6.05-1.42-1.42L10.59 12z"/></svg>
@@ -2472,7 +2520,7 @@ function toggleListFollow(btn){
   }
 }
 function openCreateListModal(){
-  alert('创建列表功能即将上线');
+  showToast('创建列表功能即将上线');
 }
 
 // ===== TOPICS =====
@@ -2678,7 +2726,7 @@ function startNewMessage(){
   const recipient = document.getElementById('newMsgRecipient').value.trim();
   const text = document.getElementById('newMsgText').value.trim();
   if(!recipient){
-    alert('请输入用户名');
+    showToast('请输入用户名');
     return;
   }
   // Create or find conversation
@@ -2852,26 +2900,60 @@ function copyShareUrl(){
   });
 }
 function openMoreMenu(id,event){
-  const body=document.getElementById('moreModalBody');
   const t=DB.tweets.find(x=>x.id===id);
-  body.innerHTML=`
-    <div class="d-item" onclick="toggleBookmarkFromMore(${id});closeMoreMenu()"><svg viewBox="0 0 24 24"><path d="M17 3H7c-1.1 0-1.99.9-1.99 2L5 21l7-3 7 3V5c0-1.1-.9-2-2-2z"/></svg> ${t&&t.bookmarked?'从书签中移除':'添加到书签'}</div>
-    <div class="d-item" onclick="copyTweetLink(${id});closeMoreMenu()"><svg viewBox="0 0 24 24"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg> 复制链接</div>
-    <div class="d-item" onclick="closeMoreMenu()"><svg viewBox="0 0 24 24"><path d="M12 3c-4.97 0-9 4.03-9 9s4.03 9 9 9 9-4.03 9-9c0-.46-.04-.92-.1-1.36-.98 1.37-2.58 2.26-4.4 2.26-2.98 0-5.4-2.42-5.4-5.4 0-1.81.89-3.42 2.26-4.4-.44-.06-.9-.1-1.36-.1z"/></svg> ${t&&t.liked?'不喜欢':'喜欢'}</div>
+  const menu=document.getElementById('ctxMenu');
+  menu.innerHTML=`
+    <div class="d-item" onclick="toggleBookmarkFromMore(${id});closeCtxMenu()"><svg viewBox="0 0 24 24"><path d="M17 3H7c-1.1 0-1.99.9-1.99 2L5 21l7-3 7 3V5c0-1.1-.9-2-2-2z"/></svg> ${t&&t.bookmarked?'从书签中移除':'添加到书签'}</div>
+    <div class="d-item" onclick="copyTweetLink(${id});closeCtxMenu()"><svg viewBox="0 0 24 24"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg> 复制链接</div>
+    <div class="d-item" onclick="toggleLikeFromMore(${id});closeCtxMenu()"><svg viewBox="0 0 24 24"><path d="M12 3c-4.97 0-9 4.03-9 9s4.03 9 9 9 9-4.03 9-9c0-.46-.04-.92-.1-1.36-.98 1.37-2.58 2.26-4.4 2.26-2.98 0-5.4-2.42-5.4-5.4 0-1.81.89-3.42 2.26-4.4-.44-.06-.9-.1-1.36-.1z"/></svg> ${t&&t.liked?'不喜欢':'喜欢'}</div>
     <div class="d-divider"></div>
-    <div class="d-item" onclick="navigate('user','${t?t.handle:''}');closeMoreMenu()"><svg viewBox="0 0 24 24"><path d="M5.651 19h12.698c-.337-1.8-1.023-3.21-1.945-4.19C15.318 13.65 13.838 13 12 13s-3.317.65-4.404 1.81c-.922.98-1.608 2.39-1.945 4.19z"/></svg> 查看个人资料</div>
-    <div class="d-item" onclick="closeMoreMenu()"><svg viewBox="0 0 24 24"><path d="M3.75 12c0-.966.783-1.75 1.75-1.75s1.75.784 1.75 1.75-.783 1.75-1.75 1.75S3.75 12.966 3.75 12zm8.25 0c0-.966.783-1.75 1.75-1.75s1.75.784 1.75 1.75-.783 1.75-1.75 1.75S12 12.966 12 12zm8.25 0c0-.966.783-1.75 1.75-1.75s1.75.784 1.75 1.75-.783 1.75-1.75 1.75S20.25 12.966 20.25 12z"/></svg> 分享</div>
+    <div class="d-item" onclick="navigate('user','${t?t.handle:''}');closeCtxMenu()"><svg viewBox="0 0 24 24"><path d="M5.651 19h12.698c-.337-1.8-1.023-3.21-1.945-4.19C15.318 13.65 13.838 13 12 13s-3.317.65-4.404 1.81c-.922.98-1.608 2.39-1.945 4.19z"/></svg> 查看个人资料</div>
+    <div class="d-item" onclick="openShareModal(${id});closeCtxMenu()"><svg viewBox="0 0 24 24"><path d="M12 2.59l5.7 5.7-1.41 1.42L13 6.41V16h-2V6.41l-3.3 3.3-1.41-1.42L12 2.59zm-6 3h2v2H6c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.55 0 1-.45 1-1V8.59c0-.55-.45-1-1-1h-2v-2h2c1.66 0 3 1.34 3 3v10c0 1.66-1.34 3-3 3H6c-1.66 0-3-1.34-3-3V8.59c0-1.66 1.34-3 3-3z"/></svg> 分享帖子</div>
     <div class="d-divider"></div>
-    <div class="d-item danger" onclick="deleteTweet(${id});closeMoreMenu()"><svg viewBox="0 0 24 24"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg> 删除帖子</div>
+    <div class="d-item danger" onclick="deleteTweet(${id});closeCtxMenu()"><svg viewBox="0 0 24 24"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg> 删除帖子</div>
   `;
-  document.getElementById('moreModal').classList.add('active');
+  // 靠近按钮弹出
+  const rect=event.target.closest('button')?.getBoundingClientRect()||event.target.getBoundingClientRect();
+  const vw=window.innerWidth, vh=window.innerHeight;
+  let left=rect.left, top=rect.bottom+4;
+  const menuW=288, menuH=260;
+  if(left+menuW>vw-12) left=vw-menuW-12;
+  if(top+menuH>vh-12) top=rect.top-menuH-4;
+  menu.style.left=left+'px';
+  menu.style.top=top+'px';
+  menu.classList.add('active');
+}
+function closeCtxMenu(){document.getElementById('ctxMenu').classList.remove('active')}
+function toggleLikeFromMore(id){
+  const t=DB.tweets.find(x=>x.id===id);
+  if(!t)return;
+  t.liked=!t.liked;
+  t.likes+=t.liked?1:-1;
+  showToast(t.liked?'已添加到喜欢':'已取消喜欢');
 }
 function closeMoreMenu(){document.getElementById('moreModal').classList.remove('active')}
 function copyTweetLink(id){openShareModal(id)}
 function deleteTweet(id){
   DB.tweets=DB.tweets.filter(x=>x.id!==id);
   document.getElementById('tweet-'+id)?.remove();
+  showToast('帖子已删除');
 }
+// ===== TOAST =====
+let _toastTimer=null;
+function showToast(msg,duration){
+  duration=duration||2200;
+  const wrap=document.getElementById('toast-wrap');
+  const el=document.createElement('div');
+  el.className='toast';
+  el.textContent=msg;
+  wrap.appendChild(el);
+  requestAnimationFrame(()=>requestAnimationFrame(()=>el.classList.add('show')));
+  setTimeout(()=>{
+    el.classList.remove('show');
+    setTimeout(()=>el.remove(),300);
+  },duration);
+}
+
 function toggleDropdown(id){
   const el=document.getElementById(id);
   const wasActive=el.classList.contains('active');
@@ -2925,6 +3007,7 @@ document.addEventListener('click',function(e){
   }
   if(!e.target.closest('#shareModal'))closeShareModal();
   if(!e.target.closest('#moreModal')&&!e.target.closest('.more-btn'))closeMoreMenu();
+  if(!e.target.closest('#ctxMenu')&&!e.target.closest('.more-btn'))closeCtxMenu();
   if(!e.target.closest('#likersModal')&&!e.target.closest('.likers-trigger'))closeLikersModal();
 });
 
@@ -2955,6 +3038,7 @@ document.addEventListener('keydown',function(e){
     closePostModal();
     closeShareModal();
     closeMoreMenu();
+    closeCtxMenu();
     closeAllDropdowns();
   }
   if(e.key==='n'&&!e.ctrlKey&&!e.metaKey&&!e.target.closest('input,textarea')){
