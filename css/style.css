@@ -18,18 +18,18 @@ textarea,input{font-family:inherit;outline:none;border:none;background:transpare
 .layout{display:flex;max-width:1280px;margin:0 auto;min-height:100vh}
 
 /* ===== LEFT SIDEBAR ===== */
-.sidebar{width:275px;position:sticky;top:0;height:100vh;display:flex;flex-direction:column;padding:0 12px;border-right:1px solid var(--border);flex-shrink:0;overflow-y:auto}
-.logo{padding:0;width:50px;height:50px;display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:900;border-radius:var(--r);cursor:pointer;transition:background .2s;margin:8px 0 4px;flex-shrink:0}
+.sidebar{width:275px;position:sticky;top:0;height:100vh;display:flex;flex-direction:column;padding:0 16px;border-right:1px solid var(--border);flex-shrink:0;overflow-y:auto}
+.logo{padding:0;width:50px;height:50px;display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:900;border-radius:var(--r);cursor:pointer;transition:background .2s;margin:2px 0 2px;flex-shrink:0}
 .logo:hover,.nav-item:hover{background:rgba(231,233,234,.1)}
-.nav{display:flex;flex-direction:column;gap:2px;flex:1}
-.nav-item{display:flex;align-items:center;gap:20px;padding:12px;border-radius:var(--r);cursor:pointer;font-size:20px;min-width:52px;max-width:100%;transition:background .2s;color:var(--text)}
+.nav{display:flex;flex-direction:column;gap:0;flex:1}
+.nav-item{display:flex;align-items:center;gap:16px;padding:12px;border-radius:var(--r);cursor:pointer;font-size:20px;min-width:52px;max-width:100%;transition:background .2s;color:var(--text)}
 .nav-item.active{font-weight:700}
 .nav-item svg{width:26px;height:26px;fill:var(--text);flex-shrink:0}
 .nav-label{white-space:nowrap}
 .nav-badge{position:relative}
 .nav-badge .b{position:absolute;top:-4px;right:-4px;background:var(--accent);color:#fff;font-size:11px;font-weight:700;border-radius:99px;padding:1px 4px;min-width:18px;text-align:center;display:none}
 .nav-badge.has .b{display:block}
-.post-btn{background:var(--accent);color:#fff;border-radius:var(--r);padding:16px 32px;font-size:17px;font-weight:700;cursor:pointer;width:230px;margin:16px 0;transition:background .2s}
+.post-btn{background:var(--accent);color:#fff;border-radius:var(--r);padding:16px 32px;font-size:17px;font-weight:700;cursor:pointer;width:calc(100% - 8px);margin:12px auto;transition:background .2s}
 .post-btn:hover{background:var(--ah)}
 .user-menu{margin-bottom:12px;display:flex;align-items:center;gap:12px;padding:12px;border-radius:var(--r);cursor:pointer;transition:background .2s}
 .user-menu:hover{background:rgba(231,233,234,.1)}
