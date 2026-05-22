@@ -792,8 +792,13 @@ function homePost(){
   const v = document.getElementById('homeCompose').value.trim();
   if(!v) return;
   const viewsOptions=['15','28','47','89','124','203'];
-  const t = {id:Date.now(),name:"王坤",handle:"@wngkn5393218313",verified:false,time:"刚刚",text:v,avatar:"王",avatarBg:"linear-gradient(135deg,#667eea,#764ba2)",likes:0,retweets:0,replies:0,views:viewsOptions[Math.floor(Math.random()*viewsOptions.length)],liked:false,retweeted:false,bookmarked:false};
+  const u = currentUser() || {};
+  const t = {id:Date.now(),name:u.name||'用户',handle:u.handle||'@user',verified:u.verified||false,time:"刚刚",text:v,avatar:(u.name||'用').slice(0,1),avatarBg:u.avatarBg||"linear-gradient(135deg,#667eea,#764ba2)",likes:0,retweets:0,replies:0,views:viewsOptions[Math.floor(Math.random()*viewsOptions.length)],liked:false,retweeted:false,bookmarked:false};
   DB.tweets.unshift(t);
+  u.posts = (u.posts||0) + 1;
+  // 持久化更新后的用户数据
+  const allUsers = JSON.parse(localStorage.getItem('yan_auth_users')||'{}');
+  if(allUsers[u.id]){ allUsers[u.id].posts = u.posts; localStorage.setItem('yan_auth_users', JSON.stringify(allUsers)); }
   document.getElementById('homeCompose').value = '';
   document.getElementById('homePostBtn').disabled = true;
   // 重置分页状态
@@ -1711,12 +1716,13 @@ function toggleUserDropdown(event){
     return;
   }
   closeAllDropdowns();
+  const u = currentUser() || {};
   dropdown.innerHTML = `
     <div class="user-menu-header">
-      <div class="av" style="width:40px;height:40px;font-size:16px">王</div>
+      <div class="av" style="width:40px;height:40px;font-size:16px;background:${u.avatarBg||'linear-gradient(135deg,#667eea,#764ba2)'}">${(u.name||'王').slice(0,1)}</div>
       <div class="user-menu-header-info">
-        <div class="user-menu-header-name">王坤</div>
-        <div class="user-menu-header-handle">@wngkn5393218313</div>
+        <div class="user-menu-header-name">${u.name||'王坤'}</div>
+        <div class="user-menu-header-handle">${u.handle||'@wngkn5393218313'}</div>
       </div>
     </div>
     <div class="user-menu-switch" onclick="toggleAccount()">
@@ -1790,7 +1796,8 @@ function renderProfile(){
     {key:'media',label:'媒体'},
     {key:'likes',label:'喜欢'}
   ];
-  const userTweets = DB.tweets.filter(t=>t.handle==='@wngkn5393218313');
+  const myHandle = isLoggedIn() ? currentUser().handle : '@wngkn5393218313';
+  const userTweets = DB.tweets.filter(t=>t.handle===myHandle || t.handle==='@wngkn5393218313');
   let content = '';
 
   if(tab==='posts'){
@@ -2031,7 +2038,7 @@ function submitMainReply(id){
   const text = document.getElementById('replyTextMain').value.trim();
   if(!text) return;
   if(!DB.replies[id]) DB.replies[id]=[];
-  const r = {id:Date.now(),replyTo:id,name:'王坤',handle:'@wngkn5393218313',avatar:'王',avatarBg:'linear-gradient(135deg,#667eea,#764ba2)',time:'刚刚',text,likes:0,liked:false};
+  const r = {id:Date.now(),replyTo:id,name:currentUser()?.name||'用户',handle:currentUser()?.handle||'@user',avatar:(currentUser()?.name||'用').slice(0,1),avatarBg:currentUser()?.avatarBg||'linear-gradient(135deg,#667eea,#764ba2)',time:'刚刚',text,likes:0,liked:false};
   DB.replies[id].push(r);
   const t = DB.tweets.find(x=>x.id===id);
   if(t) t.replies++;
@@ -2064,7 +2071,7 @@ function renderSettings(){
       <div class="settings-section">
         <div class="settings-section-title">账户</div>
         <div class="settings-item" onclick="navigate('auth')">
-          <div class="settings-item-info"><h3>${state.currentUser?'王坤 (@wngkn5393218313)':'登录'}</h3><p>管理你的账号信息</p></div>
+          <div class="settings-item-info"><h3>${isLoggedIn() ? currentUser().name + ' (' + currentUser().handle + ')' : '登录'}</h3><p>管理你的账号信息</p></div>
           <svg width="20" height="20" fill="var(--text2)" viewBox="0 0 24 24"><path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6z"/></svg>
         </div>
       </div>
@@ -2369,14 +2376,15 @@ const FOLLOWERS_DATA = [
 ];
 function renderFollowing(){
   const main = document.getElementById('mainContent');
+  const u = currentUser() || state.user;
   main.innerHTML=`
     <div class="ct">
       <div class="main-header" style="justify-content:space-between">
         <div style="display:flex;align-items:center;gap:20px">
           <button class="back-btn" onclick="navigate('profile')"><svg viewBox="0 0 24 24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg></button>
           <div>
-            <div style="font-size:17px;font-weight:800">王坤</div>
-            <div style="font-size:13px;color:var(--text2)">${state.user.following} 正在关注</div>
+            <div style="font-size:17px;font-weight:800">${u.name||'王坤'}</div>
+            <div style="font-size:13px;color:var(--text2)">${u.following||state.user.following} 正在关注</div>
           </div>
         </div>
       </div>
@@ -2387,14 +2395,15 @@ function renderFollowing(){
 }
 function renderFollowers(){
   const main = document.getElementById('mainContent');
+  const u = currentUser() || state.user;
   main.innerHTML=`
     <div class="ct">
       <div class="main-header" style="justify-content:space-between">
         <div style="display:flex;align-items:center;gap:20px">
           <button class="back-btn" onclick="navigate('profile')"><svg viewBox="0 0 24 24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg></button>
           <div>
-            <div style="font-size:17px;font-weight:800">王坤</div>
-            <div style="font-size:13px;color:var(--text2)">${state.user.followers} 关注者</div>
+            <div style="font-size:17px;font-weight:800">${u.name||'王坤'}</div>
+            <div style="font-size:13px;color:var(--text2)">${u.followers||state.user.followers} 关注者</div>
           </div>
         </div>
       </div>
@@ -2664,7 +2673,8 @@ function submitQuoteRetweet(){
   const qt=DB.tweets.find(x=>x.id===quoteId);
   if(!qt)return;
   const viewsOptions=['15','28','47','89','124'];
-  const t={id:Date.now(),name:'王坤',handle:'@wngkn5393218313',verified:false,time:'刚刚',text,avatar:'王',avatarBg:'linear-gradient(135deg,#667eea,#764ba2)',likes:0,retweets:0,replies:0,views:viewsOptions[Math.floor(Math.random()*viewsOptions.length)],liked:false,retweeted:false,bookmarked:false,quoteTweet:quoteId};
+  const u = currentUser() || {};
+  const t={id:Date.now(),name:u.name||'用户',handle:u.handle||'@user',verified:u.verified||false,time:'刚刚',text,avatar:(u.name||'用').slice(0,1),avatarBg:u.avatarBg||'linear-gradient(135deg,#667eea,#764ba2)',likes:0,retweets:0,replies:0,views:viewsOptions[Math.floor(Math.random()*viewsOptions.length)],liked:false,retweeted:false,bookmarked:false,quoteTweet:quoteId};
   DB.tweets.unshift(t);
   // 增加原帖转推数
   qt.retweets++;
@@ -2688,12 +2698,29 @@ function openReplyModal(id){
 function openPostModal(){
   if(!requireLogin()) return;
   document.getElementById('postModal').classList.add('active');
+  replyScope='everyone';
+  const span = document.querySelector('.reply-scope-btn span');
+  if(span) span.textContent='所有人可以回复';
+  state.editingTweetId=null;
+  document.getElementById('modalPostBtn').textContent='发帖';
+  // 更新弹窗头像为当前用户
+  const u = currentUser();
+  const avEl = document.getElementById('modalAv');
+  if(avEl && u){
+    avEl.textContent = (u.name||'用').slice(0,1);
+    if(u.avatarBg) avEl.style.background = u.avatarBg;
+  }
   setTimeout(()=>document.getElementById('modalText').focus(),50);
 }
 function closePostModal(){
   document.getElementById('postModal').classList.remove('active');
   document.getElementById('modalText').value='';
   document.getElementById('modalPostBtn').disabled=true;
+  document.getElementById('modalPostBtn').textContent='发帖';
+  state.editingTweetId=null;
+  replyScope='everyone';
+  const span = document.querySelector('.reply-scope-btn span');
+  if(span) span.textContent='所有人可以回复';
 }
 function updateModalPostBtn(){
   const v=document.getElementById('modalText').value.trim();
@@ -2704,11 +2731,42 @@ function submitPost(){
   const v=document.getElementById('modalText').value.trim();
   if(!v)return;
   const viewsOptions=['12','32','58','103','156','234'];
-  const t={id:Date.now(),name:'王坤',handle:'@wngkn5393218313',verified:false,time:'刚刚',text:v,avatar:'王',avatarBg:'linear-gradient(135deg,#667eea,#764ba2)',likes:0,retweets:0,replies:0,views:viewsOptions[Math.floor(Math.random()*viewsOptions.length)],liked:false,retweeted:false,bookmarked:false};
-  DB.tweets.unshift(t);
-  LS.save();
+  const u = currentUser() || {};
+  if(state.editingTweetId){
+    // 编辑已有帖子
+    const t = DB.tweets.find(x=>x.id===state.editingTweetId);
+    if(t){
+      t.text = v;
+      t.edited = true;
+      LS.save();
+    }
+    state.editingTweetId = null;
+    document.getElementById('modalPostBtn').textContent = '发帖';
+  } else {
+    // 新建帖子
+    const t={
+      id:Date.now(),
+      name:u.name||'用户',
+      handle:u.handle||'@user',
+      verified:u.verified||false,
+      time:'刚刚',
+      text:v,
+      avatar:(u.name||'用').slice(0,1),
+      avatarBg:u.avatarBg||'linear-gradient(135deg,#667eea,#764ba2)',
+      likes:0,retweets:0,replies:0,
+      views:viewsOptions[Math.floor(Math.random()*viewsOptions.length)],
+      liked:false,retweeted:false,bookmarked:false
+    };
+    DB.tweets.unshift(t);
+    u.posts = (u.posts||0) + 1;
+    // 持久化更新后的用户数据
+    const allUsers = JSON.parse(localStorage.getItem('yan_auth_users')||'{}');
+    if(allUsers[u.id]){ allUsers[u.id].posts = u.posts; localStorage.setItem('yan_auth_users', JSON.stringify(allUsers)); }
+    LS.save();
+  }
   closePostModal();
   if(state.currentPage==='home'){renderHome();}
+  else if(state.currentPage==='profile'){renderProfile();}
 }
 function openShareModal(id){
   document.getElementById('shareModal').classList.add('active');
@@ -2725,7 +2783,8 @@ function copyShareUrl(){
 function openMoreMenu(id,event){
   const body=document.getElementById('moreModalBody');
   const t=DB.tweets.find(x=>x.id===id);
-  const isMine = t && t.handle === '@wngkn5393218313';
+  const myHandle = isLoggedIn() ? currentUser().handle : '';
+  const isMine = t && (t.handle === myHandle || t.handle === '@wngkn5393218313');
   body.innerHTML=`
     <div class="d-item" onclick="toggleBookmarkFromMore(${id});closeMoreMenu()"><svg viewBox="0 0 24 24"><path d="M17 3H7c-1.1 0-1.99.9-1.99 2L5 21l7-3 7 3V5c0-1.1-.9-2-2-2z"/></svg> ${t&&t.bookmarked?'从书签中移除':'添加到书签'}</div>
     ${isMine ? `
