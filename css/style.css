@@ -556,3 +556,6 @@ textarea,input{font-family:inherit;outline:none;border:none;background:transpare
 
 /* ===== LOGIN PROMPT ===== */
 .login-prompt-text{font-size:15px;color:var(--text2);margin-bottom:24px}
+
+/* ===== TOAST ===== */
+@keyframes toastIn{from{opacity:0;transform:translateX(-50%) translateY(-8px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}

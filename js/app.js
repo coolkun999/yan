@@ -313,14 +313,28 @@ function authPhoneSkipName(){
   }
 }
 function onAuthSuccess(user){
-  // 显示成功面板
-  document.getElementById('authPhonePanel').style.display = 'none';
-  document.getElementById('authEmailPanel').style.display = 'none';
-  document.getElementById('authSuccessPanel').style.display = '';
   const u = user || currentUser();
-  document.getElementById('authSuccessHandle').textContent = u ? ('欢迎，' + (u.name || u.handle)) : '登录成功';
-  // 更新侧边栏
+  // 关闭所有弹窗
+  closeAuthModal();
+  closeLoginPrompt();
+  // 同步登录状态：更新侧边栏、刷新当前页面
   renderLoggedInSidebar();
+  // 回到主页并重新渲染（确保 compose 区域、内容等都以登录态显示）
+  navigate('home');
+  // 顶部短暂提示欢迎
+  showToast('欢迎，' + (u ? (u.name || u.handle) : ''));
+}
+
+// 顶部 Toast 提示（1.5秒后消失）
+function showToast(msg){
+  const old = document.getElementById('appToast');
+  if(old) old.remove();
+  const el = document.createElement('div');
+  el.id = 'appToast';
+  el.style.cssText = 'position:fixed;top:16px;left:50%;transform:translateX(-50%);z-index:99999;background:var(--accent);color:#fff;padding:10px 24px;border-radius:999px;font-size:14px;font-weight:600;box-shadow:0 4px 16px rgba(0,0,0,.3);pointer-events:none;animation:toastIn .2s ease';
+  el.textContent = msg;
+  document.body.appendChild(el);
+  setTimeout(function(){ el.style.opacity='0'; el.style.transition='opacity .3s'; setTimeout(function(){ if(el.parentNode) el.remove(); }, 300); }, 1500);
 }
 
 // ===== 邮箱登录/注册 =====
@@ -1728,12 +1742,31 @@ function toggleUserDropdown(event){
       帮助中心
     </div>
     <div class="user-menu-divider"></div>
-    <div class="user-menu-item" onclick="closeAllDropdowns()">
+    <div class="user-menu-item" onclick="doLogout()">
       <svg viewBox="0 0 24 24"><path d="M17 7l-1.41 1.41L18.17 11H8v2h10.17l-2.58 2.58L17 17l5-5zM4 5h8V3H4c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h8v-2H4V5z"/></svg>
       退出登录
     </div>
   `;
   dropdown.classList.add('active');
+}
+function doLogout(){
+  closeAllDropdowns();
+  authLogout();
+  // 切换回游客侧边栏
+  const userMenu = document.getElementById('userMenu');
+  if(userMenu){
+    userMenu.outerHTML = `
+    <div class="guest-menu" id="guestMenu" style="margin-bottom:12px;display:flex;flex-direction:column;gap:8px;padding:12px 0">
+      <button class="abtn" onclick="openAuthModal()" style="width:calc(100% - 8px);margin:0 auto;padding:12px;border-radius:var(--r);font-size:15px;font-weight:700;cursor:pointer">登录</button>
+      <div style="font-size:13px;color:var(--text2);text-align:center;padding:0 8px">登录以发帖、点赞和关注</div>
+    </div>`;
+  }
+  // 发帖按钮切回游客模式
+  const postBtn = document.querySelector('.post-btn');
+  if(postBtn) postBtn.onclick = function(){ openLoginPrompt(); };
+  // 返回主页
+  navigate('home');
+  showToast('已退出登录');
 }
 function toggleAccount(){
   closeAllDropdowns();
