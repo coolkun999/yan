@@ -114,7 +114,11 @@ function authRegister(identifier, password, type, displayName) {
   };
   users[identifier] = user;
   saveUsers(users);
-  return { ok: true, user };
+  // 注册成功自动登录（建立 session，脱敏存储）
+  const sessionUser = { ...user };
+  delete sessionUser.password;
+  setSession(sessionUser);
+  return { ok: true, user: sessionUser };
 }
 
 // ===== 登录 =====
