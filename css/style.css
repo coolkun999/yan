@@ -62,6 +62,13 @@ textarea,input{font-family:inherit;outline:none;border:none;background:transpare
 .tb{width:36px;height:36px;border-radius:var(--r);background:transparent;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--accent);transition:background .2s}
 .tb:hover{background:rgba(29,155,240,.1)}
 .tb svg{width:20px;height:20px;fill:currentColor}
+/* 回复范围按钮 */
+.reply-scope-btn{width:auto;height:auto;padding:2px 8px;border-radius:999px;display:inline-flex;align-items:center;color:var(--accent);font-size:13px;gap:2px;transition:background .2s}
+.reply-scope-btn:hover{background:rgba(29,155,240,.1)}
+.reply-scope-btn svg{width:16px;height:16px}
+/* 回复范围菜单项 */
+.rs-item:hover{background:var(--bg3)}
+.rs-active{background:rgba(29,155,240,.08)}
 .tb.disabled{opacity:.4;pointer-events:none}
 .pb{background:var(--accent);color:#fff;border-radius:var(--r);padding:8px 20px;font-size:15px;font-weight:700;cursor:pointer;transition:background .2s;border:none}
 .pb:hover{background:var(--ah)}

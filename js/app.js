@@ -641,7 +641,13 @@ function renderHome(){
             <button class="tb" onclick="alert('日程安排功能即将上线')" title="安排"><svg viewBox="0 0 24 24"><path d="M7 11h2v2H7v-2zm4 0h2v2h-2v-2zm4 0h2v2h-2v-2zM19 4h-1V2h-2v2H8V2H6v2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 16H5V9h14v11z"/></svg></button>
             <button class="tb" onclick="alert('位置功能即将上线')" title="位置"><svg viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5S10.62 6.5 12 6.5s2.5 1.12 2.5 2.5S13.38 11.5 12 11.5z"/></svg></button>
           </div>
-          <button class="pb" id="homePostBtn" disabled onclick="homePost()">发帖</button>
+          <div style="display:flex;align-items:center;gap:8px">
+            <button class="tb reply-scope-btn" onclick="toggleReplyScope()" title="所有人可以回复">
+              <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zM8.46 14.45l-1.36-.62c.28-.61.41-1.24.4-1.86-.02-1.47-.75-3-1.06-3.38.67-.34 3-1.35 5.6-.33 3.35 1.34 3.58 5.01 3.58 5.74H8.46z"/></svg>
+              <span style="font-size:13px;font-weight:600;color:var(--accent);margin-left:4px">所有人可以回复</span>
+            </button>
+            <button class="pb" id="homePostBtn" disabled onclick="homePost()">发帖</button>
+          </div>
         </div>
       </div>
     </div>` : `
@@ -2830,6 +2836,56 @@ function insertEmoji(e){
   document.getElementById('emojiPicker')?.classList.remove('active');
 }
 
+// ===== 回复范围 =====
+let replyScope = 'everyone'; // 'everyone' | 'followed' | 'mentioned'
+function toggleReplyScope(){
+  const old = document.getElementById('replyScopeMenu');
+  if(old){ old.remove(); return; }
+  const btn = document.querySelector('.reply-scope-btn');
+  if(!btn) return;
+  const rect = btn.getBoundingClientRect();
+  const menu = document.createElement('div');
+  menu.id = 'replyScopeMenu';
+  menu.style.cssText = 'position:fixed;z-index:9999;background:var(--bg);border:1px solid var(--border);border-radius:12px;box-shadow:0 8px 28px rgba(0,0,0,.4);overflow:hidden;min-width:280px';
+  menu.style.top = (rect.bottom + 4) + 'px';
+  menu.style.left = (rect.left - 80) + 'px';
+  const scopes = [
+    { key:'everyone', label:'所有人可以回复', desc:'任何人都可以回复你的帖子', icon:'<circle cx="12" cy="12" r="10"/><ellipse cx="12" cy="12" rx="6" ry="4"/><path d="M4 12c0-4.4 3.6-8 8-8m0 16c-1.7 0-3.3-3-4-6.3"/><path d="M6.3 7.6c-3.8 2.2-3.8 5.7 0 8.8"/><path d="M8 4.7c-2.2 3.8-2.2 8.7 0 12.6"/><path d="M16 4.7c2.2 3.8 2.2 8.7 0 12.6"/><path d="M17.7 7.6c3.8 2.2 3.8 5.7 0 8.8"/><path d="M20 12c0-4.4-3.6-8-8-8"/><path d="M4 12h16"/>' },
+    { key:'followed', label:'你关注的人可以回复', desc:'仅你关注的人可以回复', icon:'<path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>' },
+    { key:'mentioned', label:'你提及的人可以回复', desc:'仅你 @ 的人可以回复', icon:'<path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>' }
+  ];
+  menu.innerHTML = scopes.map(s => `
+    <div class="rs-item${replyScope === s.key ? ' rs-active' : ''}" onclick="selectReplyScope('${s.key}')" style="display:flex;align-items:center;gap:12px;padding:12px 16px;cursor:pointer;transition:background .15s">
+      <svg viewBox="0 0 24 24" style="width:20px;height:20px;fill:currentColor;flex-shrink:0;color:var(--text2)">${s.icon}</svg>
+      <div style="flex:1">
+        <div style="font-size:15px;font-weight:600">${s.label}</div>
+        <div style="font-size:13px;color:var(--text2)">${s.desc}</div>
+      </div>
+      ${replyScope === s.key ? '<svg viewBox="0 0 24 24" style="width:20px;height:20px;fill:var(--accent)"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>' : ''}
+    </div>
+  `).join('');
+  document.body.appendChild(menu);
+  // click outside to close
+  setTimeout(() => {
+    document.addEventListener('click', function closeScope(e){
+      if(!e.target.closest('#replyScopeMenu') && !e.target.closest('.reply-scope-btn')){
+        menu.remove();
+        document.removeEventListener('click', closeScope);
+      }
+    });
+  }, 10);
+}
+function selectReplyScope(key){
+  replyScope = key;
+  const menu = document.getElementById('replyScopeMenu');
+  if(menu) menu.remove();
+  const span = document.querySelector('.reply-scope-btn span');
+  if(span){
+    const labels = { everyone:'所有人可以回复', followed:'你关注的人可以回复', mentioned:'你提及的人可以回复' };
+    span.textContent = labels[key] || '所有人可以回复';
+  }
+}
+
 // ===== CLICK OUTSIDE =====
 document.addEventListener('click',function(e){
   if(!e.target.closest('.dropdown')&&!e.target.closest('[onclick*="toggleDropdown"]')&&!e.target.closest('#userMenu')){
@@ -2844,6 +2900,10 @@ document.addEventListener('click',function(e){
   if(!e.target.closest('#quoteModal')&&!e.target.closest('.ab.rt'))closeQuoteModal();
   // 关闭转推下拉菜单
   if(!e.target.closest('.rt-menu')&&!e.target.closest('.ab.rt'))document.querySelectorAll('.rt-menu').forEach(m=>m.remove());
+  // 关闭回复范围菜单
+  if(!e.target.closest('#replyScopeMenu')&&!e.target.closest('.reply-scope-btn')){
+    const m = document.getElementById('replyScopeMenu'); if(m) m.remove();
+  }
 });
 
 // ===== INFINITE SCROLL =====
