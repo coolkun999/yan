@@ -576,8 +576,8 @@ function navigate(page, param){
   state.currentPage = page;
   document.getElementById('sidebar').style.display = '';
   document.getElementById('sidebarRight').style.display = 'flex';
-  document.getElementById('authPage').classList.remove('active');
-  document.getElementById('authPage').innerHTML = '';
+  const ap = document.getElementById('authPage');
+  if(ap){ ap.classList.remove('active'); ap.innerHTML = ''; }
   document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
   const navMap = {home:'nav-home',explore:'nav-explore',notifications:'nav-notif',messages:'nav-messages',bookmarks:'nav-bookmarks',profile:'nav-profile',settings:'nav-settings'};
   if(navMap[page]) document.getElementById(navMap[page])?.classList.add('active');
@@ -2984,7 +2984,7 @@ window.addEventListener('scroll', function(){
 });
 
 // ===== INIT =====
-navigate('home');
+// Initial navigation is handled by DOMContentLoaded callback in initAuth above
 
 // ===== KEYBOARD SHORTCUTS =====
 document.addEventListener('keydown',function(e){
