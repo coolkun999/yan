@@ -28,6 +28,401 @@ const state = {
 
 
 // ===== UTILITIES =====
+// ===== AUTH INIT =====
+// 页面加载时根据登录状态初始化 UI
+(function initAuth(){
+  document.addEventListener('DOMContentLoaded', function(){
+    applyAuthUI();
+    // 游客模式：直接显示主页，不强制登录
+    if(!isLoggedIn()){
+      // 侧边栏显示登录按钮
+      renderGuestSidebar();
+    } else {
+      renderLoggedInSidebar();
+    }
+    // 默认导航到主页
+    navigate('home');
+  });
+})();
+
+function applyAuthUI(){
+  const loggedIn = isLoggedIn();
+  const sidebar = document.getElementById('sidebar');
+  if(sidebar) sidebar.style.display = '';
+  const sbR = document.getElementById('sidebarRight');
+  if(sbR) sbR.style.display = '';
+}
+
+// 游客模式：侧边栏显示登录入口
+function renderGuestSidebar(){
+  const userMenu = document.getElementById('userMenu');
+  if(userMenu){
+    userMenu.outerHTML = `
+    <div class="guest-menu" id="guestMenu" style="margin-bottom:12px;display:flex;flex-direction:column;gap:8px;padding:12px 0">
+      <button class="abtn" onclick="openAuthModal()" style="width:calc(100% - 8px);margin:0 auto;padding:12px;border-radius:var(--r);font-size:15px;font-weight:700;cursor:pointer">登录</button>
+      <div style="font-size:13px;color:var(--text2);text-align:center;padding:0 8px">登录以发帖、点赞和关注</div>
+    </div>`;
+  }
+  // 更新发帖按钮行为：未登录时弹登录提示
+  const postBtn = document.querySelector('.post-btn');
+  if(postBtn) postBtn.onclick = function(){ openLoginPrompt(); };
+}
+
+// 已登录：侧边栏显示用户信息
+function renderLoggedInSidebar(){
+  const user = currentUser();
+  if(!user) return;
+  const guestMenu = document.getElementById('guestMenu');
+  if(guestMenu){
+    guestMenu.outerHTML = `
+    <div class="user-menu" id="userMenu" onclick="toggleUserDropdown(event)">
+      <div class="av" style="background:${user.avatarBg||'linear-gradient(135deg,#667eea,#764ba2)'}">${(user.name||'用').slice(0,1)}</div>
+      <div class="user-menu-text">
+        <div class="un">${user.name||'用户'}</div>
+        <div class="uh">${user.handle||''}</div>
+      </div>
+      <span class="dots">···</span>
+    </div>`;
+  }
+  // 恢复发帖按钮
+  const postBtn = document.querySelector('.post-btn');
+  if(postBtn) postBtn.onclick = function(){ openPostModal(); };
+  // 更新 state.user 以便兼容旧代码
+  if(state) state.user = { name:user.name, handle:user.handle, bio:user.bio||'', location:user.location||'', joinedDate:user.joinedDate||'', followers:user.followers||0, following:user.following||0, posts:user.posts||0, verified:user.verified||false };
+}
+
+// 登录拦截：需要登录的操作前调用，返回 true 表示已登录
+function requireLogin(actionDesc){
+  if(isLoggedIn()) return true;
+  openLoginPrompt();
+  return false;
+}
+
+// ===== AUTH MODAL 控制 =====
+function openAuthModal(tab){
+  // 已登录则跳过
+  if(isLoggedIn()) return;
+  tab = tab || 'email';
+  switchAuthTab(tab);
+  document.getElementById('authModal').classList.add('active');
+  // 重置手机号步骤
+  document.getElementById('authPhoneStep1').style.display = '';
+  document.getElementById('authPhoneStep2').style.display = 'none';
+  document.getElementById('authPhoneStep3').style.display = 'none';
+  document.getElementById('authSuccessPanel').style.display = 'none';
+  // 重置输入框
+  document.getElementById('authPhoneInput').value = '';
+  document.getElementById('authEmailInput').value = '';
+  document.getElementById('authPasswordInput').value = '';
+  // 清空验证码
+  document.querySelectorAll('#authCodeInputs .code-input').forEach(i=>i.value='');
+  // 重置邮箱子面板（默认显示登录）
+  switchEmailSub('login');
+  validatePhoneInput();
+  validateEmailInput();
+  window._pendingPhoneUser = null;
+}
+function closeAuthModal(){
+  document.getElementById('authModal').classList.remove('active');
+}
+function switchAuthTab(tab){
+  const tabPhone = document.getElementById('authTabPhone');
+  const tabEmail = document.getElementById('authTabEmail');
+  const phonePanel = document.getElementById('authPhonePanel');
+  const emailPanel = document.getElementById('authEmailPanel');
+  if(tab === 'phone'){
+    tabPhone.classList.add('active'); tabPhone.style.color = 'var(--text)'; tabPhone.style.fontWeight='800'; tabPhone.style.borderBottom='3px solid var(--accent)';
+    tabEmail.classList.remove('active'); tabEmail.style.color = 'var(--text2)'; tabEmail.style.fontWeight='500'; tabEmail.style.borderBottom='3px solid transparent';
+    phonePanel.style.display = '';
+    emailPanel.style.display = 'none';
+  } else {
+    tabEmail.classList.add('active'); tabEmail.style.color = 'var(--text)'; tabEmail.style.fontWeight='800'; tabEmail.style.borderBottom='3px solid var(--accent)';
+    tabPhone.classList.remove('active'); tabPhone.style.color = 'var(--text2)'; tabPhone.style.fontWeight='500'; tabPhone.style.borderBottom='3px solid transparent';
+    phonePanel.style.display = 'none';
+    emailPanel.style.display = '';
+  }
+}
+function openLoginPrompt(){
+  document.getElementById('loginPromptModal').classList.add('active');
+}
+function closeLoginPrompt(){
+  document.getElementById('loginPromptModal').classList.remove('active');
+}
+
+// ===== 手机号登录流程 =====
+function validatePhoneInput(){
+  const phone = document.getElementById('authPhoneInput').value.trim();
+  const btn = document.getElementById('authPhoneNextBtn');
+  if(isValidPhone(phone)){
+    btn.style.opacity = '1'; btn.style.cursor = 'pointer'; btn.disabled = false;
+    document.getElementById('authPhoneError').style.display = 'none';
+  } else {
+    btn.style.opacity = '.5'; btn.style.cursor = 'default'; btn.disabled = true;
+  }
+}
+function authPhoneNext(){
+  const phone = document.getElementById('authPhoneInput').value.trim();
+  if(!isValidPhone(phone)) return;
+  // 检查是否已注册
+  const users = getUsers();
+  const isRegistered = !!users[phone];
+  // 发送验证码（模拟）
+  const code = sendVerifyCode(phone);
+  // 开发模式：把验证码显示在页面上方便测试
+  console.log('[言 验证码] 手机号 ' + phone + ' 的验证码是：' + code);
+  // 显示 step2
+  document.getElementById('authPhoneStep1').style.display = 'none';
+  document.getElementById('authPhoneStep2').style.display = '';
+  document.getElementById('authPhoneDisplay').textContent = phone;
+  // 清空验证码输入
+  document.querySelectorAll('#authCodeInputs .code-input').forEach(inp=>inp.value='');
+  document.getElementById('authCodeInputs').children[0].focus();
+  document.getElementById('authCodeError').style.display = 'none';
+  // 启动倒计时
+  startCountdown(60);
+  // 如果是已注册：提示"登录"，未注册：提示"注册"
+  document.getElementById('authCodeVerifyBtn').textContent = isRegistered ? '登录' : '注册并登录';
+}
+let _countdownTimer = null;
+function startCountdown(seconds){
+  const btn = document.getElementById('authResendBtn');
+  const cd = document.getElementById('authCountdown');
+  btn.style.display = 'none';
+  cd.style.display = '';
+  let left = seconds;
+  cd.textContent = left + '秒后重新发送';
+  if(_countdownTimer) clearInterval(_countdownTimer);
+  _countdownTimer = setInterval(function(){
+    left--;
+    if(left <= 0){
+      clearInterval(_countdownTimer);
+      btn.style.display = '';
+      cd.style.display = 'none';
+    } else {
+      cd.textContent = left + '秒后重新发送';
+    }
+  }, 1000);
+}
+function authResendCode(){
+  const phone = document.getElementById('authPhoneInput').value.trim();
+  const code = sendVerifyCode(phone);
+  console.log('[言 验证码] 重新发送，验证码：' + code);
+  startCountdown(60);
+  document.getElementById('authCodeError').style.display = 'none';
+}
+// 验证码输入自动跳转（使用 data-idx 属性）
+function codeInput(el){
+  el.value = el.value.replace(/[^0-9]/g,'');
+  const idx = parseInt(el.dataset.idx);
+  if(el.value.length === 1 && idx < 5){
+    document.querySelectorAll('#authCodeInputs .code-input')[idx+1].focus();
+  }
+  // 自动验证：6位填满时自动验证
+  const inputs = document.querySelectorAll('#authCodeInputs .code-input');
+  const allFilled = Array.from(inputs).every(i=>i.value.length===1);
+  if(allFilled) authVerifyCode();
+}
+function codeBack(evt, el){
+  const idx = parseInt(el.dataset.idx);
+  if(evt.key === 'Backspace' && el.value.length === 0 && idx > 0){
+    document.querySelectorAll('#authCodeInputs .code-input')[idx-1].focus();
+  }
+}
+function authVerifyCode(){
+  const inputs = document.querySelectorAll('#authCodeInputs .code-input');
+  const code = Array.from(inputs).map(i=>i.value).join('');
+  const phone = document.getElementById('authPhoneInput').value.trim();
+  const users = getUsers();
+  const isRegistered = !!users[phone];
+  if(code.length < 6){
+    showAuthCodeError('请输入完整的6位验证码');
+    return;
+  }
+  if(!verifyCode(phone, code)){
+    showAuthCodeError('验证码错误或已过期');
+    return;
+  }
+  // 验证码正确
+  if(isRegistered){
+    // 已注册：直接登录（手机号登录用验证码替代密码）
+    const loginResult = authLoginByPhone(phone);
+    if(loginResult.ok){
+      onAuthSuccess(loginResult.user);
+    } else {
+      showAuthCodeError(loginResult.msg);
+    }
+  } else {
+    // 新用户：先创建账号，再引导设置昵称
+    const regResult = authRegister(phone, '_phone_verify', 'phone');
+    if(regResult.ok){
+      // 显示设置昵称步骤
+      document.getElementById('authPhoneStep2').style.display = 'none';
+      document.getElementById('authPhoneStep3').style.display = '';
+      document.getElementById('authPhoneNameInput').focus();
+      validatePhoneNameInput();
+      // 把新注册的用户存入 session（等设置完昵称再正式激活）
+      window._pendingPhoneUser = regResult.user;
+    } else {
+      showAuthCodeError(regResult.msg);
+    }
+  }
+}
+function showAuthCodeError(msg){
+  const el = document.getElementById('authCodeError');
+  el.textContent = msg;
+  el.style.display = '';
+}
+// 手机号验证码登录（验证码已在上面验证过，这里直接设置 session）
+function authLoginByPhone(phone){
+  const users = getUsers();
+  const user = users[phone];
+  if(!user) return { ok: false, msg: '账号不存在' };
+  const sessionUser = { ...user };
+  delete sessionUser.password;
+  // 调用 auth.js 的 setSession
+  setSession(sessionUser);
+  return { ok: true, user: sessionUser };
+}
+// 手机号注册：验证昵称输入
+function validatePhoneNameInput(){
+  const name = document.getElementById('authPhoneNameInput').value.trim();
+  const btn = document.getElementById('authPhoneNameBtn');
+  const ok = name.length >= 1;
+  btn.style.opacity = ok ? '1' : '.5';
+  btn.style.cursor = ok ? 'pointer' : 'default';
+  btn.disabled = !ok;
+}
+// 手机号注册：确认昵称，完成注册
+function authPhoneSetName(){
+  const name = document.getElementById('authPhoneNameInput').value.trim();
+  if(!name){ document.getElementById('authPhoneNameError').textContent='请输入昵称'; document.getElementById('authPhoneNameError').style.display=''; return; }
+  if(window._pendingPhoneUser){
+    updateCurrentUser({ name: name });
+    const user = currentUser();
+    window._pendingPhoneUser = null;
+    onAuthSuccess(user);
+  }
+}
+// 手机号注册：跳过昵称设置
+function authPhoneSkipName(){
+  const pending = window._pendingPhoneUser;
+  if(pending){
+    setSession(pending);
+    window._pendingPhoneUser = null;
+    onAuthSuccess(pending);
+  }
+}
+function onAuthSuccess(user){
+  // 显示成功面板
+  document.getElementById('authPhonePanel').style.display = 'none';
+  document.getElementById('authEmailPanel').style.display = 'none';
+  document.getElementById('authSuccessPanel').style.display = '';
+  const u = user || currentUser();
+  document.getElementById('authSuccessHandle').textContent = u ? ('欢迎，' + (u.name || u.handle)) : '登录成功';
+  // 更新侧边栏
+  renderLoggedInSidebar();
+}
+
+// ===== 邮箱登录/注册 =====
+// 切换邮箱子面板：login | register
+function switchEmailSub(sub){
+  const loginSub = document.getElementById('authEmailLoginSub');
+  const regSub = document.getElementById('authEmailRegSub');
+  if(!loginSub || !regSub) return;
+  if(sub === 'register'){
+    loginSub.style.display = 'none';
+    regSub.style.display = '';
+    // 重置注册表单
+    document.getElementById('authRegNameInput').value = '';
+    document.getElementById('authRegEmailInput').value = '';
+    document.getElementById('authRegPwInput').value = '';
+    document.getElementById('authRegPw2Input').value = '';
+    document.getElementById('authRegError').style.display = 'none';
+    validateRegInput();
+  } else {
+    regSub.style.display = 'none';
+    loginSub.style.display = '';
+    document.getElementById('authEmailError').style.display = 'none';
+    validateEmailInput();
+  }
+}
+
+// 邮箱登录表单验证
+function validateEmailInput(){
+  const email = document.getElementById('authEmailInput') ? document.getElementById('authEmailInput').value.trim() : '';
+  const pw = document.getElementById('authPasswordInput') ? document.getElementById('authPasswordInput').value : '';
+  const loginBtn = document.getElementById('authEmailLoginBtn');
+  if(!loginBtn) return;
+  const ok = isValidEmail(email) && pw.length >= 1;
+  loginBtn.style.opacity = ok ? '1' : '.5';
+  loginBtn.style.cursor = ok ? 'pointer' : 'default';
+  loginBtn.disabled = !ok;
+  if(!ok) { const e = document.getElementById('authEmailError'); if(e) e.style.display = 'none'; }
+}
+
+// 注册表单验证
+function validateRegInput(){
+  const name = document.getElementById('authRegNameInput') ? document.getElementById('authRegNameInput').value.trim() : '';
+  const email = document.getElementById('authRegEmailInput') ? document.getElementById('authRegEmailInput').value.trim() : '';
+  const pw = document.getElementById('authRegPwInput') ? document.getElementById('authRegPwInput').value : '';
+  const pw2 = document.getElementById('authRegPw2Input') ? document.getElementById('authRegPw2Input').value : '';
+  const btn = document.getElementById('authRegBtn');
+  if(!btn) return;
+  const ok = name.length >= 1 && isValidEmail(email) && isValidPassword(pw) && pw === pw2;
+  btn.style.opacity = ok ? '1' : '.5';
+  btn.style.cursor = ok ? 'pointer' : 'default';
+  btn.disabled = !ok;
+  if(!ok) { const e = document.getElementById('authRegError'); if(e) e.style.display = 'none'; }
+}
+
+// 密码显示/隐藏（通用，传入 inputId）
+function togglePwVisibility(inputId, btn){
+  const inp = document.getElementById(inputId);
+  if(!inp) return;
+  if(inp.type === 'password'){
+    inp.type = 'text'; btn.textContent = '隐藏';
+  } else {
+    inp.type = 'password'; btn.textContent = '显示';
+  }
+}
+
+// 邮箱登录
+function authEmailAction(action){
+  const email = document.getElementById('authEmailInput').value.trim();
+  const pw = document.getElementById('authPasswordInput').value;
+  const errEl = document.getElementById('authEmailError');
+  if(!isValidEmail(email)){ errEl.textContent='请输入有效的邮箱'; errEl.style.display=''; return; }
+  if(!pw){ errEl.textContent='请输入密码'; errEl.style.display=''; return; }
+  const loginResult = authLogin(email, pw, 'email');
+  if(!loginResult.ok){
+    errEl.textContent = loginResult.msg; errEl.style.display=''; return;
+  }
+  onAuthSuccess(loginResult.user);
+}
+
+// 邮箱注册（新版：含昵称和确认密码）
+function authDoRegister(){
+  const name = document.getElementById('authRegNameInput').value.trim();
+  const email = document.getElementById('authRegEmailInput').value.trim();
+  const pw = document.getElementById('authRegPwInput').value;
+  const pw2 = document.getElementById('authRegPw2Input').value;
+  const errEl = document.getElementById('authRegError');
+  if(!name){ errEl.textContent='请输入昵称'; errEl.style.display=''; return; }
+  if(!isValidEmail(email)){ errEl.textContent='请输入有效的邮箱'; errEl.style.display=''; return; }
+  if(!isValidPassword(pw)){ errEl.textContent='密码至少8位'; errEl.style.display=''; return; }
+  if(pw !== pw2){ errEl.textContent='两次密码不一致'; errEl.style.display=''; return; }
+  const regResult = authRegister(email, pw, 'email', name);
+  if(!regResult.ok){
+    errEl.textContent = regResult.msg; errEl.style.display=''; return;
+  }
+  onAuthSuccess(regResult.user);
+}
+
+function closeAuthModalAndRefresh(){
+  closeAuthModal();
+  // 刷新当前页面
+  if(state && state.currentPage) navigate(state.currentPage);
+}
 function f(n){if(n>=10000)return(n/10000).toFixed(1)+'万';if(n>=1000)return(n/1000).toFixed(1)+'k';return n}
 function vSvg(){return'<svg viewBox="0 0 24 24"><path d="M20.884 13.19c-1.351 2.48-4.001 5.12-8.379 7.67l-.503.3-.504-.3c-4.379-2.55-7.029-5.19-8.382-7.67-1.36-2.5-1.41-4.86-.514-6.67.887-1.79 2.647-2.91 4.601-3.01 1.651-.09 3.368.56 4.798 2.01 1.429-1.45 3.146-2.1 4.796-2.01 1.954.1 3.714 1.22 4.601 3.01.896 1.81.846 4.17-.514 6.67z"/></svg>'}
 function vbSvg(){return'<svg viewBox="0 0 24 24"><path d="M4.5 3.88l4.432 4.14-1.364 1.46L5.5 7.55V16c0 1.1.896 2 2 2H13v2H7.5c-2.209 0-4-1.79-4-4V7.55L1.432 9.48.068 8.02 4.5 3.88z"/></svg>'}
@@ -218,8 +613,9 @@ function renderHome(){
         </div>
       </div>
     </div>
+    ${isLoggedIn() ? `
     <div class="compose">
-      <div class="av">王</div>
+      <div class="av" style="background:${currentUser()&&currentUser().avatarBg||'linear-gradient(135deg,#667eea,#764ba2)'}">${currentUser()&&currentUser().name?currentUser().name.slice(0,1):'我'}</div>
       <div class="ca">
         <textarea class="cin" placeholder="有什么新鲜事？" id="homeCompose" oninput="updateComposeBtn()"></textarea>
         <div class="ctb">
@@ -234,7 +630,11 @@ function renderHome(){
           <button class="pb" id="homePostBtn" disabled onclick="homePost()">发帖</button>
         </div>
       </div>
-    </div>
+    </div>` : `
+    <div class="compose" style="cursor:pointer;padding:16px;display:flex;align-items:center;justify-content:space-between" onclick="openAuthModal()">
+      <span style="font-size:20px;color:var(--text2)">有什么新鲜事？</span>
+      <button class="abtn" style="width:auto;padding:10px 20px;font-size:15px;pointer-events:none">发帖</button>
+    </div>`}
     <div id="homeFeed">${forYouActive ? renderForYouFeed() : renderFollowingFeed()}</div>
   `;
   initEmojiPicker();
@@ -368,6 +768,7 @@ function updateComposeBtn(){
   document.getElementById('homePostBtn').disabled = v.length===0;
 }
 function homePost(){
+  if(!requireLogin()) return;
   const v = document.getElementById('homeCompose').value.trim();
   if(!v) return;
   const viewsOptions=['15','28','47','89','124','203'];
@@ -2142,6 +2543,7 @@ function handleGoogleAuth(){
 
 // ===== INTERACTIONS =====
 function doLike(id,btn){
+  if(!requireLogin()) return;
   const t=DB.tweets.find(x=>x.id===id);
   if(!t)return;
   t.liked=!t.liked;
@@ -2152,6 +2554,7 @@ function doLike(id,btn){
   if(lk)lk.textContent=f(t.likes);
 }
 function doRetweet(id,btn){
+  if(!requireLogin()) return;
   const t=DB.tweets.find(x=>x.id===id);
   if(!t)return;
   // 弹出选择：普通转推 or 引用转推
@@ -2232,16 +2635,19 @@ function submitQuoteRetweet(){
   else if(state.currentPage==='post')renderPostDetail(quoteId);
 }
 function toggleFollow(btn){
+  if(!requireLogin()) return;
   btn.textContent=btn.textContent==='关注'?'正在关注':'关注';
   btn.classList.toggle('following',btn.textContent==='正在关注');
 }
 function openReplyModal(id){
+  if(!requireLogin()) return;
   const t=DB.tweets.find(x=>x.id===id);
   if(!t)return;
   openPostModal();
   document.getElementById('modalText').value='@'+t.handle.replace('@','')+' ';
 }
 function openPostModal(){
+  if(!requireLogin()) return;
   document.getElementById('postModal').classList.add('active');
   setTimeout(()=>document.getElementById('modalText').focus(),50);
 }
@@ -2255,6 +2661,7 @@ function updateModalPostBtn(){
   document.getElementById('modalPostBtn').disabled=v.length===0;
 }
 function submitPost(){
+  if(!requireLogin()) return;
   const v=document.getElementById('modalText').value.trim();
   if(!v)return;
   const viewsOptions=['12','32','58','103','156','234'];

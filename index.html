@@ -305,9 +305,153 @@
   <div class="d-item" onclick="closeAllDropdowns()"><svg viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg> 订阅专业版</div>
 </div>
 
-<!-- Auth page overlay -->
-<div id="authPage" class="page"></div>
+<!-- AUTH MODAL: 登录/注册弹窗 -->
+<div class="modal-overlay" id="authModal">
+  <div class="modal" style="max-width:420px;overflow:visible">
+    <div class="modal-header" style="border-bottom:none;padding-bottom:0;justify-content:center;position:relative">
+      <button class="modal-close" style="position:absolute;left:12px" onclick="closeAuthModal()">
+        <svg viewBox="0 0 24 24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+      </button>
+      <div style="font-size:20px;font-weight:800">欢迎来到 言</div>
+    </div>
+    <div class="modal-body" style="padding:16px 32px 32px">
+
+      <!-- 方式切换 Tab -->
+      <div class="auth-tabs" style="display:flex;margin-bottom:24px;border-bottom:1px solid var(--border)">
+        <button class="auth-tab" id="authTabPhone" onclick="switchAuthTab('phone')" style="flex:1;padding:12px 0;font-size:15px;font-weight:500;background:transparent;border:none;color:var(--text2);cursor:pointer;position:relative;border-bottom:3px solid transparent">手机号</button>
+        <button class="auth-tab active" id="authTabEmail" onclick="switchAuthTab('email')" style="flex:1;padding:12px 0;font-size:15px;font-weight:700;background:transparent;border:none;color:var(--text);cursor:pointer;border-bottom:3px solid var(--accent)">邮箱</button>
+      </div>
+
+      <!-- 手机号登录 -->
+      <div id="authPhonePanel" style="display:none">
+        <div id="authPhoneStep1">
+          <div style="font-size:23px;font-weight:800;margin-bottom:6px">登录到 言</div>
+          <div style="font-size:15px;color:var(--text2);margin-bottom:24px">输入你的手机号</div>
+          <div class="ail" style="margin-bottom:12px">
+            <label>手机号</label>
+            <input type="tel" id="authPhoneInput" maxlength="11" placeholder="请输入手机号" style="width:100%;background:transparent;border:none;outline:none;color:var(--text);font-size:17px;font-family:inherit;padding:4px 0" oninput="validatePhoneInput()">
+          </div>
+          <div id="authPhoneError" style="color:#f4212e;font-size:13px;margin-bottom:8px;display:none"></div>
+          <button class="abtn" id="authPhoneNextBtn" onclick="authPhoneNext()" style="opacity:.5;cursor:default;margin-top:16px">下一步</button>
+        </div>
+        <div id="authPhoneStep2" style="display:none">
+          <div style="font-size:23px;font-weight:800;margin-bottom:6px">验证手机号</div>
+          <div style="font-size:15px;color:var(--text2);margin-bottom:4px">我们已向 <span id="authPhoneDisplay" style="color:var(--text);font-weight:600"></span> 发送验证码</div>
+          <div style="font-size:13px;color:var(--text2);margin-bottom:20px">请输入 6 位验证码</div>
+          <!-- 验证码输入 -->
+          <div id="authCodeInputs" style="display:flex;gap:8px;justify-content:center;margin-bottom:20px">
+            <input class="code-input" type="text" maxlength="1" data-idx="0" oninput="codeInput(this)" onkeydown="codeBack(event,this)" style="width:44px;height:52px;text-align:center;font-size:24px;font-weight:700;border:2px solid var(--border);border-radius:12px;background:var(--bg);color:var(--text);outline:none;transition:border-color .2s">
+            <input class="code-input" type="text" maxlength="1" data-idx="1" oninput="codeInput(this)" onkeydown="codeBack(event,this)" style="width:44px;height:52px;text-align:center;font-size:24px;font-weight:700;border:2px solid var(--border);border-radius:12px;background:var(--bg);color:var(--text);outline:none;transition:border-color .2s">
+            <input class="code-input" type="text" maxlength="1" data-idx="2" oninput="codeInput(this)" onkeydown="codeBack(event,this)" style="width:44px;height:52px;text-align:center;font-size:24px;font-weight:700;border:2px solid var(--border);border-radius:12px;background:var(--bg);color:var(--text);outline:none;transition:border-color .2s">
+            <input class="code-input" type="text" maxlength="1" data-idx="3" oninput="codeInput(this)" onkeydown="codeBack(event,this)" style="width:44px;height:52px;text-align:center;font-size:24px;font-weight:700;border:2px solid var(--border);border-radius:12px;background:var(--bg);color:var(--text);outline:none;transition:border-color .2s">
+            <input class="code-input" type="text" maxlength="1" data-idx="4" oninput="codeInput(this)" onkeydown="codeBack(event,this)" style="width:44px;height:52px;text-align:center;font-size:24px;font-weight:700;border:2px solid var(--border);border-radius:12px;background:var(--bg);color:var(--text);outline:none;transition:border-color .2s">
+            <input class="code-input" type="text" maxlength="1" data-idx="5" oninput="codeInput(this)" onkeydown="codeBack(event,this)" style="width:44px;height:52px;text-align:center;font-size:24px;font-weight:700;border:2px solid var(--border);border-radius:12px;background:var(--bg);color:var(--text);outline:none;transition:border-color .2s">
+          </div>
+          <div id="authCodeError" style="color:#f4212e;font-size:13px;margin-bottom:8px;text-align:center;display:none"></div>
+          <div style="text-align:center;margin-bottom:20px">
+            <span style="font-size:14px;color:var(--text2)">未收到验证码？</span>
+            <button id="authResendBtn" onclick="authResendCode()" style="background:transparent;border:none;color:var(--accent);font-size:14px;cursor:pointer;font-weight:600;display:none">重新发送</button>
+            <span id="authCountdown" style="font-size:14px;color:var(--text2)"></span>
+          </div>
+          <button class="abtn" id="authCodeVerifyBtn" onclick="authVerifyCode()" style="margin-top:8px">验证</button>
+        </div>
+        <!-- Step3：新用户设置昵称（仅注册时显示）-->
+        <div id="authPhoneStep3" style="display:none">
+          <div style="font-size:23px;font-weight:800;margin-bottom:6px">设置你的昵称</div>
+          <div style="font-size:15px;color:var(--text2);margin-bottom:20px">告诉大家怎么称呼你</div>
+          <div class="ail" style="margin-bottom:12px">
+            <label>昵称</label>
+            <input type="text" id="authPhoneNameInput" maxlength="20" placeholder="请输入昵称" style="width:100%;background:transparent;border:none;outline:none;color:var(--text);font-size:17px;font-family:inherit;padding:4px 0" oninput="validatePhoneNameInput()">
+          </div>
+          <div id="authPhoneNameError" style="color:#f4212e;font-size:13px;margin-bottom:8px;display:none"></div>
+          <button class="abtn" id="authPhoneNameBtn" onclick="authPhoneSetName()" style="margin-top:16px">完成注册</button>
+          <button onclick="authPhoneSkipName()" style="background:transparent;border:none;color:var(--text2);font-size:13px;cursor:pointer;margin-top:12px;display:block;width:100%;text-align:center">跳过，稍后设置</button>
+        </div>
+      </div>
+
+      <!-- 邮箱面板：登录子面板 -->
+      <div id="authEmailPanel" style="display:none">
+        <!-- 登录子面板 -->
+        <div id="authEmailLoginSub">
+          <div style="font-size:23px;font-weight:800;margin-bottom:6px">登录到 言</div>
+          <div style="font-size:15px;color:var(--text2);margin-bottom:20px">使用邮箱和密码</div>
+          <div class="ail" style="margin-bottom:12px">
+            <label>邮箱</label>
+            <input type="email" id="authEmailInput" placeholder="请输入邮箱" style="width:100%;background:transparent;border:none;outline:none;color:var(--text);font-size:17px;font-family:inherit;padding:4px 0" oninput="validateEmailInput()">
+          </div>
+          <div class="ail" style="margin-bottom:12px">
+            <label>密码</label>
+            <div style="display:flex;align-items:center">
+              <input type="password" id="authPasswordInput" placeholder="请输入密码" style="flex:1;background:transparent;border:none;outline:none;color:var(--text);font-size:17px;font-family:inherit;padding:4px 0" oninput="validateEmailInput()">
+              <button onclick="togglePwVisibility('authPasswordInput',this)" style="background:transparent;border:none;color:var(--text2);cursor:pointer;padding:0 4px;font-size:13px">显示</button>
+            </div>
+          </div>
+          <div id="authEmailError" style="color:#f4212e;font-size:13px;margin-bottom:8px;display:none"></div>
+          <button class="abtn" onclick="authEmailAction('login')" id="authEmailLoginBtn" style="opacity:.5;cursor:default;margin-top:16px">登录</button>
+          <div style="font-size:13px;color:var(--text2);margin-top:16px;text-align:center">
+            还没有账号？<button onclick="switchEmailSub('register')" style="background:transparent;border:none;color:var(--accent);font-size:13px;cursor:pointer;font-weight:600;padding:0">立即注册</button>
+          </div>
+        </div>
+        <!-- 注册子面板 -->
+        <div id="authEmailRegSub" style="display:none">
+          <div style="font-size:23px;font-weight:800;margin-bottom:6px">注册 言 账号</div>
+          <div style="font-size:15px;color:var(--text2);margin-bottom:20px">使用邮箱注册，免费加入</div>
+          <div class="ail" style="margin-bottom:12px">
+            <label>昵称</label>
+            <input type="text" id="authRegNameInput" maxlength="20" placeholder="你的显示名称" style="width:100%;background:transparent;border:none;outline:none;color:var(--text);font-size:17px;font-family:inherit;padding:4px 0" oninput="validateRegInput()">
+          </div>
+          <div class="ail" style="margin-bottom:12px">
+            <label>邮箱</label>
+            <input type="email" id="authRegEmailInput" placeholder="请输入邮箱" style="width:100%;background:transparent;border:none;outline:none;color:var(--text);font-size:17px;font-family:inherit;padding:4px 0" oninput="validateRegInput()">
+          </div>
+          <div class="ail" style="margin-bottom:12px">
+            <label>密码 <span style="font-weight:400;color:var(--text2);font-size:12px">（至少8位）</span></label>
+            <div style="display:flex;align-items:center">
+              <input type="password" id="authRegPwInput" placeholder="请设置密码" style="flex:1;background:transparent;border:none;outline:none;color:var(--text);font-size:17px;font-family:inherit;padding:4px 0" oninput="validateRegInput()">
+              <button onclick="togglePwVisibility('authRegPwInput',this)" style="background:transparent;border:none;color:var(--text2);cursor:pointer;padding:0 4px;font-size:13px">显示</button>
+            </div>
+          </div>
+          <div class="ail" style="margin-bottom:12px">
+            <label>确认密码</label>
+            <div style="display:flex;align-items:center">
+              <input type="password" id="authRegPw2Input" placeholder="再次输入密码" style="flex:1;background:transparent;border:none;outline:none;color:var(--text);font-size:17px;font-family:inherit;padding:4px 0" oninput="validateRegInput()">
+              <button onclick="togglePwVisibility('authRegPw2Input',this)" style="background:transparent;border:none;color:var(--text2);cursor:pointer;padding:0 4px;font-size:13px">显示</button>
+            </div>
+          </div>
+          <div id="authRegError" style="color:#f4212e;font-size:13px;margin-bottom:8px;display:none"></div>
+          <button class="abtn" onclick="authDoRegister()" id="authRegBtn" style="opacity:.5;cursor:default;margin-top:16px">注册</button>
+          <div style="font-size:13px;color:var(--text2);margin-top:16px;text-align:center">
+            已有账号？<button onclick="switchEmailSub('login')" style="background:transparent;border:none;color:var(--accent);font-size:13px;cursor:pointer;font-weight:600;padding:0">直接登录</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- 注册成功/登录成功 提示 -->
+      <div id="authSuccessPanel" style="display:none;text-align:center;padding:32px 0">
+        <div style="font-size:48px;margin-bottom:16px">🎉</div>
+        <div style="font-size:20px;font-weight:800;margin-bottom:8px">欢迎加入 言！</div>
+        <div style="font-size:15px;color:var(--text2);margin-bottom:24px" id="authSuccessHandle"></div>
+        <button class="abtn" onclick="closeAuthModalAndRefresh()">开始探索</button>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- Login prompt for guest -->
+<div class="modal-overlay" id="loginPromptModal">
+  <div class="modal" style="max-width:360px;text-align:center">
+    <div class="modal-body" style="padding:32px">
+      <div style="font-size:20px;font-weight:800;margin-bottom:8px">登录以继续</div>
+      <div style="font-size:15px;color:var(--text2);margin-bottom:24px">登录后可以发帖、点赞、关注更多精彩内容</div>
+      <button class="abtn" onclick="openAuthModal()" style="margin-bottom:12px">登录</button>
+      <button class="modal-btn" onclick="closeLoginPrompt()" style="width:100%">暂不登录，继续浏览</button>
+    </div>
+  </div>
+</div>
+
 <script src="data/db.js"></script>
+<script src="js/auth.js"></script>
 <script src="js/app.js"></script>
 </body>
 </html>

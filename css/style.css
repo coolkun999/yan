@@ -536,3 +536,23 @@ textarea,input{font-family:inherit;outline:none;border:none;background:transpare
 .d-item.danger{color:var(--pink)}
 .d-item.danger svg{fill:var(--pink)!important}
 .d-item.danger:hover{background:rgba(249,24,128,.1)!important}
+
+/* ===== AUTH MODAL ===== */
+.auth-tabs{display:flex;margin-bottom:24px;border-bottom:1px solid var(--border)}
+.auth-tab{flex:1;padding:12px 0;font-size:15px;font-weight:500;background:transparent;border:none;color:var(--text2);cursor:pointer;position:relative;transition:color .2s}
+.auth-tab.active{color:var(--text);font-weight:700;border-bottom:3px solid var(--accent)}
+.auth-tab:hover{color:var(--text)}
+.ail{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:16px;font-size:15px;transition:border-color .2s;margin-bottom:12px}
+.ail:focus-within{border-color:var(--accent)}
+.ail label{display:block;font-size:13px;color:var(--text2);margin-bottom:4px;font-weight:600}
+.ail input{width:100%;background:transparent;border:none;outline:none;color:var(--text);font-size:17px;font-family:inherit;padding:4px 0}
+.ail input::placeholder{color:var(--text2)}
+.abtn{background:var(--text);color:var(--bg);border-radius:var(--r);padding:14px;width:100%;font-size:17px;font-weight:700;cursor:pointer;margin-top:8px;transition:opacity .2s;border:none;font-family:inherit}
+.abtn:hover{opacity:.85}
+.abtn:disabled{opacity:.5;cursor:default}
+.code-input:focus{border-color:var(--accent)!important;outline:none}
+.auth-success{text-align:center;padding:32px 0}
+.auth-err{color:#f4212e;font-size:13px;margin-bottom:8px;display:none}
+
+/* ===== LOGIN PROMPT ===== */
+.login-prompt-text{font-size:15px;color:var(--text2);margin-bottom:24px}
