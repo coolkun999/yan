@@ -1094,7 +1094,12 @@ function renderFollowingFeed(){
   if(followingTweets.length === 0){
     return `<div class="empty-state"><svg viewBox="0 0 24 24"><path d="M5.651 19h12.698c-.337-1.8-1.023-3.21-1.945-4.19C15.318 13.65 13.838 13 12 13s-3.317.65-4.404 1.81c-.922.98-1.608 2.39-1.945 4.19z"/></svg><h3>还没有内容</h3><p>关注更多用户，在这里看到他们的帖子</p></div>`;
   }
-  return followingTweets.map(t=>renderTweet(t)).join('');
+  return followingTweets.length > 0 ? followingTweets.map(t=>renderTweet(t)).join('') : `<div class="empty-state" style="padding:60px 20px">
+    <svg viewBox="0 0 24 24" width="48" height="48" fill="var(--text2)" style="margin-bottom:16px"><path d="M5.651 19h12.698c-.337-1.8-1.023-3.21-1.945-4.19C15.318 13.65 13.838 13 12 13s-3.317.65-4.404 1.81c-.922.98-1.608 2.39-1.945 4.19zM12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm11 5h-2v-2h-2v2h-2v2h2v2h2v-2h2v-2z"/></svg>
+    <h3 style="font-size:20px;font-weight:800;margin-bottom:8px">还没有关注任何人</h3>
+    <p style="color:var(--text2);font-size:15px;margin-bottom:20px">关注更多用户，在这里看到他们的帖子</p>
+    <button onclick="navigate('explore')" style="background:var(--accent);color:#fff;border:none;border-radius:9999px;padding:12px 24px;font-size:15px;font-weight:700;cursor:pointer">发现更多</button>
+  </div>`;
 }
 
 // 加载更多按钮渲染
@@ -1177,6 +1182,26 @@ function updateComposeBtn(){
   const v = document.getElementById('homeCompose').value.trim();
   document.getElementById('homePostBtn').disabled = v.length===0;
 }
+function switchProfileTab(el,tab){
+  document.querySelectorAll('.profile-tab').forEach(t=>t.classList.remove('active'));
+  el.classList.add('active');
+  const feed = document.getElementById('profileFeed');
+  const u = state.user;
+  if(tab==='posts'){
+    const tweets = DB.tweets.filter(t=>t.handle===u.handle);
+    feed.innerHTML = tweets.length?tweets.map(t=>renderTweet(t)).join(''):'<div class="empty-state"><h3>还没有发布任何内容</h3><p>发布你的第一条动态</p></div>';
+  } else if(tab==='replies'){
+    const replies = DB.tweets.filter(t=>t.handle===u.handle&&t.replies>0);
+    feed.innerHTML = replies.length?replies.map(t=>renderTweet(t)).join(''):'<div class="empty-state"><h3>暂无回复</h3><p>你的回复会显示在这里</p></div>';
+  } else if(tab==='media'){
+    const media = DB.tweets.filter(t=>t.handle===u.handle&&t.hasMedia);
+    feed.innerHTML = media.length?media.map(t=>renderTweet(t)).join(''):'<div class="empty-state"><h3>暂无媒体</h3><p>你发布的图片和视频会显示在这里</p></div>';
+  } else if(tab==='likes'){
+    const likes = DB.tweets.filter(t=>t.liked);
+    feed.innerHTML = likes.length?likes.map(t=>renderTweet(t)).join(''):'<div class="empty-state"><h3>暂无喜欢</h3><p>你喜欢的帖子会显示在这里</p></div>';
+  }
+}
+
 function homePost(){
   const v = document.getElementById('homeCompose').value.trim();
   if(!v) return;
@@ -1295,6 +1320,12 @@ function renderExploreForYou(filter){
       <div class="explore-trend-card" style="border-radius:0">
         ${trends.map((t,i)=>renderTrendItem(t, i+1)).join('')}
       </div>
+    ${tab==='foryou'||tab==='trending'?`
+    <div style="display:flex;gap:8px;padding:8px 16px;border-bottom:1px solid var(--border);overflow-x:auto;scrollbar-width:none">
+      ${['综合','科技','娱乐','体育','财经'].map((c,i)=>`<div style="flex-shrink:0;padding:6px 16px;border-radius:9999px;font-size:13px;font-weight:500;cursor:pointer;background:${i===0?'var(--bg2)':'transparent'};color:var(--text2);border:1px solid var(--border)" onclick="this.parentElement.querySelectorAll('div').forEach(d=>{d.style.background='transparent';d.style.color='var(--text2)'});this.style.background='var(--bg2)';this.style.color='var(--text)'">${c}</div>`).join('')}
+    </div>`:''}
+    <div>
+      ${content}
     </div>
   `;
 }
@@ -1455,7 +1486,11 @@ function renderNotifications(){
 function openNotifSettings(){
   const body = document.getElementById('moreModalBody');
   body.innerHTML=`
-    <div class="d-item" onclick="showToast('已开启所有通知');closeMoreMenu()"><svg viewBox="0 0 24 24"><path d="M19.993 9.042C19.48 5.017 16.054 2 11.996 2s-7.49 3.021-7.999 7.051L2.866 18H7.1c.463 2.282 2.481 4 4.9 4s4.437-1.718 4.9-4h4.236l-1.143-8.958z"/></svg> 所有通知</div>
+    <div class="d-item" onclick="toggleNotifType('all');closeMoreMenu()"><svg viewBox="0 0 24 24"><path d="M19.993 9.042C19.48 5.017 16.054 2 11.996 2s-7.49 3.021-7.999 7.051L2.866 18H7.1c.463 2.282 2.481 4 4.9 4s4.437-1.718 4.9-4h4.236l-1.143-8.958z"/></svg> 所有通知 <span style="margin-left:auto;color:var(--accent)">●</span></div>
+    <div class="d-item" onclick="toggleNotifType('follow');closeMoreMenu()"><svg viewBox="0 0 24 24"><path d="M5.651 19h12.698c-.337-1.8-1.023-3.21-1.945-4.19C15.318 13.65 13.838 13 12 13s-3.317.65-4.404 1.81c-.922.98-1.608 2.39-1.945 4.19z"/></svg> 新粉丝 <span style="margin-left:auto;color:var(--accent)">●</span></div>
+    <div class="d-item" onclick="toggleNotifType('like');closeMoreMenu()"><svg viewBox="0 0 24 24"><path d="M16.697 5.5c-1.222-.06-2.679.51-3.89 2.16l-.805 1.09-.806-1.09C9.984 6.01 8.526 5.44 7.304 5.5c-1.243.07-2.349.78-2.91 1.91-.552 1.12-.633 2.78.479 4.82 1.074 1.97 3.257 4.27 7.129 6.61 3.87-2.34 6.052-4.64 7.126-6.61 1.111-2.04 1.03-3.7.477-4.82-.561-1.13-1.666-1.84-2.908-1.91z"/></svg> 喜欢 <span style="margin-left:auto;color:var(--accent)">●</span></div>
+    <div class="d-item" onclick="toggleNotifType('retweet');closeMoreMenu()"><svg viewBox="0 0 24 24"><path d="M4.5 3.88l4.432 4.14-1.364 1.46L5.5 7.55V16c0 1.1.896 2 2 2H13v2H7.5c-2.209 0-4-1.79-4-4V7.55L1.432 9.48.068 8.02 4.5 3.88z"/></svg> 转帖 <span style="margin-left:auto;color:var(--accent)">●</span></div>
+    <div class="d-item" onclick="toggleNotifType('mention');closeMoreMenu()"><svg viewBox="0 0 24 24"><path d="M1.751 10c0-4.42 3.584-8 8.005-8h4.366c4.49 0 7.501 3.858 7.501 7.501 0 3.808-2.851 7.091-6.056 7.765.005.099.01.197.01.297 0 1.68-1.072 2.96-2.584 3.063C11.51 21.954 11.013 22 10.5 22c-4.394 0-8.75-3.519-8.75-8.5 0-1.085.225-2.107.625-3.025-.001-.075-.014-.155-.014-.237C2.361 10 2.056 10 1.75 10z"/></svg> 回复和提及 <span style="margin-left:auto;color:var(--accent)">●</span></div>
     <div class="d-item" onclick="showToast('已开启新粉丝通知');closeMoreMenu()"><svg viewBox="0 0 24 24"><path d="M5.651 19h12.698c-.337-1.8-1.023-3.21-1.945-4.19C15.318 13.65 13.838 13 12 13s-3.317.65-4.404 1.81c-.922.98-1.608 2.39-1.945 4.19z"/></svg> 新粉丝</div>
     <div class="d-item" onclick="showToast('已开启喜欢通知');closeMoreMenu()"><svg viewBox="0 0 24 24"><path d="M16.697 5.5c-1.222-.06-2.679.51-3.89 2.16l-.805 1.09-.806-1.09C9.984 6.01 8.526 5.44 7.304 5.5c-1.243.07-2.349.78-2.91 1.91-.552 1.12-.633 2.78.479 4.82 1.074 1.97 3.257 4.27 7.129 6.61 3.87-2.34 6.052-4.64 7.126-6.61 1.111-2.04 1.03-3.7.477-4.82-.561-1.13-1.666-1.84-2.908-1.91z"/></svg> 喜欢</div>
     <div class="d-item" onclick="showToast('已开启转帖通知');closeMoreMenu()"><svg viewBox="0 0 24 24"><path d="M4.5 3.88l4.432 4.14-1.364 1.46L5.5 7.55V16c0 1.1.896 2 2 2H13v2H7.5c-2.209 0-4-1.79-4-4V7.55L1.432 9.48.068 8.02 4.5 3.88z"/></svg> 转帖</div>
@@ -1465,6 +1500,18 @@ function openNotifSettings(){
   `;
   document.getElementById('moreModal').classList.add('active');
 }
+const notifSettings = {all:true, follow:true, like:true, retweet:true, mention:true};
+function toggleNotifType(type){
+  notifSettings[type] = !notifSettings[type];
+  const items = document.querySelectorAll('#moreModalBody .d-item');
+  const types = ['all','follow','like','retweet','mention'];
+  items.forEach((item,i)=>{
+    const dot = item.querySelector('span');
+    if(dot) dot.style.color = notifSettings[types[i]] ? 'var(--accent)' : 'var(--text2)';
+  });
+  showToast(notifSettings[type]?'已开启':'已关闭');
+}
+
 function renderPushNotifCard(){
   return `
     <div class="push-notif-card" id="pushNotifCard">
@@ -2747,6 +2794,7 @@ function setTheme(theme,el){
 function renderSearch(q=''){
   const main = document.getElementById('mainContent');
   const results = q?DB.tweets.filter(t=>t.text.includes(q)||t.name.includes(q)||t.handle.includes(q)):[];
+  const userResults = q?FOLLOWING_DATA.filter(u=>u.name.includes(q)||u.handle.includes(q)):[];
   main.innerHTML = `
     <div class="ct">
       <div class="main-header">
@@ -2761,7 +2809,18 @@ function renderSearch(q=''){
         </div>
       </div>
     </div>
-    ${q?`<div style="padding:12px 16px;font-size:14px;color:var(--text2)">"${q}" 的搜索结果 · ${results.length} 条</div>`:''}
+    ${q?`
+      <div style="padding:12px 16px;font-size:14px;color:var(--text2);border-bottom:1px solid var(--border)">
+        "${q}" 的搜索结果 · ${results.length} 条帖子
+      </div>
+      ${userResults.length>0?`<div style="padding:8px 16px;font-size:13px;font-weight:700;color:var(--text2)">用户</div>
+        ${userResults.map(u=>`<div class="fi" style="padding:10px 16px;cursor:pointer" onclick="navigate('user','${u.handle}')">
+          <div class="fa" style="background:${u.avatarBg};width:40px;height:40px;font-size:16px">${u.avatar}</div>
+          <div style="flex:1"><div style="font-weight:700;font-size:14px">${u.name}</div><div style="color:var(--text2);font-size:13px">${u.handle}</div></div>
+        </div>`).join('')}`:''}
+      ${results.length>0?`<div style="padding:8px 16px;font-size:13px;font-weight:700;color:var(--text2)">帖子</div>
+        ${results.map(t=>renderTweet(t)).join('')}`:''}
+    `:''}
     ${q&&results.length===0?'<div class="empty-state"><h3>未找到结果</h3><p>试试其他关键词</p></div>':
       (q?results.map(t=>renderTweet(t)).join(''):
       `<div class="empty-state"><h3>搜索「言」</h3><p>输入关键词搜索帖子、用户或话题</p></div>
@@ -2780,7 +2839,7 @@ function doSearch(q){if(q.length>1){if(!state.searchHistory)state.searchHistory=
 function renderTrending(){
   const main = document.getElementById('mainContent');
   const trends = [
-    {cat:'科技',name:'#AI大模型',count:'12.3万'}, {cat:'娱乐',name:'#新剧热播',count:'9.8万'},
+    {cat:'科技',name:'#AI大模型',count:'12.3万',posts:'2.3万',icon:'🤖'}, {cat:'娱乐',name:'#新剧热播',count:'9.8万'},
     {cat:'体育',name:'#世界杯预选赛',count:'7.2万'}, {cat:'财经',name:'#A股行情',count:'5.6万'},
     {cat:'科技',name:'#开源项目',count:'4.3万'}, {cat:'游戏',name:'#黑神话悟空',count:'3.9万'},
     {cat:'科技',name:'#Vue4发布',count:'3.2万'}, {cat:'娱乐',name:'#电影推荐',count:'2.8万'},
@@ -2794,10 +2853,21 @@ function renderTrending(){
       </div>
     </div>
     ${trends.map(t=>`
-      <div class="trend-item" style="padding:16px">
-        <div class="tm">${t.cat} 趋势</div>
-        <div class="tn2" style="font-size:18px">${t.name}</div>
-        <div class="tc">${t.count} 条帖子</div>
+      <div class="trend-item" style="padding:16px;cursor:pointer" onclick="navigate('topic','${t.name.replace('#','')}')">
+        <div style="display:flex;align-items:center;gap:12px">
+          <div style="width:44px;height:44px;border-radius:12px;background:var(--bg2);display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0">${t.icon||'📌'}</div>
+          <div style="flex:1;min-width:0">
+            <div style="display:flex;align-items:center;gap:8px">
+              <div class="tn2" style="font-size:17px;font-weight:800">${t.name}</div>
+              ${t.count.includes('万')?'<div style="background:var(--green);color:#fff;font-size:11px;font-weight:700;padding:2px 8px;border-radius:10px">热门</div>':''}
+            </div>
+            <div class="tm" style="margin-top:2px">${t.cat} · ${t.count} 讨论</div>
+          </div>
+          <button class="more-btn" style="display:flex" onclick="event.stopPropagation()">
+            <svg viewBox="0 0 24 24"><path d="M3 12c0-1.1.9-2 2-2s2 .9 2 2-.9 2-2 2-2-.9-2-2zm9 2c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm7 0c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2z"/></svg>
+          </button>
+        </div>
+        ${t.posts?'<div style="margin-top:6px;font-size:13px;color:var(--text2)">${t.posts} 万人关注</div>':''}
       </div>
     `).join('')}
   `;
@@ -2805,8 +2875,8 @@ function renderTrending(){
 
 // ===== LISTS =====
 const LISTS_DATA = [
-  {id:1,name:'前端开发者',members:1234,description:'分享前端技术和最佳实践',following:false},
-  {id:2,name:'AI爱好者',members:5678,description:'人工智能相关讨论',following:true},
+  {id:1,name:'前端开发者',members:1234,description:'分享前端技术和最佳实践',following:false,owner:false},
+  {id:2,name:'AI爱好者',members:5678,description:'人工智能相关讨论',following:true,owner:true},
   {id:3,name:'创业者联盟',members:901,description:'创业者和投资人社区',following:false}
 ];
 function renderLists(){
@@ -2824,20 +2894,38 @@ function renderLists(){
       </div>
     </div>
     <div class="profile-tabs" style="border-top:none">
-      <div class="profile-tab active">已加入</div>
-      <div class="profile-tab">订阅</div>
+      <div class="profile-tab active" onclick="switchListsTab(this,'joined')">已加入</div>
+      <div class="profile-tab" onclick="switchListsTab(this,'subscribed')">订阅</div>
     </div>
+    <div id="joinedSection">
     ${LISTS_DATA.filter(l=>l.following).length>0?LISTS_DATA.filter(l=>l.following).map(l=>`
-      <div class="fi" style="padding:16px">
+      <div class="fi" style="padding:16px;cursor:pointer" onclick="openListDetail(${l.id})">
+        <div style="width:48px;height:48px;border-radius:12px;background:var(--bg2);display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:800;color:var(--accent)">${l.name[0]}</div>
+        <div style="flex:1;min-width:0">
+          <div style="display:flex;align-items:center;gap:8px">
+            <span style="font-weight:700;font-size:16px">${l.name}</span>
+            ${l.owner?'<span style="background:var(--accent);color:#fff;font-size:11px;font-weight:700;padding:2px 8px;border-radius:10px">创建者</span>':''}
+          </div>
+          <div style="font-size:14px;color:var(--text2);margin-top:2px">${l.members.toLocaleString()} 位成员 · ${l.description}</div>
+        </div>
+        <button class="fbtn following" onclick="event.stopPropagation();toggleListFollow(this,${l.id})">正在关注</button>
+      </div>
+    `).join(''):'<div class="empty-state"><svg viewBox="0 0 24 24"><path d="M3 13h2v-2H3v2zm0 4h2v-2H3v2zm0-8h2V7H3v2zm4 4h14v-2H7v2zm0 4h14v-2H7v2zM7 7v2h14V7H7z"/></svg><h3>还没有加入的列表</h3><p>发现并加入有趣的列表</p></div>'}
+    </div>
+    <div id="subscribedSection" style="display:none">
+    ${LISTS_DATA.filter(l=>l.owner).length>0?LISTS_DATA.filter(l=>l.owner).map(l=>`
+      <div class="fi" style="padding:16px;cursor:pointer" onclick="openListDetail(${l.id})">
+        <div style="width:48px;height:48px;border-radius:12px;background:var(--bg2);display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:800;color:var(--accent)">${l.name[0]}</div>
         <div style="flex:1;min-width:0">
           <div style="display:flex;align-items:center;gap:8px">
             <span style="font-weight:700;font-size:16px">${l.name}</span>
           </div>
           <div style="font-size:14px;color:var(--text2);margin-top:2px">${l.members.toLocaleString()} 位成员 · ${l.description}</div>
         </div>
-        <button class="fbtn following" onclick="toggleListFollow(this)">正在关注</button>
+        <button class="fbtn" onclick="event.stopPropagation();toggleListFollow(this,${l.id})">关注</button>
       </div>
-    `).join(''):'<div class="empty-state"><svg viewBox="0 0 24 24"><path d="M3 13h2v-2H3v2zm0 4h2v-2H3v2zm0-8h2V7H3v2zm4 4h14v-2H7v2zm0 4h14v-2H7v2zM7 7v2h14V7H7z"/></svg><h3>还没有加入的列表</h3><p>发现并加入有趣的列表</p></div>'}
+    `).join(''):'<div class="empty-state"><h3>暂无订阅</h3></div>'}
+    </div>
     <div style="padding:16px 16px 8px;border-bottom:1px solid var(--border)">
       <div style="font-size:15px;font-weight:700">推荐列表</div>
     </div>
@@ -2854,7 +2942,37 @@ function renderLists(){
     `).join('')}
   `;
 }
-function toggleListFollow(btn){
+function switchListsTab(el,tab){
+  document.querySelectorAll('.profile-tab').forEach(t=>t.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('joinedSection').style.display=tab==='joined'?'block':'none';
+  document.getElementById('subscribedSection').style.display=tab==='subscribed'?'block':'none';
+}
+function openListDetail(id){
+  const l=LISTS_DATA.find(x=>x.id===id);
+  if(!l)return;
+  const main=document.getElementById('mainContent');
+  main.innerHTML=`
+    <div class="ct">
+      <div class="main-header">
+        <button class="back-btn" onclick="navigate('lists')"><svg viewBox="0 0 24 24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg></button>
+        <div><div class="page-title">${l.name}</div><div style="font-size:13px;color:var(--text2)">${l.members} 位成员</div></div>
+      </div>
+    </div>
+    <div style="padding:16px;border-bottom:1px solid var(--border)">
+      <div style="font-size:15px;line-height:1.6;color:var(--text2)">${l.description}</div>
+      <div style="display:flex;gap:12px;margin-top:12px">
+        <button class="fbtn following" onclick="this.textContent=this.textContent==='正在关注'?'关注':'正在关注';this.style.background=this.textContent==='正在关注'?'transparent':'var(--text)';this.style.color=this.textContent==='正在关注'?'var(--text)':'var(--bg)'">正在关注</button>
+        <button class="fbtn" onclick="alert('分享功能开发中')">分享</button>
+      </div>
+    </div>
+    <div style="padding:16px 16px 8px"><div style="font-size:15px;font-weight:700;margin-bottom:12px">成员</div></div>
+    ${FOLLOWING_DATA.slice(0,4).map(u=>`<div class="fi" style="padding:12px 16px"><div class="fa" style="background:${u.avatarBg};width:40px;height:40px;font-size:16px;cursor:pointer" onclick="navigate('user','${u.handle}')">${u.avatar}</div><div style="flex:1;min-width:0;cursor:pointer" onclick="navigate('user','${u.handle}')"><div style="display:flex;align-items:center;gap:4px"><span style="font-weight:700;font-size:15px">${u.name}</span>${u.verified?'<svg width="14" height="14" viewBox="0 0 24 24"><path fill="var(--accent)" d="M20.396 11c-.018-.646-.215-1.275-.57-1.816-.354-.54-.852-.972-1.438-1.246.223-.607.27-1.264.14-1.897-.131-.634-.437-1.218-.882-1.687-.47-.445-1.053-.75-1.687-.882-.633-.13-1.29-.083-1.897.14-.273-.587-.704-1.086-1.245-1.44S11.647 1.62 11 1.604c-.646.017-1.273.213-1.813.568s-.969.854-1.24 1.441c-.608-.223-1.267-.272-1.902-.14-.635.13-1.22.436-1.69.882-.445.47-.749 1.055-.878 1.688-.13.633-.08 1.29.144 1.896-.587.274-1.087.705-1.443 1.245-.356.54-.555 1.17-.574 1.817.02.647.218 1.276.574 1.817.356.54.856.972 1.443 1.245-.224.606-.274 1.263-.144 1.896.13.634.433 1.218.877 1.688.47.443 1.054.747 1.687.878.633.132 1.29.084 1.897-.136.274.586.705 1.084 1.246 1.439.54.354 1.17.551 1.816.569.647-.016 1.276-.213 1.817-.567s.972-.854 1.245-1.44c.604.239 1.266.296 1.903.164.636-.132 1.22-.447 1.68-.907.46-.46.776-1.044.908-1.681s.075-1.299-.165-1.903c.586-.274 1.084-.705 1.439-1.246.354-.54.551-1.17.569-1.816z"/></svg>':''}</div><div style="color:var(--text2);font-size:13px">${u.handle}</div></div><button class="fbtn" style="font-size:13px;padding:5px 14px">查看</button></div>`).join('')}
+  `;
+}
+function toggleListFollow(btn,id){
+  const l=id?LISTS_DATA.find(x=>x.id===id):null;
+  if(l) l.following=!l.following;
   if(btn.classList.contains('following')){
     btn.classList.remove('following');
     btn.classList.add('fbtn');
