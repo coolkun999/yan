@@ -1,0 +1,10 @@
+{
+  "appId": "com.yan.app",
+  "appName": "言",
+  "webDir": "/tmp/yan_repo",
+  "backgroundColor": "#000000",
+  "android": {
+    "backgroundColor": "#000000",
+    "allowMixedContent": true
+  }
+}
