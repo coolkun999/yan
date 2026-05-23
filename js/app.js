@@ -22,7 +22,8 @@ const state = {
   notifHasMore: true,
   explorePage: 0,
   explorePageSize: 15,
-  exploreHasMore: true
+  exploreHasMore: true,
+  listTab: 'joined'
 };
 
 
@@ -454,7 +455,7 @@ function renderTweet(t, showReply=false){
   const quoteHtml = t.quoteTweet ? renderQuoteTweet(t.quoteTweet) : '';
   const replyForm = showReply ? `
     <div class="reply-input" style="border-top:1px solid var(--border)">
-      <div class="av">王</div>
+      <div class="av" style="background:${(currentUser()&&currentUser().avatarBg)||'linear-gradient(135deg,#667eea,#764ba2)'}">${(currentUser()&&currentUser().name&&currentUser().name.slice(0,1))||state.user.name.slice(0,1)}</div>
       <textarea class="ri-textarea" placeholder="发一条回复..." id="replyText-${t.id}"></textarea>
       <button class="pb" onclick="submitReply(${t.id})" style="align-self:flex-end">回复</button>
     </div>` : '';
@@ -492,28 +493,32 @@ function formatTweetText(text){
 
 // ===== MEDIA RENDER =====
 function renderMedia(t){
-  if(!t.media) return '';
+  if(!t.media || !t.media.length) return '';
   const imgs = t.media;
   const count = imgs.length;
+  const renderImg = (m, style) => {
+    if(m.url) return `<div style="${style}overflow:hidden;border-radius:0"><img src="${m.url}" style="width:100%;height:100%;object-fit:cover" alt=""></div>`;
+    return `<div style="${style}">${m.icon||'📷'}</div>`;
+  };
   if(count === 1){
+    if(imgs[0].url) return `<div class="tmedia"><div class="media-single" style="width:100%;border-radius:16px;overflow:hidden"><img src="${imgs[0].url}" style="width:100%;max-height:400px;object-fit:cover;display:block" alt=""></div></div>`;
     return `<div class="tmedia"><div class="media-single" style="width:100%;height:280px;background:${imgs[0].bg};border-radius:16px;display:flex;align-items:center;justify-content:center;overflow:hidden">
       <div style="font-size:64px">${imgs[0].icon||'📷'}</div>
     </div></div>`;
   }
   if(count === 2){
     return `<div class="tmedia" style="display:grid;grid-template-columns:1fr 1fr;gap:2px;border-radius:16px;overflow:hidden">
-      ${imgs.map(m=>`<div style="height:200px;background:${m.bg};display:flex;align-items:center;justify-content:center;font-size:48px">${m.icon||'📷'}</div>`).join('')}
+      ${imgs.map(m=>renderImg(m, `height:200px;background:${m.bg||''};display:flex;align-items:center;justify-content:center;font-size:48px`)).join('')}
     </div>`;
   }
   if(count === 3){
     return `<div class="tmedia" style="display:grid;grid-template-columns:1fr 1fr;gap:2px;border-radius:16px;overflow:hidden">
-      <div style="grid-row:span 2;height:100%;min-height:200px;background:${imgs[0].bg};display:flex;align-items:center;justify-content:center;font-size:48px">${imgs[0].icon||'📷'}</div>
-      ${imgs.slice(1).map(m=>`<div style="height:100px;background:${m.bg};display:flex;align-items:center;justify-content:center;font-size:40px">${m.icon||'📷'}</div>`).join('')}
+      ${renderImg(imgs[0], `grid-row:span 2;height:100%;min-height:200px;background:${imgs[0].bg||''};display:flex;align-items:center;justify-content:center;font-size:48px`)}
+      ${imgs.slice(1).map(m=>renderImg(m, `height:100px;background:${m.bg||''};display:flex;align-items:center;justify-content:center;font-size:40px`)).join('')}
     </div>`;
   }
-  // 4 images
   return `<div class="tmedia" style="display:grid;grid-template-columns:1fr 1fr;gap:2px;border-radius:16px;overflow:hidden">
-    ${imgs.map(m=>`<div style="height:160px;background:${m.bg};display:flex;align-items:center;justify-content:center;font-size:48px">${m.icon||'📷'}</div>`).join('')}
+    ${imgs.map(m=>renderImg(m, `height:160px;background:${m.bg||''};display:flex;align-items:center;justify-content:center;font-size:48px`)).join('')}
   </div>`;
 }
 
@@ -605,6 +610,10 @@ function navigate(page, param){
     case 'spaces': renderSpaces(); break;
     case 'following': renderFollowing(); break;
     case 'followers': renderFollowers(); break;
+    case 'help': renderHelp(); break;
+    case 'premium': renderPremium(); break;
+    case 'accessibility': renderAccessibility(); break;
+    case 'listDetail': renderListDetail(param); break;
     default: renderHome();
   }
   closeAllDropdowns();
@@ -631,21 +640,23 @@ function renderHome(){
     <div class="compose">
       <div class="av" style="background:${currentUser()&&currentUser().avatarBg||'linear-gradient(135deg,#667eea,#764ba2)'}">${currentUser()&&currentUser().name?currentUser().name.slice(0,1):'我'}</div>
       <div class="ca">
-        <textarea class="cin" placeholder="有什么新鲜事？" id="homeCompose" oninput="updateComposeBtn()"></textarea>
+        <textarea class="cin" placeholder="有什么新鲜事？" id="homeCompose" oninput="updateComposeBtn();updateCharCount('homeCompose','homeCharCount')" maxlength="500"></textarea>
         <div class="ctb">
           <div class="ctools">
-            <button class="tb" title="媒体"><svg viewBox="0 0 24 24"><path fill-rule="evenodd" d="M3 5.5C3 4.12 4.12 3 5.5 3h13C19.88 3 21 4.12 21 5.5v13c0 1.38-1.12 2.5-2.5 2.5h-13C4.12 21 3 19.88 3 18.5v-13zM5.5 5c-.28 0-.5.22-.5.5v9.09l3.4-3.4a.5.5 0 0 1 .7 0l3.06 3.06 2.63-1.32a.5.5 0 0 1 .48.04l2.23 1.63V5.5c0-.28-.22-.5-.5-.5h-12zM9 8.5a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3z"/></svg></button>
+            <button class="tb" title="媒体" onclick="document.getElementById('mediaFileInput').click()"><svg viewBox="0 0 24 24"><path fill-rule="evenodd" d="M3 5.5C3 4.12 4.12 3 5.5 3h13C19.88 3 21 4.12 21 5.5v13c0 1.38-1.12 2.5-2.5 2.5h-13C4.12 21 3 19.88 3 18.5v-13zM5.5 5c-.28 0-.5.22-.5.5v9.09l3.4-3.4a.5.5 0 0 1 .7 0l3.06 3.06 2.63-1.32a.5.5 0 0 1 .48.04l2.23 1.63V5.5c0-.28-.22-.5-.5-.5h-12zM9 8.5a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3z"/></svg></button>
             <button class="tb" title="GIF"><svg viewBox="0 0 24 24"><path d="M19 10.5V8.8h-4.4v6.4h1.7v-2h2v-1.7h-2v-1H19zm-7.3-1.7h1.7v6.4h-1.7V8.8zm-3.6 1.6c.4 0 .9.2 1.2.5l1.2-1C9.9 9.2 9 8.8 8.1 8.8c-1.8 0-3.2 1.4-3.2 3.2s1.4 3.2 3.2 3.2c1 0 1.8-.4 2.4-1.1v-2.5H7.7v1.2h1.2v.6c-.2.1-.5.2-.8.2-.9 0-1.6-.7-1.6-1.6 0-.8.7-1.6 1.6-1.6z"/></svg></button>
             <button class="tb" title="投票"><svg viewBox="0 0 24 24"><path d="M18 5h-1V3a1 1 0 0 0-2 0v2h-2V3a1 1 0 1 0-2 0v2H9V3a1 1 0 0 0-2 0v2H6a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2zM6 19V9h12v10H6zm3-7h2v5H9v-5zm4-3h2v8h-2V9z"/></svg></button>
             <button class="tb" onclick="toggleEmoji()" title="表情"><svg viewBox="0 0 24 24"><path fill-rule="evenodd" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zM8.5 9a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3zm7 0a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3zm-8 6c.6.8 1.6 1.5 3 1.5s2.4-.7 3-1.5l-1-.7c-.3.4-1 .8-2 .8s-1.7-.4-2-.8l-1 .7z"/></svg></button>
-            <button class="tb" onclick="alert('日程安排功能即将上线')" title="安排"><svg viewBox="0 0 24 24"><path d="M7 11h2v2H7v-2zm4 0h2v2h-2v-2zm4 0h2v2h-2v-2zM19 4h-1V2h-2v2H8V2H6v2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 16H5V9h14v11z"/></svg></button>
-            <button class="tb" onclick="alert('位置功能即将上线')" title="位置"><svg viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5S10.62 6.5 12 6.5s2.5 1.12 2.5 2.5S13.38 11.5 12 11.5z"/></svg></button>
+            <button class="tb" onclick="openScheduleModal()" title="安排"><svg viewBox="0 0 24 24"><path d="M7 11h2v2H7v-2zm4 0h2v2h-2v-2zm4 0h2v2h-2v-2zM19 4h-1V2h-2v2H8V2H6v2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 16H5V9h14v11z"/></svg></button>
+            <button class="tb" onclick="openLocationModal()" title="位置"><svg viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5S10.62 6.5 12 6.5s2.5 1.12 2.5 2.5S13.38 11.5 12 11.5z"/></svg></button>
           </div>
+          <div class="compose-media-preview" id="homeMediaPreview" style="display:none;margin-top:8px"></div>
           <div style="display:flex;align-items:center;gap:8px">
             <button class="tb reply-scope-btn" onclick="toggleReplyScope()" title="所有人可以回复">
               <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zM8.46 14.45l-1.36-.62c.28-.61.41-1.24.4-1.86-.02-1.47-.75-3-1.06-3.38.67-.34 3-1.35 5.6-.33 3.35 1.34 3.58 5.01 3.58 5.74H8.46z"/></svg>
               <span style="font-size:13px;font-weight:600;color:var(--accent);margin-left:4px">所有人可以回复</span>
             </button>
+            <span id="homeCharCount" style="font-size:13px;color:var(--text2);display:none;min-width:28px;text-align:right"></span>
             <button class="pb" id="homePostBtn" disabled onclick="homePost()">发帖</button>
           </div>
         </div>
@@ -785,7 +796,24 @@ function switchHomeTab(tab){
 }
 function updateComposeBtn(){
   const v = document.getElementById('homeCompose').value.trim();
-  document.getElementById('homePostBtn').disabled = v.length===0;
+  const btn = document.getElementById('homePostBtn');
+  btn.disabled = v.length === 0 || document.getElementById('homeCompose').value.length > 500;
+}
+// 字数计数器（通用）
+function updateCharCount(textareaId, countId){
+  const ta = document.getElementById(textareaId);
+  const counter = document.getElementById(countId);
+  if(!ta || !counter) return;
+  const len = ta.value.length;
+  const limit = 500;
+  const remaining = limit - len;
+  if(len > 0){
+    counter.style.display = 'inline';
+    counter.textContent = remaining;
+    counter.style.color = remaining < 0 ? '#f4212e' : remaining < 50 ? '#f7a11c' : 'var(--text2)';
+  } else {
+    counter.style.display = 'none';
+  }
 }
 function homePost(){
   if(!requireLogin()) return;
@@ -794,6 +822,9 @@ function homePost(){
   const viewsOptions=['15','28','47','89','124','203'];
   const u = currentUser() || {};
   const t = {id:Date.now(),name:u.name||'用户',handle:u.handle||'@user',verified:u.verified||false,time:"刚刚",text:v,avatar:(u.name||'用').slice(0,1),avatarBg:u.avatarBg||"linear-gradient(135deg,#667eea,#764ba2)",likes:0,retweets:0,replies:0,views:viewsOptions[Math.floor(Math.random()*viewsOptions.length)],liked:false,retweeted:false,bookmarked:false};
+  if(state.composeMedia && state.composeMedia.length > 0){
+    t.media = state.composeMedia.map(m=>({url:m.url}));
+  }
   DB.tweets.unshift(t);
   u.posts = (u.posts||0) + 1;
   // 持久化更新后的用户数据
@@ -801,6 +832,7 @@ function homePost(){
   if(allUsers[u.id]){ allUsers[u.id].posts = u.posts; localStorage.setItem('yan_auth_users', JSON.stringify(allUsers)); }
   document.getElementById('homeCompose').value = '';
   document.getElementById('homePostBtn').disabled = true;
+  clearComposeMedia();
   // 重置分页状态
   state.homePage = 0;
   state.homeHasMore = true;
@@ -928,7 +960,7 @@ function filterTrends(cat){
   document.querySelectorAll('.trend-tab').forEach(t => t.classList.remove('active'));
   document.querySelector('.trend-tab[data-cat="'+cat+'"]').classList.add('active');
   const list = TREND_DATA[cat] || TREND_DATA.all;
-  const html = list.map(t => '<div class="trend-item" onclick="navigate(\'trending\')"><div style="display:flex;justify-content:space-between"><span class="tm">'+t.cat+'</span><span style="color:var(--text2)">···</span></div><div class="tn2">'+t.name+'</div><div class="tc">'+t.count+'</div></div>').join('');
+  const html = list.map(t => '<div class="trend-item" onclick="navigate(\'topic\',\''+t.name.replace('#','')+'\')" ><div style="display:flex;justify-content:space-between"><span class="tm">'+t.cat+'</span><span style="color:var(--text2)">···</span></div><div class="tn2">'+t.name+'</div><div class="tc">'+t.count+'</div></div>').join('');
   document.getElementById('trendList').innerHTML = html;
 }
 
@@ -1004,8 +1036,14 @@ function renderExplore(){
   }
   
   main.innerHTML = `
-    <div class="explore-tabs">
-      <div class="explore-tabs-inner">
+    <div class="ct" style="position:sticky;top:0;z-index:10;background:var(--bg)">
+      <div style="padding:8px 16px">
+        <div class="sbw" style="width:100%">
+          <svg viewBox="0 0 24 24"><path d="M10.25 3.75c-3.59 0-6.5 2.91-6.5 6.5s2.91 6.5 6.5 6.5c1.795 0 3.419-.726 4.596-1.904 1.178-1.177 1.904-2.801 1.904-4.596 0-3.59-2.91-6.5-6.5-6.5z"/></svg>
+          <input class="sin" id="exploreSearchInput" placeholder="搜索" onkeydown="if(event.key==='Enter'&&this.value.trim())searchExplore(this.value.trim())" oninput="handleExploreLiveSearch(this.value)">
+        </div>
+      </div>
+      <div class="explore-tabs-inner" style="padding:0 8px;border-bottom:1px solid var(--border)">
         ${tabs.map(t=>`<div class="explore-tab ${tab===t.key?'active':''}" onclick="switchExploreTab('${t.key}')">${t.label}</div>`).join('')}
       </div>
     </div>
@@ -1045,7 +1083,7 @@ function renderTrendItem(t){
   const topLine = t.cat ? `<div class="explore-trend-cat">${t.cat}</div>` : (t.region ? `<div class="explore-trend-cat">${t.region}</div>` : '');
   const postsLine = t.posts ? `<div class="explore-trend-cat">${t.posts} 条帖子</div>` : '';
   return `
-    <div class="explore-trend-item" onclick="navigate('trending')">
+    <div class="explore-trend-item" onclick="navigate('topic','${t.name.replace('#','')}')">
       <div class="explore-trend-info">
         ${topLine}
         <div class="explore-trend-name">${t.name}</div>
@@ -1099,7 +1137,7 @@ function renderNotifications(){
 }
 function openNotifSettings(){
   const body = document.getElementById('moreModalBody');
-  body.innerHTML='<div class="d-item" onclick="closeMoreMenu()"><svg viewBox="0 0 24 24"><path d="M19.993 9.042C19.48 5.017 16.054 2 11.996 2s-7.49 3.021-7.999 7.051L2.866 18H7.1c.463 2.282 2.481 4 4.9 4s4.437-1.718 4.9-4h4.236l-1.143-8.958z"/></svg> 所有通知</div><div class="d-item" onclick="closeMoreMenu()"><svg viewBox="0 0 24 24"><path d="M5.651 19h12.698c-.337-1.8-1.023-3.21-1.945-4.19C15.318 13.65 13.838 13 12 13s-3.317.65-4.404 1.81c-.922.98-1.608 2.39-1.945 4.19z"/></svg> 新粉丝</div><div class="d-item" onclick="closeMoreMenu()"><svg viewBox="0 0 24 24"><path d="M16.697 5.5c-1.222-.06-2.679.51-3.89 2.16l-.805 1.09-.806-1.09C9.984 6.01 8.526 5.44 7.304 5.5c-1.243.07-2.349.78-2.91 1.91-.552 1.12-.633 2.78.479 4.82 1.074 1.97 3.257 4.27 7.129 6.61 3.87-2.34 6.052-4.64 7.126-6.61 1.111-2.04 1.03-3.7.477-4.82-.561-1.13-1.666-1.84-2.908-1.91z"/></svg> 喜欢</div><div class="d-item" onclick="closeMoreMenu()"><svg viewBox="0 0 24 24"><path d="M4.5 3.88l4.432 4.14-1.364 1.46L5.5 7.55V16c0 1.1.896 2 2 2H13v2H7.5c-2.209 0-4-1.79-4-4V7.55L1.432 9.48.068 8.02 4.5 3.88z"/></svg> 转帖</div><div class="d-item" onclick="closeMoreMenu()"><svg viewBox="0 0 24 24"><path d="M1.751 10c0-4.42 3.584-8 8.005-8h4.366c4.49 0 7.501 3.858 7.501 7.501 0 3.808-2.851 7.091-6.056 7.765 .005.099.01.197.01.297 0 1.68-1.072 2.96-2.584 3.063C11.51 21.954 11.013 22 10.5 22c-4.394 0-8.75-3.519-8.75-8.5 0-1.085.225-2.107.625-3.025-.001-.075-.014-.155-.014-.237C2.361 10 2.056 10 1.75 10z"/></svg> 回复和提及</div><div class="d-divider"></div><div class="d-item" onclick="alert(\'通知设置功能即将上线\');closeMoreMenu()"><svg viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.31.06-.63.06-.94 0-.31-.02-.63-.06-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.04.31-.06.63-.06.94s.02.63.06.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg> 通知设置</div>';
+  body.innerHTML='<div class="d-item" onclick="closeMoreMenu()"><svg viewBox="0 0 24 24"><path d="M19.993 9.042C19.48 5.017 16.054 2 11.996 2s-7.49 3.021-7.999 7.051L2.866 18H7.1c.463 2.282 2.481 4 4.9 4s4.437-1.718 4.9-4h4.236l-1.143-8.958z"/></svg> 所有通知</div><div class="d-item" onclick="closeMoreMenu()"><svg viewBox="0 0 24 24"><path d="M5.651 19h12.698c-.337-1.8-1.023-3.21-1.945-4.19C15.318 13.65 13.838 13 12 13s-3.317.65-4.404 1.81c-.922.98-1.608 2.39-1.945 4.19z"/></svg> 新粉丝</div><div class="d-item" onclick="closeMoreMenu()"><svg viewBox="0 0 24 24"><path d="M16.697 5.5c-1.222-.06-2.679.51-3.89 2.16l-.805 1.09-.806-1.09C9.984 6.01 8.526 5.44 7.304 5.5c-1.243.07-2.349.78-2.91 1.91-.552 1.12-.633 2.78.479 4.82 1.074 1.97 3.257 4.27 7.129 6.61 3.87-2.34 6.052-4.64 7.126-6.61 1.111-2.04 1.03-3.7.477-4.82-.561-1.13-1.666-1.84-2.908-1.91z"/></svg> 喜欢</div><div class="d-item" onclick="closeMoreMenu()"><svg viewBox="0 0 24 24"><path d="M4.5 3.88l4.432 4.14-1.364 1.46L5.5 7.55V16c0 1.1.896 2 2 2H13v2H7.5c-2.209 0-4-1.79-4-4V7.55L1.432 9.48.068 8.02 4.5 3.88z"/></svg> 转帖</div><div class="d-item" onclick="closeMoreMenu()"><svg viewBox="0 0 24 24"><path d="M1.751 10c0-4.42 3.584-8 8.005-8h4.366c4.49 0 7.501 3.858 7.501 7.501 0 3.808-2.851 7.091-6.056 7.765 .005.099.01.197.01.297 0 1.68-1.072 2.96-2.584 3.063C11.51 21.954 11.013 22 10.5 22c-4.394 0-8.75-3.519-8.75-8.5 0-1.085.225-2.107.625-3.025-.001-.075-.014-.155-.014-.237C2.361 10 2.056 10 1.75 10z"/></svg> 回复和提及</div><div class="d-divider"></div><div class="d-item" onclick="openNotifSettings()"><svg viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.31.06-.63.06-.94 0-.31-.02-.63-.06-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.04.31-.06.63-.06.94s.02.63.06.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg> 通知设置</div>';
   document.getElementById('moreModal').classList.add('active');
 }
 function renderPushNotifCard(){
@@ -1160,7 +1198,12 @@ function openNotifMore(e){}
 function handleNotif(id,type){
   const n = DB.notifications.find(x=>x.id===id);
   if(n) n.unread = false;
-  if(type==='follow') navigate('user',n.handle);
+  if(type==='follow') navigate('user', n.handle);
+  else if(type==='like'||type==='retweet'||type==='reply'||type==='mention'){
+    // 跳转到对应帖子（通知里有 tweetId 的话）
+    if(n && n.tweetId) navigate('post', n.tweetId);
+    else navigate('home');
+  }
 }
 
 // ===== MESSAGES =====
@@ -1171,27 +1214,17 @@ function renderMessages(){
   main.innerHTML = `
     <div class="msg-layout" style="border-right:none">
       <div class="msg-list">
-        <div class="msg-list-header">消息 <button style="background:var(--accent);color:#fff;border:none;border-radius:50%;width:36px;height:36px;cursor:pointer;font-size:20px;font-weight:300" onclick="openNewMsgModal()">+</button></div>
+        <div class="msg-list-header">消息 <button style="background:var(--accent);color:#fff;border:none;border-radius:50%;width:36px;height:36px;cursor:pointer;font-size:20px;font-weight:300;display:inline-flex;align-items:center;justify-content:center" onclick="openNewMsgModal()" title="发起新对话">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="#fff"><path d="M2.25 6.75c0-1.24 1.01-2.25 2.25-2.25h15c1.24 0 2.25 1.01 2.25 2.25v10.5c0 1.24-1.01 2.25-2.25 2.25H4.5c-1.24 0-2.25-1.01-2.25-2.25V6.75zm14.25 1.5l-6.75 4.5-6.75-4.5v9h13.5v-9z"/></svg>
+        </button></div>
         <div class="msg-search">
           <div class="sbw">
             <svg viewBox="0 0 24 24"><path d="M10.25 3.75c-3.59 0-6.5 2.91-6.5 6.5s2.91 6.5 6.5 6.5c1.795 0 3.419-.726 4.596-1.904 1.178-1.177 1.904-2.801 1.904-4.596 0-3.59-2.91-6.5-6.5-6.5z"/></svg>
-            <input class="sin" placeholder="搜索私信">
+            <input class="sin" placeholder="搜索私信" oninput="filterMsgList(this.value)" id="msgSearchInput">
           </div>
         </div>
-        ${DB.messages.map(m=>`
-          <div class="msg-item" id="msg-${m.id}" onclick="openChat(${m.id})">
-            <div class="msg-av ${m.online?'online':''}" style="background:${m.avatarBg}">${m.avatar}</div>
-            <div class="msg-info">
-              <div class="msg-name">${m.name} <span class="msg-time">${m.time}</span></div>
-              <div class="msg-preview">${m.unread?'<span style="color:var(--text);font-weight:700">'+m.preview+'</span>':m.preview}</div>
-            </div>
-            ${m.unread>0?`<div class="msg-unread"></div>`:''}
-          </div>
-        `).join('')}
-        <div class="empty-state" style="padding:40px">
-          <svg viewBox="0 0 24 24"><path d="M1.998 5.5c0-1.381 1.119-2.5 2.5-2.5h15c1.381 0 2.5 1.119 2.5 2.5v13c0 1.381-1.119 2.5-2.5 2.5h-15c-1.381 0-2.5-1.119-2.5-2.5v-13z"/></svg>
-          <h3>暂无新消息</h3>
-          <p>向感兴趣的人发送私信消息吧</p>
+        <div id="msgListItems">
+          ${renderMsgListItems(DB.messages)}
         </div>
       </div>
       <div class="msg-chat" id="chatArea">
@@ -1242,7 +1275,7 @@ function openChat(id){
         <button class="chat-tool" onclick="toggleEmojiPicker()" title="表情">
           <svg viewBox="0 0 24 24"><path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm3.5-9c.83 0 1.5-.67 1.5-1.5S16.33 8 15.5 8 14 8.67 14 9.5s.67 1.5 1.5 1.5zm-7 0c.83 0 1.5-.67 1.5-1.5S9.33 8 8.5 8 7 8.67 7 9.5 7.67 11 8.5 11zm3.5 6.5c2.33 0 4.31-1.46 5.11-3.5H6.89c.8 2.04 2.78 3.5 5.11 3.5z"/></svg>
         </button>
-        <button class="chat-tool" onclick="alert('图片功能开发中')" title="图片">
+        <button class="chat-tool" onclick="sendImageMsg()" title="图片">
           <svg viewBox="0 0 24 24"><path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"/></svg>
         </button>
       </div>
@@ -1373,9 +1406,17 @@ function renderBookmarks(){
   const main = document.getElementById('mainContent');
   main.innerHTML = `
     <div class="ct">
-      <div class="main-header">
-        <button class="back-btn" onclick="navigate('home')"><svg viewBox="0 0 24 24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg></button>
-        <div class="page-title">书签</div>
+      <div class="main-header" style="justify-content:space-between">
+        <div style="display:flex;align-items:center;gap:20px">
+          <button class="back-btn" onclick="navigate('home')"><svg viewBox="0 0 24 24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg></button>
+          <div>
+            <div class="page-title">书签</div>
+            <div style="font-size:13px;color:var(--text2)">${state.user.handle}</div>
+          </div>
+        </div>
+        ${DB.bookmarks.length>0?`<button class="back-btn" style="display:flex;color:var(--accent)" onclick="clearAllBookmarks()" title="清除所有书签">
+          <svg viewBox="0 0 24 24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>`:''}
       </div>
     </div>
     ${DB.bookmarks.length===0?`
@@ -1384,7 +1425,7 @@ function renderBookmarks(){
         <h3>还没有书签</h3>
         <p>保存帖子以便稍后阅读，只需点击帖子上的书签图标即可</p>
       </div>`:
-      DB.bookmarks.map(t=>renderTweet(t)).join('')
+      DB.bookmarks.map(id=>DB.tweets.find(t=>t.id===id)).filter(Boolean).map(t=>renderTweet(t)).join('')
     }
   `;
 }
@@ -1392,13 +1433,28 @@ function bookmark(id,btn){
   const t = DB.tweets.find(x=>x.id===id);
   if(!t) return;
   t.bookmarked = !t.bookmarked;
-  if(t.bookmarked) DB.bookmarks.push(t);
-  else DB.bookmarks = DB.bookmarks.filter(x=>x.id!==id);
+  if(t.bookmarked){
+    if(!DB.bookmarks.includes(id)) DB.bookmarks.unshift(id);
+    showToast('已保存到书签');
+  } else {
+    DB.bookmarks = DB.bookmarks.filter(x=>x!==id);
+    showToast('已从书签移除');
+  }
   const svg = btn.querySelector('svg');
-  svg.setAttribute('fill', t.bookmarked ? 'var(--accent)' : 'var(--text2)');
+  if(svg) svg.setAttribute('fill', t.bookmarked ? 'var(--accent)' : 'var(--text2)');
 }
-
-// ===== PLACEHOLDER PAGES =====
+function clearAllBookmarks(){
+  // 显示确认操作
+  const toast = document.getElementById('globalToast');
+  const existing = document.getElementById('confirmBookmarkClear');
+  if(existing){existing.remove();return;}
+  const div = document.createElement('div');
+  div.id = 'confirmBookmarkClear';
+  div.style.cssText = 'position:fixed;bottom:140px;left:50%;transform:translateX(-50%);background:var(--bg2);border:1px solid var(--border);color:var(--text);padding:16px 24px;border-radius:16px;z-index:9999;text-align:center;box-shadow:0 8px 32px rgba(0,0,0,.4);min-width:280px';
+  div.innerHTML = `<div style="font-size:15px;font-weight:600;margin-bottom:12px">确认清除全部书签？</div><div style="display:flex;gap:12px;justify-content:center"><button onclick="document.getElementById('confirmBookmarkClear').remove()" style="padding:8px 20px;border-radius:9999px;border:1px solid var(--border);background:transparent;color:var(--text);cursor:pointer;font-size:14px">取消</button><button onclick="document.getElementById('confirmBookmarkClear').remove();DB.bookmarks.forEach(id=>{const t=DB.tweets.find(x=>x.id===id);if(t)t.bookmarked=false;});DB.bookmarks=[];showToast('已清除全部书签');renderBookmarks();" style="padding:8px 20px;border-radius:9999px;border:none;background:#f4212e;color:#fff;cursor:pointer;font-size:14px;font-weight:700">清除</button></div>`;
+  document.body.appendChild(div);
+  setTimeout(()=>{if(document.getElementById('confirmBookmarkClear'))document.getElementById('confirmBookmarkClear').remove();},5000);
+}
 function renderPlaceholderPage(title,subtitle,icon){
   const main = document.getElementById('mainContent');
   main.innerHTML = `
@@ -1436,26 +1492,39 @@ function renderCommunities(){
       </div>
     </div>
     <div class="tab-row" style="border-bottom:none;padding:0 16px">
-      <div class="tab active">推荐</div>
-      <div class="tab">我的社群</div>
+      <div class="tab active" onclick="switchCommTab(this,'all')">推荐</div>
+      <div class="tab" onclick="switchCommTab(this,'joined')">我的社群</div>
     </div>
-    ${COMMUNITIES_DATA.map(c=>`
-      <div class="tweet" style="cursor:pointer" onclick="openCommunityDetail(${c.id})">
-        <div class="ta" style="background:${c.avatarBg}" onclick="event.stopPropagation()">${c.avatar}</div>
-        <div class="tbdy">
-          <div class="th">
-            <span class="tn">${c.name}</span>
-            <span class="thandle">· ${c.members} 成员</span>
-          </div>
-          <div class="ttxt" style="font-size:14px;color:var(--text2)">${c.desc}</div>
-          <div style="display:flex;align-items:center;gap:12px;margin-top:8px">
-            <span style="font-size:13px;color:var(--text2)">${c.posts} 帖子</span>
-            <button class="fbtn ${c.joined?'following':''}" onclick="event.stopPropagation();toggleCommunityJoin(${c.id},this)">${c.joined?'已加入':'加入'}</button>
-          </div>
+    <div id="commListArea">
+      ${COMMUNITIES_DATA.map(c=>renderCommItem(c)).join('')}
+    </div>
+  `;
+}
+function renderCommItem(c){
+  return `
+    <div class="tweet" style="cursor:pointer" onclick="openCommunityDetail(${c.id})">
+      <div class="ta" style="background:${c.avatarBg}" onclick="event.stopPropagation()">${c.avatar}</div>
+      <div class="tbdy">
+        <div class="th">
+          <span class="tn">${c.name}</span>
+          <span class="thandle">· ${c.members} 成员</span>
+        </div>
+        <div class="ttxt" style="font-size:14px;color:var(--text2)">${c.desc}</div>
+        <div style="display:flex;align-items:center;gap:12px;margin-top:8px">
+          <span style="font-size:13px;color:var(--text2)">${c.posts} 帖子</span>
+          <button class="fbtn ${c.joined?'following':''}" onclick="event.stopPropagation();toggleCommunityJoin(${c.id},this)">${c.joined?'已加入':'加入'}</button>
         </div>
       </div>
-    `).join('')}
+    </div>
   `;
+}
+function switchCommTab(el, filter){
+  document.querySelectorAll('.tab-row .tab').forEach(t=>t.classList.remove('active'));
+  el.classList.add('active');
+  const area = document.getElementById('commListArea');
+  if(!area) return;
+  const list = filter==='joined'?COMMUNITIES_DATA.filter(c=>c.joined):COMMUNITIES_DATA;
+  area.innerHTML = list.length>0?list.map(c=>renderCommItem(c)).join(''):`<div class="empty-state"><h3>还没有加入任何社群</h3><p>探索推荐社群，找到志同道合的人</p></div>`;
 }
 function toggleCommunityJoin(id,btn){
   const c = COMMUNITIES_DATA.find(x=>x.id===id);
@@ -1519,7 +1588,7 @@ function renderMonetization(){
           <div style="display:flex;flex-wrap:wrap;gap:8px">
             ${m.features.map(f=>`<span style="background:var(--bg);padding:4px 10px;border-radius:12px;font-size:12px;color:var(--text2)">✓ ${f}</span>`).join('')}
           </div>
-          <button class="fbtn" style="margin-top:16px;width:100%" onclick="alert('功能即将上线')">${m.price==='免费'?'立即开通':'立即订阅'}</button>
+          <button class="fbtn" style="margin-top:16px;width:100%" onclick="navigate('premium');closeMoreMenu()">${m.price==='免费'?'立即开通':'立即订阅'}</button>
         </div>
       `).join('')}
       <div style="background:linear-gradient(135deg,rgba(102,126,234,.2),rgba(118,75,162,.2));border-radius:16px;padding:24px;text-align:center;border:1px solid var(--border)">
@@ -1592,7 +1661,34 @@ function renderAds(){
   `;
 }
 function toggleAdStatus(id){const a=ADS_DATA.find(x=>x.id===id);if(a)a.status=a.status==='active'?'paused':'active';renderAds();}
-function editAd(id){alert('广告编辑功能即将上线')}
+function editAd(id){
+  const a=ADS_DATA.find(x=>x.id===id);
+  if(!a)return;
+  const body=document.getElementById('moreModalBody');
+  if(!body){openMoreMenu();setTimeout(()=>editAd(id),100);return;}
+  body.innerHTML=`
+    <div style="padding:16px">
+      <div style="font-size:18px;font-weight:700;margin-bottom:16px">编辑广告</div>
+      <div style="margin-bottom:12px"><label style="font-size:13px;color:var(--text2)">广告名称</label><input id="editAdName" type="text" value="${a.name}" style="width:100%;padding:10px;background:var(--bg);border:1px solid var(--border);border-radius:8px;color:var(--text);margin-top:4px"></div>
+      <div style="margin-bottom:12px"><label style="font-size:13px;color:var(--text2)">预算</label><input id="editAdBudget" type="text" value="${a.budget}" style="width:100%;padding:10px;background:var(--bg);border:1px solid var(--border);border-radius:8px;color:var(--text);margin-top:4px"></div>
+      <div style="display:flex;gap:8px;margin-top:16px">
+        <button class="fbtn" onclick="saveAdEdit(${a.id})" style="flex:1;background:var(--accent);color:#fff;border:none;justify-content:center">保存</button>
+        <button class="fbtn" onclick="closeMoreMenu()" style="flex:1;justify-content:center">取消</button>
+      </div>
+    </div>
+  `;
+}
+function saveAdEdit(id){
+  const a=ADS_DATA.find(x=>x.id===id);
+  if(a){
+    const nameEl=document.getElementById('editAdName');
+    const budgetEl=document.getElementById('editAdBudget');
+    if(nameEl)a.name=nameEl.value.trim()||a.name;
+    if(budgetEl)a.budget=budgetEl.value.trim()||a.budget;
+  }
+  closeMoreMenu();
+  renderAds();
+}
 function openNewAdModal(){
   const body=document.getElementById('moreModalBody');
   body.innerHTML=`
@@ -1601,7 +1697,7 @@ function openNewAdModal(){
       <div style="margin-bottom:12px"><label style="font-size:13px;color:var(--text2)">广告名称</label><input type="text" placeholder="输入广告名称" style="width:100%;padding:10px;background:var(--bg);border:1px solid var(--border);border-radius:8px;color:var(--text);margin-top:4px"></div>
       <div style="margin-bottom:12px"><label style="font-size:13px;color:var(--text2)">每日预算</label><input type="text" placeholder="¥100" style="width:100%;padding:10px;background:var(--bg);border:1px solid var(--border);border-radius:8px;color:var(--text);margin-top:4px"></div>
       <div style="margin-bottom:12px"><label style="font-size:13px;color:var(--text2)">投放日期</label><input type="date" style="width:100%;padding:10px;background:var(--bg);border:1px solid var(--border);border-radius:8px;color:var(--text);margin-top:4px"></div>
-      <button class="fbtn" style="width:100%;margin-top:16px" onclick="alert('广告创建成功！');closeMoreMenu()">创建广告</button>
+      <button class="fbtn" id="createAdBtn" style="width:100%;margin-top:16px" onclick="createNewAd(this)">创建广告</button>
     </div>
   `;
   document.getElementById('moreModal').classList.add('active');
@@ -1661,7 +1757,7 @@ function renderSpaces(){
           <div style="font-weight:700;margin-bottom:8px">${s.title}</div>
           <div style="display:flex;justify-content:space-between;align-items:center">
             <div style="font-size:13px;color:var(--text2)">主持人：${s.host} · 👥 ${s.listeners}人感兴趣</div>
-            <button class="fbtn" onclick="alert('已预约提醒')">预约</button>
+            <button class="fbtn" onclick="scheduleSpaceReminder(this,${s.id})">预约</button>
           </div>
         </div>
       `).join('')}
@@ -1690,7 +1786,7 @@ function openSpace(id){
       <div style="margin:16px 0">
         ${s.speakers.map(sp=>`<div style="display:inline-block;text-align:center;margin:8px"><div class="av" style="width:48px;height:48px;font-size:18px">${sp[0]}</div><div style="font-size:11px;margin-top:4px">${sp}</div></div>`).join('')}
       </div>
-      <button class="fbtn" style="width:200px;margin-top:16px" onclick="alert('已加入空间')">加入收听</button>
+      <button class="fbtn" style="width:200px;margin-top:16px" onclick="joinSpace(this)">加入收听</button>
     </div>
   `;
 }
@@ -1701,7 +1797,7 @@ function openCreateSpaceModal(){
       <div style="font-size:18px;font-weight:700;margin-bottom:16px">创建空间</div>
       <div style="margin-bottom:12px"><label style="font-size:13px;color:var(--text2)">空间标题</label><input type="text" placeholder="给你的空间起个名字" style="width:100%;padding:10px;background:var(--bg);border:1px solid var(--border);border-radius:8px;color:var(--text);margin-top:4px"></div>
       <div style="margin-bottom:12px"><label style="font-size:13px;color:var(--text2)">话题标签</label><input type="text" placeholder="#话题" style="width:100%;padding:10px;background:var(--bg);border:1px solid var(--border);border-radius:8px;color:var(--text);margin-top:4px"></div>
-      <button class="fbtn" style="width:100%;margin-top:16px" onclick="alert('空间创建成功！');closeMoreMenu()">开始直播</button>
+      <button class="fbtn" style="width:100%;margin-top:16px" onclick="createSpace(this)">开始直播</button>
     </div>
   `;
   document.getElementById('moreModal').classList.add('active');
@@ -1850,11 +1946,11 @@ function renderProfile(){
       </div>
     </div>
     <div class="profile-header">
-      <div class="profile-cover" onclick="document.querySelector('.profile-avatar').click()"></div>
+      <div class="profile-cover" onclick="changeProfileCover(this)" style="cursor:pointer" title="点击更换封面"></div>
       <div class="profile-avatar-wrap">
-        <div class="profile-avatar">王</div>
+        <div class="profile-avatar" onclick="changeProfileAvatar(this)" style="cursor:pointer" title="点击更换头像">${(state.user.name||'用').slice(0,1)}</div>
       </div>
-      <button class="profile-edit-btn">编辑个人资料</button>
+      <button class="profile-edit-btn" onclick="openEditProfileModal()">编辑个人资料</button>
     </div>
     <div class="profile-info">
       <div style="height:8px"></div>
@@ -1909,7 +2005,7 @@ function renderVerifyBanner(){
       <div class="verif-banner-content">
         <h3>你尚未通过认证 <span style="color:var(--accent);display:inline-flex;vertical-align:middle"><svg width="18" height="18" viewBox="0 0 24 24"><path fill="var(--accent)" d="M20.396 11c-.018-.646-.215-1.275-.57-1.816-.354-.54-.852-.972-1.438-1.246.223-.607.27-1.264.14-1.897-.131-.634-.437-1.218-.882-1.687-.47-.445-1.053-.75-1.687-.882-.633-.13-1.29-.083-1.897.14-.273-.587-.704-1.086-1.245-1.44S11.647 1.62 11 1.604c-.646.017-1.273.213-1.813.568s-.969.854-1.24 1.441c-.608-.223-1.267-.272-1.902-.14-.635.13-1.22.436-1.69.882-.445.47-.749 1.055-.878 1.688-.13.633-.08 1.29.144 1.896-.587.274-1.087.705-1.443 1.245-.356.54-.555 1.17-.574 1.817.02.647.218 1.276.574 1.817.356.54.856.972 1.443 1.245-.224.606-.274 1.263-.144 1.896.13.634.433 1.218.877 1.688.47.443 1.054.747 1.687.878.633.132 1.29.084 1.897-.136.274.586.705 1.084 1.246 1.439.54.354 1.17.551 1.816.569.647-.016 1.276-.213 1.817-.567s.972-.854 1.245-1.44c.604.239 1.266.296 1.903.164.636-.132 1.22-.447 1.68-.907.46-.46.776-1.044.908-1.681s.075-1.299-.165-1.903c.586-.274 1.084-.705 1.439-1.246.354-.54.551-1.17.569-1.816z"/></svg></span></h3>
         <p>通过认证即可获得推广回复、分析、免广告浏览等功能。立即升级你的个人资料。</p>
-        <button class="verif-banner-btn" onclick="alert('认证功能即将上线')">获得认证</button>
+        <button class="verif-banner-btn" onclick="navigate('premium')">获得认证</button>
       </div>
       <button class="verif-banner-close" onclick="document.getElementById('verifBanner').style.display='none'">
         <svg viewBox="0 0 24 24"><path d="M10.59 12L4.54 5.96l1.42-1.42L12 10.59l6.04-6.05 1.42 1.42L13.41 12l6.05 6.04-1.42 1.42L12 13.41l-6.04 6.05-1.42-1.42L10.59 12z"/></svg>
@@ -1968,14 +2064,38 @@ function renderUserProfile(handle){
         <span class="ps"><span>${f(u.followers)}</span> 关注者</span>
       </div>
       <div class="profile-tabs">
-        <div class="profile-tab active">帖子</div>
-        <div class="profile-tab">回复</div>
-        <div class="profile-tab">媒体</div>
-        <div class="profile-tab">喜欢</div>
+        <div class="profile-tab active" onclick="switchUserProfileTab(this,'posts','${handle}')">帖子</div>
+        <div class="profile-tab" onclick="switchUserProfileTab(this,'replies','${handle}')">回复</div>
+        <div class="profile-tab" onclick="switchUserProfileTab(this,'media','${handle}')">媒体</div>
+        <div class="profile-tab" onclick="switchUserProfileTab(this,'likes','${handle}')">喜欢</div>
       </div>
     </div>
-    ${userTweets.length>0?userTweets.map(t=>renderTweet(t)).join(''):'<div class="empty-state"><h3>还没有帖子</h3></div>'}
+    <div id="userProfileContent">
+      ${userTweets.length>0?userTweets.map(t=>renderTweet(t)).join(''):'<div class="empty-state"><h3>还没有帖子</h3></div>'}
+    </div>
   `;
+}
+function switchUserProfileTab(el, tab, handle){
+  document.querySelectorAll('.profile-tab').forEach(t=>t.classList.remove('active'));
+  el.classList.add('active');
+  const cont = document.getElementById('userProfileContent');
+  if(!cont) return;
+  const userTweets = DB.tweets.filter(t=>t.handle===handle);
+  let html = '';
+  if(tab==='posts'){
+    html = userTweets.length>0?userTweets.map(t=>renderTweet(t)).join(''):'<div class="empty-state"><h3>还没有帖子</h3></div>';
+  } else if(tab==='media'){
+    const mediaTweets = userTweets.filter(t=>t.media&&t.media.length>0);
+    html = mediaTweets.length>0?mediaTweets.map(t=>renderTweet(t)).join(''):'<div class="empty-state"><h3>还没有媒体内容</h3></div>';
+  } else if(tab==='replies'){
+    const replyIds = userTweets.map(t=>t.id);
+    const all = replyIds.flatMap(id=>(DB.replies[id]||[]).map(r=>({...r,tweetId:id,parentTweet:DB.tweets.find(tw=>tw.id===id)})));
+    html = all.length>0?all.map(r=>renderProfileReply(r)).join(''):'<div class="empty-state"><h3>还没有回复</h3></div>';
+  } else if(tab==='likes'){
+    const liked = DB.tweets.filter(t=>t.liked&&t.handle===handle);
+    html = liked.length>0?liked.map(t=>renderTweet(t)).join(''):'<div class="empty-state"><h3>还没有喜欢的内容</h3></div>';
+  }
+  cont.innerHTML = html;
 }
 function toggleUserFollow(handle,btn){
   const text = btn.textContent.trim();
@@ -2009,7 +2129,7 @@ function renderPostDetail(id){
     </div>
     ${renderTweet(t)}
     <div class="reply-input">
-      <div class="av">王</div>
+      <div class="av" style="background:${(currentUser()&&currentUser().avatarBg)||'linear-gradient(135deg,#667eea,#764ba2)'}">${(currentUser()&&currentUser().name&&currentUser().name.slice(0,1))||state.user.name.slice(0,1)}</div>
       <textarea class="ri-textarea" placeholder="发一条回复..." id="replyTextMain" onkeydown="if(event.key==='Enter'&&!event.shiftKey&&event.ctrlKey){submitMainReply(${id})}"></textarea>
       <button class="pb" onclick="submitMainReply(${id})" style="align-self:flex-end">回复</button>
     </div>
@@ -2074,6 +2194,19 @@ function renderSettings(){
           <div class="settings-item-info"><h3>${isLoggedIn() ? currentUser().name + ' (' + currentUser().handle + ')' : '登录'}</h3><p>管理你的账号信息</p></div>
           <svg width="20" height="20" fill="var(--text2)" viewBox="0 0 24 24"><path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6z"/></svg>
         </div>
+        ${isLoggedIn() ? `
+        <div class="settings-item" onclick="navigate('premium')">
+          <div class="settings-item-info"><h3>订阅 Premium</h3><p>解锁高级功能，广告减少</p></div>
+          <svg width="20" height="20" fill="var(--text2)" viewBox="0 0 24 24"><path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6z"/></svg>
+        </div>
+        <div class="settings-item" onclick="handleLogout()" style="color:#f4212e">
+          <div class="settings-item-info"><h3 style="color:#f4212e">退出登录</h3><p>退出当前账号</p></div>
+          <svg width="20" height="20" fill="#f4212e" viewBox="0 0 24 24"><path d="M17 7l-1.41 1.41L18.17 11H8v2h10.17l-2.58 2.58L17 17l5-5zM4 5h8V3H4c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h8v-2H4V5z"/></svg>
+        </div>` : `
+        <div class="settings-item" onclick="navigate('auth')">
+          <div class="settings-item-info"><h3>登录或注册</h3><p>加入「言」，开始你的社交之旅</p></div>
+          <svg width="20" height="20" fill="var(--text2)" viewBox="0 0 24 24"><path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6z"/></svg>
+        </div>`}
       </div>
       <div class="settings-section">
         <div class="settings-section-title">外观</div>
@@ -2178,7 +2311,19 @@ function renderSearch(q=''){
     )}
   `;
 }
-function doSearch(q){if(q.length>1){if(!state.searchHistory)state.searchHistory=[];state.searchHistory=state.searchHistory.filter(h=>h!==q);state.searchHistory.unshift(q);state.searchHistory=state.searchHistory.slice(0,10);navigate('search',q);}}
+let _searchTimer = null;
+function doSearch(q){
+  // 实时搜索：300ms 防抖，输入少于2字不触发
+  clearTimeout(_searchTimer);
+  if(q.length < 2){ if(state.currentPage==='search') navigate('search',''); return; }
+  _searchTimer = setTimeout(()=>{
+    if(!state.searchHistory) state.searchHistory = [];
+    state.searchHistory = state.searchHistory.filter(h=>h!==q);
+    state.searchHistory.unshift(q);
+    state.searchHistory = state.searchHistory.slice(0,10);
+    navigate('search', q);
+  }, 300);
+}
 
 // ===== TRENDING =====
 function renderTrending(){
@@ -2198,7 +2343,7 @@ function renderTrending(){
       </div>
     </div>
     ${trends.map(t=>`
-      <div class="trend-item" style="padding:16px">
+      <div class="trend-item" style="padding:16px;cursor:pointer" onclick="navigate('topic','${t.name}')">
         <div class="tm">${t.cat} 趋势</div>
         <div class="tn2" style="font-size:18px">${t.name}</div>
         <div class="tc">${t.count} 条帖子</div>
@@ -2215,6 +2360,7 @@ const LISTS_DATA = [
 ];
 function renderLists(){
   const main = document.getElementById('mainContent');
+  const activeTab = state.listTab || 'joined';
   main.innerHTML=`
     <div class="ct">
       <div class="main-header" style="justify-content:space-between">
@@ -2228,50 +2374,127 @@ function renderLists(){
       </div>
     </div>
     <div class="profile-tabs" style="border-top:none">
-      <div class="profile-tab active">已加入</div>
-      <div class="profile-tab">订阅</div>
+      <div class="profile-tab ${activeTab==='joined'?'active':''}" onclick="switchListTab('joined')">已加入</div>
+      <div class="profile-tab ${activeTab==='discover'?'active':''}" onclick="switchListTab('discover')">发现</div>
     </div>
-    ${LISTS_DATA.filter(l=>l.following).length>0?LISTS_DATA.filter(l=>l.following).map(l=>`
-      <div class="fi" style="padding:16px">
-        <div style="flex:1;min-width:0">
-          <div style="display:flex;align-items:center;gap:8px">
-            <span style="font-weight:700;font-size:16px">${l.name}</span>
-          </div>
-          <div style="font-size:14px;color:var(--text2);margin-top:2px">${l.members.toLocaleString()} 位成员 · ${l.description}</div>
-        </div>
-        <button class="fbtn following" onclick="toggleListFollow(this)">正在关注</button>
-      </div>
-    `).join(''):'<div class="empty-state"><svg viewBox="0 0 24 24"><path d="M3 13h2v-2H3v2zm0 4h2v-2H3v2zm0-8h2V7H3v2zm4 4h14v-2H7v2zm0 4h14v-2H7v2zM7 7v2h14V7H7z"/></svg><h3>还没有加入的列表</h3><p>发现并加入有趣的列表</p></div>'}
-    <div style="padding:16px 16px 8px;border-bottom:1px solid var(--border)">
-      <div style="font-size:15px;font-weight:700">推荐列表</div>
-    </div>
-    ${LISTS_DATA.filter(l=>!l.following).map(l=>`
-      <div class="fi" style="padding:16px">
-        <div style="flex:1;min-width:0">
-          <div style="display:flex;align-items:center;gap:8px">
-            <span style="font-weight:700;font-size:16px">${l.name}</span>
-          </div>
-          <div style="font-size:14px;color:var(--text2);margin-top:2px">${l.members.toLocaleString()} 位成员 · ${l.description}</div>
-        </div>
-        <button class="fbtn" onclick="toggleListFollow(this)">关注</button>
-      </div>
-    `).join('')}
+    ${activeTab==='joined'?renderJoinedLists():renderDiscoverLists()}
   `;
 }
+function switchListTab(tab){state.listTab=tab;renderLists();}
+function renderJoinedLists(){
+  const joined = LISTS_DATA.filter(l=>l.following);
+  if(joined.length===0) return '<div class="empty-state"><svg viewBox="0 0 24 24"><path d="M3 13h2v-2H3v2zm0 4h2v-2H3v2zm0-8h2V7H3v2zm4 4h14v-2H7v2zm0 4h14v-2H7v2zM7 7v2h14V7H7z"/></svg><h3>还没有加入的列表</h3><p>发现并加入有趣的列表</p></div>';
+  return joined.map(l=>renderListItem(l,true)).join('');
+}
+function renderDiscoverLists(){
+  const discover = LISTS_DATA.filter(l=>!l.following);
+  if(discover.length===0) return '<div class="empty-state"><svg viewBox="0 0 24 24"><path d="M3 13h2v-2H3v2zm0 4h2v-2H3v2zm0-8h2V7H3v2zm4 4h14v-2H7v2zm0 4h14v-2H7v2zM7 7v2h14V7H7z"/></svg><h3>没有更多推荐</h3><p>去创建或搜索更多列表</p></div>';
+  return `<div style="padding:12px 16px 8px"><div style="font-size:13px;font-weight:700;color:var(--text2)">推荐列表</div></div>`+discover.map(l=>renderListItem(l,false)).join('');
+}
+function renderListItem(l,following){
+  return `
+    <div class="fi" style="padding:16px;cursor:pointer" onclick="navigate('listDetail',${l.id})">
+      <div style="flex:1;min-width:0">
+        <div style="display:flex;align-items:center;gap:8px">
+          <span style="font-weight:700;font-size:16px">${l.name}</span>
+        </div>
+        <div style="font-size:14px;color:var(--text2);margin-top:2px">${l.members.toLocaleString()} 位成员 · ${l.description}</div>
+      </div>
+      <button class="fbtn ${following?'following':'fbtn'}" onclick="event.stopPropagation();toggleListFollow(this)">${following?'正在关注':'关注'}</button>
+    </div>`;
+}
 function toggleListFollow(btn){
+  const listItem = btn.closest('.fi');
+  const listName = listItem.querySelector('span').textContent;
+  const list = LISTS_DATA.find(l=>l.name===listName);
   if(btn.classList.contains('following')){
     btn.classList.remove('following');
     btn.classList.add('fbtn');
     btn.textContent='关注';
     btn.style.cssText='';
+    if(list){list.following=false;list.members=Math.max(0,list.members-1)}
   } else {
     btn.classList.add('following');
     btn.textContent='正在关注';
     btn.style.cssText='background:transparent;color:var(--text);border:1px solid var(--border);border-radius:9999px;padding:7px 18px;font-size:14px;font-weight:700';
+    if(list){list.following=true;list.members++}
   }
 }
 function openCreateListModal(){
-  alert('创建列表功能即将上线');
+  const overlay = document.createElement('div');
+  overlay.className='modal-overlay';
+  overlay.id='createListModal';
+  overlay.innerHTML = `
+    <div class="modal" style="max-width:520px">
+      <div class="modal-header">
+        <button class="modal-close" onclick="closeCreateListModal()">
+          <svg viewBox="0 0 24 24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+        <button class="modal-btn primary" onclick="createList()" id="createListBtn" disabled style="border-radius:9999px;padding:8px 20px;font-size:14px">完成</button>
+      </div>
+      <div class="modal-body">
+        <div style="padding:16px 0">
+          <div style="margin-bottom:20px">
+            <label style="display:block;font-size:13px;color:var(--text2);margin-bottom:8px">列表名称</label>
+            <input type="text" id="listNameInput" placeholder="给你的列表起个名字" oninput="validateCreateList()" style="width:100%;padding:12px;border:1px solid var(--border);border-radius:8px;background:var(--bg);color:var(--text);font-size:15px">
+          </div>
+          <div style="margin-bottom:20px">
+            <label style="display:block;font-size:13px;color:var(--text2);margin-bottom:8px">描述</label>
+            <input type="text" id="listDescInput" placeholder="简单描述这个列表" style="width:100%;padding:12px;border:1px solid var(--border);border-radius:8px;background:var(--bg);color:var(--text);font-size:15px">
+          </div>
+          <div style="padding:12px;border:1px solid var(--border);border-radius:8px;color:var(--text2);font-size:13px">💡 列表创建后，你可以添加和删除人员。只有你能看到你的列表。</div>
+        </div>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(overlay);
+  setTimeout(()=>{overlay.classList.add('active');document.getElementById('listNameInput').focus()},10);
+}
+function closeCreateListModal(){
+  const m = document.getElementById('createListModal');
+  if(m){m.classList.remove('active');setTimeout(()=>m.remove(),200)}
+}
+function validateCreateList(){
+  const name = document.getElementById('listNameInput').value.trim();
+  document.getElementById('createListBtn').disabled = name.length===0;
+}
+function createList(){
+  const name = document.getElementById('listNameInput').value.trim();
+  const desc = document.getElementById('listDescInput').value.trim() || '暂无描述';
+  if(!name) return;
+  const newId = LISTS_DATA.length>0?Math.max(...LISTS_DATA.map(l=>l.id))+1:1;
+  LISTS_DATA.push({id:newId,name,members:0,description:desc,following:true});
+  closeCreateListModal();
+  state.listTab = 'joined';
+  renderLists();
+}
+function renderListDetail(id){
+  const list = LISTS_DATA.find(l=>l.id===id);
+  if(!list){navigate('lists');return;}
+  const main = document.getElementById('mainContent');
+  const listTweets = DB.tweets.filter(t=>t.listTags&&t.listTags.includes(id));
+  main.innerHTML = `
+    <div class="ct">
+      <div class="main-header" style="justify-content:space-between">
+        <div style="display:flex;align-items:center;gap:20px">
+          <button class="back-btn" onclick="navigate('lists')"><svg viewBox="0 0 24 24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg></button>
+          <div>
+            <div style="font-size:17px;font-weight:800">${list.name}</div>
+            <div style="font-size:13px;color:var(--text2)">${list.members.toLocaleString()} 位成员</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div style="padding:16px;border-bottom:1px solid var(--border)">
+      <div class="profile-cover" style="height:120px;border-radius:0;background:linear-gradient(135deg,#1a1a2e,#16213e)"></div>
+      <div style="padding:0 4px">
+        <div style="font-size:15px;font-weight:700;margin-top:12px">${list.name}</div>
+        <div style="font-size:14px;color:var(--text2);margin-top:4px">${list.description}</div>
+        <div style="font-size:13px;color:var(--text2);margin-top:4px">${list.members.toLocaleString()} 位成员</div>
+      </div>
+    </div>
+    ${listTweets.length>0?listTweets.map(t=>renderTweet(t)).join(''):'<div class="empty-state"><svg viewBox="0 0 24 24"><path d="M3 13h2v-2H3v2zm0 4h2v-2H3v2zm0-8h2V7H3v2zm4 4h14v-2H7v2zm0 4h14v-2H7v2zM7 7v2h14V7H7z"/></svg><h3>此列表暂无帖子</h3><p>列表成员发布帖子后，内容会出现在这里</p></div>'}
+  `;
 }
 
 // ===== TOPICS =====
@@ -2301,7 +2524,7 @@ function renderTopics(){
       <div style="padding:12px 16px 8px">
         <div style="font-size:13px;font-weight:700;color:var(--text2);text-transform:uppercase;margin-bottom:8px">你关注的话题</div>
         <div style="display:flex;flex-wrap:wrap;gap:8px">
-          ${followingTopics.map(t=>`<div class="trend-item" style="display:flex;align-items:center;gap:8px;padding:8px 16px;background:var(--bg2);border-radius:20px" onclick="navigate('trending')">${t.icon}<span style="font-size:14px;font-weight:600">${t.name}</span></div>`).join('')}
+          ${followingTopics.map(t=>`<div class="trend-item" style="display:flex;align-items:center;gap:8px;padding:8px 16px;background:var(--bg2);border-radius:20px;cursor:pointer" onclick="navigate('topic','${t.name}')">${t.icon}<span style="font-size:14px;font-weight:600">${t.name}</span></div>`).join('')}
         </div>
       </div>
     `:''}
@@ -2357,22 +2580,30 @@ function renderTopicPage(topic){
         <button class="fbtn following" onclick="this.textContent=this.textContent==='正在关注'?'关注':'正在关注';this.style.background=this.textContent==='正在关注'?'transparent':'var(--text)';this.style.color=this.textContent==='正在关注'?'var(--text)':'var(--bg)';this.style.borderColor=this.textContent==='正在关注'?'var(--border)':'transparent'">正在关注</button>
       </div>
     </div>
-    ${tweets.length>0?`<div class="feed">${tweets.map(t=>renderTweetHTML(t)).join('')}</div>`:'<div class="empty-state" style="padding:40px 0"><h3>暂无相关帖子</h3><p>成为第一个讨论这个话题的人吧！</p></div>'}
+    ${tweets.length>0?`<div class="feed">${tweets.map(t=>renderTweet(t)).join('')}</div>`:'<div class="empty-state" style="padding:40px 0"><h3>暂无相关帖子</h3><p>成为第一个讨论这个话题的人吧！</p></div>'}
   `;
 }
 
 // ===== FOLLOWING / FOLLOWERS =====
 const FOLLOWING_DATA = [
-  {name:'林小雨',handle:'@linxiaoyu',bio:'产品经理 / AI爱好者',avatar:'林',avatarBg:'linear-gradient(135deg,#667eea,#764ba2)',verified:true,following:true},
-  {name:'科技日报',handle:'@techdaily',bio:'第一时间报道科技前沿资讯',avatar:'科',avatarBg:'linear-gradient(135deg,#f093fb,#f5576c)',verified:true,following:true},
-  {name:'张伟',handle:'@zhangwei',bio:'产品经理 / AI创业者',avatar:'张',avatarBg:'linear-gradient(135deg,#4facfe,#00f2fe)',verified:false,following:true},
-  {name:'李娜',handle:'@lina_tech',bio:'全栈工程师 / 开源贡献者',avatar:'李',avatarBg:'linear-gradient(135deg,#43e97b,#38f9d7)',verified:false,following:true},
-  {name:'前端开发者社区',handle:'@fe_community',bio:'分享前端技术和最佳实践',avatar:'前',avatarBg:'linear-gradient(135deg,#fa709a,#fee140)',verified:true,following:false}
+  {name:'林小雨',handle:'@linxiaoyu',bio:'产品经理 / AI爱好者 🌈 分享科技、职场和生活',avatar:'林',avatarBg:'linear-gradient(135deg,#667eea,#764ba2)',verified:true,following:true},
+  {name:'科技日报',handle:'@techdaily',bio:'第一时间报道科技前沿资讯，关注AI/区块链/芯片',avatar:'科',avatarBg:'linear-gradient(135deg,#f093fb,#f5576c)',verified:true,following:true},
+  {name:'张伟',handle:'@zhangwei',bio:'产品经理 / AI创业者 | 三次创业 | B站 50w 粉',avatar:'张',avatarBg:'linear-gradient(135deg,#4facfe,#00f2fe)',verified:false,following:true},
+  {name:'李娜',handle:'@lina_tech',bio:'全栈工程师 / 开源贡献者 🔥 Vue/React/Node',avatar:'李',avatarBg:'linear-gradient(135deg,#43e97b,#38f9d7)',verified:false,following:true},
+  {name:'前端开发者社区',handle:'@fe_community',bio:'分享前端技术和最佳实践 | 每日一题 | 30万开发者',avatar:'前',avatarBg:'linear-gradient(135deg,#fa709a,#fee140)',verified:true,following:true},
+  {name:'陈明',handle:'@chenming_ai',bio:'AI研究员 @ 清华大学 | NLP / LLM / 计算机视觉',avatar:'陈',avatarBg:'linear-gradient(135deg,#43e97b,#38f9d7)',verified:true,following:true},
+  {name:'产品猎人',handle:'@producthunt_cn',bio:'发现优秀产品，每日精选新品推荐',avatar:'产',avatarBg:'linear-gradient(135deg,#f093fb,#f5576c)',verified:false,following:true},
+  {name:'阿里云',handle:'@aliyun',bio:'阿里云官方账号，云计算解决方案领导者',avatar:'阿',avatarBg:'linear-gradient(135deg,#f6d365,#fda085)',verified:true,following:false},
+  {name:'GitHub',handle:'@github',bio:'How people build software',avatar:'G',avatarBg:'linear-gradient(135deg,#333,#555)',verified:true,following:false},
+  {name:'Vue.js',handle:'@vuejs',bio:'The Progressive JavaScript Framework',avatar:'V',avatarBg:'linear-gradient(135deg,#42b883,#35495e)',verified:true,following:false}
 ];
 const FOLLOWERS_DATA = [
-  {name:'王珊珊',handle:'@wangshanshan',bio:'设计师',avatar:'王',avatarBg:'linear-gradient(135deg,#fa709a,#fee140)',verified:false,following:false},
-  {name:'陈明',handle:'@chenming_ai',bio:'AI研究员',avatar:'陈',avatarBg:'linear-gradient(135deg,#43e97b,#38f9d7)',verified:true,following:true},
-  {name:'诗雅',handle:'@shiya',bio:'自由撰稿人',avatar:'诗',avatarBg:'linear-gradient(135deg,#f093fb,#f5576c)',verified:false,following:false}
+  {name:'王珊珊',handle:'@wangshanshan',bio:'UI/UX 设计师 | Figma 爱好者 | 记录生活',avatar:'王',avatarBg:'linear-gradient(135deg,#fa709a,#fee140)',verified:false,following:false},
+  {name:'陈明',handle:'@chenming_ai',bio:'AI研究员 @ 清华大学 | NLP / LLM / 计算机视觉',avatar:'陈',avatarBg:'linear-gradient(135deg,#43e97b,#38f9d7)',verified:true,following:true},
+  {name:'诗雅',handle:'@shiya',bio:'自由撰稿人 ✍️ 科技 / 文化 / 社会观察',avatar:'诗',avatarBg:'linear-gradient(135deg,#f093fb,#f5576c)',verified:false,following:false},
+  {name:'刘宇航',handle:'@liuyuhang_dev',bio:'Android/iOS独立开发者 🚀 App Store 5款产品在架',avatar:'刘',avatarBg:'linear-gradient(135deg,#4facfe,#00f2fe)',verified:false,following:true},
+  {name:'赵晓梅',handle:'@zhaoxiaomei',bio:'投资人 / 创业导师 | 关注早期科技项目 | DM open',avatar:'赵',avatarBg:'linear-gradient(135deg,#667eea,#764ba2)',verified:true,following:false},
+  {name:'周杰',handle:'@zhoujie_pm',bio:'产品总监 | 用户增长 | 曾就职字节/腾讯',avatar:'周',avatarBg:'linear-gradient(135deg,#f6d365,#fda085)',verified:false,following:false}
 ];
 function renderFollowing(){
   const main = document.getElementById('mainContent');
@@ -2479,7 +2710,9 @@ function startNewMessage(){
   const recipient = document.getElementById('newMsgRecipient').value.trim();
   const text = document.getElementById('newMsgText').value.trim();
   if(!recipient){
-    alert('请输入用户名');
+    const input = document.getElementById('newMsgRecipient');
+    if(input){input.style.borderColor='var(--danger,#f4212e)';setTimeout(()=>{input.style.borderColor='';},2000);}
+    showToast('请输入用户名');
     return;
   }
   // Create or find conversation
@@ -2595,7 +2828,7 @@ function doLike(id,btn){
   const t=DB.tweets.find(x=>x.id===id);
   if(!t)return;
   t.liked=!t.liked;
-  t.likes+=t.liked?1:-1;
+  t.likes = Math.max(0, t.likes + (t.liked?1:-1));
   LS.save();
   btn.classList.toggle('liked',t.liked);
   const lk=document.getElementById('lk-'+id);
@@ -2685,8 +2918,16 @@ function submitQuoteRetweet(){
 }
 function toggleFollow(btn){
   if(!requireLogin()) return;
-  btn.textContent=btn.textContent==='关注'?'正在关注':'关注';
-  btn.classList.toggle('following',btn.textContent==='正在关注');
+  const isFollowing = btn.textContent.trim() === '正在关注';
+  if(isFollowing){
+    btn.textContent = '关注';
+    btn.classList.remove('following');
+    btn.style.cssText = '';
+  } else {
+    btn.textContent = '正在关注';
+    btn.classList.add('following');
+    btn.style.cssText = 'background:transparent;color:var(--text);border:1px solid var(--border);border-radius:9999px;padding:7px 18px;font-size:14px;font-weight:700';
+  }
 }
 function openReplyModal(id){
   if(!requireLogin()) return;
@@ -2719,6 +2960,7 @@ function closePostModal(){
   document.getElementById('modalPostBtn').textContent='发帖';
   state.editingTweetId=null;
   replyScope='everyone';
+  clearComposeMedia();
   const span = document.querySelector('.reply-scope-btn span');
   if(span) span.textContent='所有人可以回复';
 }
@@ -2757,6 +2999,9 @@ function submitPost(){
       views:viewsOptions[Math.floor(Math.random()*viewsOptions.length)],
       liked:false,retweeted:false,bookmarked:false
     };
+    if(state.composeMedia && state.composeMedia.length > 0){
+      t.media = state.composeMedia.map(m=>({url:m.url}));
+    }
     DB.tweets.unshift(t);
     u.posts = (u.posts||0) + 1;
     // 持久化更新后的用户数据
@@ -2827,15 +3072,22 @@ function editTweet(id){
   updateModalPostBtn();
 }
 function muteUser(handle){
-  // 模拟屏蔽用户
-  alert('已屏蔽 @'+handle);
+  showToast('已静音 @'+handle);
+  closeMoreMenu();
 }
 function blockUser(handle){
-  // 模拟拉黑用户
-  alert('已屏蔽 @'+handle);
+  showToast('已屏蔽 @'+handle);
+  closeMoreMenu();
 }
 function changeWhoCanReply(id){
-  alert('此功能即将上线');
+  const options = ['所有人', '你关注的人', '仅提及的人'];
+  const t = DB.tweets.find(tw=>tw.id===id);
+  if(!t)return;
+  const cur = t.replyScope||0;
+  const next = (cur+1)%3;
+  t.replyScope = next;
+  showToast(`回复权限已更改为：${options[next]}`);
+  closeMoreMenu();
 }
 function closeMoreMenu(){document.getElementById('moreModal').classList.remove('active')}
 function toggleBookmarkFromMore(id){
@@ -3018,3 +3270,805 @@ document.addEventListener('keydown',function(e){
     navigate('profile');
   }
 });
+
+// ===== HELP CENTER =====
+function renderHelp(){
+  const main = document.getElementById('mainContent');
+  main.innerHTML = `
+    <div class="ct">
+      <div class="main-header">
+        <button class="back-btn" onclick="navigate('home')"><svg viewBox="0 0 24 24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg></button>
+        <div class="page-title">帮助中心</div>
+      </div>
+    </div>
+    <div style="padding:16px">
+      <div style="font-size:20px;font-weight:800;margin-bottom:20px">我们随时为你提供帮助</div>
+      <div class="search-bar" style="margin-bottom:24px">
+        <div class="sbw">
+          <svg viewBox="0 0 24 24" fill="var(--text2)"><path d="M10.25 3.75c-3.59 0-6.5 2.91-6.5 6.5s2.91 6.5 6.5 6.5c1.795 0 3.419-.726 4.596-1.904 1.178-1.177 1.904-2.801 1.904-4.596 0-3.59-2.91-6.5-6.5-6.5z"/></svg>
+          <input class="sin" placeholder="搜索帮助内容" style="flex:1">
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:24px">
+        ${[
+          {title:'账号管理',desc:'管理你的账号设置',icon:'🔑'},
+          {title:'隐私与安全',desc:'了解隐私保护措施',icon:'🔒'},
+          {title:'发帖与互动',desc:'学习如何发帖和互动',icon:'✍️'},
+          {title:'通知设置',desc:'管理通知偏好',icon:'🔔'},
+          {title:'举报与屏蔽',desc:'了解内容审核机制',icon:'🛡️'},
+          {title:'付费订阅',desc:'了解专业版功能',icon:'⭐'}
+        ].map(item=>`
+          <div style="padding:16px;background:var(--bg2);border-radius:12px;cursor:pointer;transition:background .2s" onmouseenter="this.style.background='var(--bg3)'" onmouseleave="this.style.background='var(--bg2)'">
+            <div style="font-size:24px;margin-bottom:8px">${item.icon}</div>
+            <div style="font-weight:700;font-size:15px;margin-bottom:4px">${item.title}</div>
+            <div style="font-size:13px;color:var(--text2)">${item.desc}</div>
+          </div>
+        `).join('')}
+      </div>
+      <div style="font-size:15px;font-weight:700;margin-bottom:12px">常见问题</div>
+      <div style="display:flex;flex-direction:column;gap:1px">
+        ${[
+          {q:'如何重置密码？',a:'前往「设置和隐私」>「账户」页面，点击"修改密码"，输入当前密码和新密码后保存即可。如忘记当前密码，请在登录页点击"忘记密码"通过邮箱重置。'},
+          {q:'如何保护账号安全？',a:'建议开启双因素认证（2FA）、使用强密码（大小写字母+数字+特殊字符，至少12位）、不要在公共设备上勾选"记住我"、定期检查登录设备列表，发现异常登录立即下线并修改密码。'},
+          {q:'如何举报垃圾信息？',a:'点击帖子右上角的"..."菜单，选择"举报"选项，按提示选择举报类别（垃圾信息/骚扰/仇恨言论等），提交后我们的审核团队会尽快处理。'},
+          {q:'如何删除帖子？',a:'点击自己的帖子右上角"..."菜单，选择"删除"，确认后该帖子将从你的个人资料和时间线中移除。注意：被他人转推和引用的内容可能仍在他们的页面显示。'},
+          {q:'如何设置双因素认证？',a:'前往「设置和隐私」>「安全」>「双因素认证」，选择认证方式（短信验证码 / 身份验证器 App / 安全密钥），按引导完成绑��。建议使用 Google Authenticator 或 1Password 等工具。'},
+          {q:'如何联系我们？',a:'如有任何疑问或建议，可通过以下方式联系我们：① 私信 @言支持 官方账号；② 发送邮件至 support@yan-app.com；③ 在帮助中心提交工单。工作时间 9:00-18:00 通常 2 小时内回复。'}
+        ].map((item,i)=>`
+          <div style="padding:16px;background:var(--bg2);cursor:pointer;transition:background .2s" onmouseenter="this.style.background='var(--bg3)'" onmouseleave="this.style.background='var(--bg2)'" onclick="toggleFaq(this)">
+            <div style="display:flex;justify-content:space-between;align-items:center">
+              <span style="font-size:15px;font-weight:600">${item.q}</span>
+              <svg viewBox="0 0 24 24" fill="var(--text2)" style="width:20px;height:20px;transition:transform .2s" class="faq-arrow"><path d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6z"/></svg>
+            </div>
+            <div class="faq-answer" style="max-height:0;overflow:hidden;transition:max-height .3s ease,margin .3s ease;margin-top:0;font-size:14px;color:var(--text2);line-height:1.7">${item.a}</div>
+          </div>
+        `).join('')}
+      </div>
+      <div style="text-align:center;padding:24px;color:var(--text2);font-size:13px">
+        如仍有疑问，请联系 <span style="color:var(--accent);cursor:pointer">@言支持</span>
+      </div>
+    </div>
+  `;
+}
+
+// ===== PREMIUM SUBSCRIPTION =====
+function renderPremium(){
+  const main = document.getElementById('mainContent');
+  main.innerHTML = `
+    <div class="ct">
+      <div class="main-header">
+        <button class="back-btn" onclick="navigate('home')"><svg viewBox="0 0 24 24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg></button>
+        <div class="page-title">专业版</div>
+      </div>
+    </div>
+    <div style="padding:24px 16px;text-align:center;background:linear-gradient(135deg,#1d3a5f 0%,#0f212e 100%)">
+      <div style="font-size:32px;margin-bottom:12px">⭐</div>
+      <div style="font-size:24px;font-weight:800;margin-bottom:8px">升级到 言 专业版</div>
+      <div style="font-size:15px;color:var(--text2);max-width:360px;margin:0 auto;line-height:1.5">解锁更多高级功能，让你的社交体验更上一层楼</div>
+    </div>
+    <div style="padding:16px">
+      <div style="display:flex;gap:12px;margin-bottom:20px">
+        <div style="flex:1;padding:16px;background:var(--bg2);border-radius:16px;text-align:center;border:1px solid var(--border)">
+          <div style="font-size:13px;color:var(--text2);margin-bottom:8px">月度会员</div>
+          <div style="font-size:28px;font-weight:800;margin-bottom:4px">¥30</div>
+          <div style="font-size:13px;color:var(--text2);margin-bottom:12px">/月</div>
+          <button class="fbtn" onclick="navigate('premium');closeMoreMenu()" style="width:100%;justify-content:center;background:var(--accent);color:#fff;border:none">订阅</button>
+        </div>
+        <div style="flex:1;padding:16px;background:var(--bg2);border-radius:16px;text-align:center;border:2px solid var(--accent);position:relative">
+          <div style="position:absolute;top:-10px;left:50%;transform:translateX(-50%);background:var(--accent);color:#fff;font-size:11px;font-weight:700;padding:2px 10px;border-radius:99px">推荐</div>
+          <div style="font-size:13px;color:var(--text2);margin-bottom:8px">年度会员</div>
+          <div style="font-size:28px;font-weight:800;margin-bottom:4px">¥288</div>
+          <div style="font-size:13px;color:var(--text2);margin-bottom:12px">¥24/月 · 省¥72</div>
+          <button class="fbtn" onclick="navigate('premium');closeMoreMenu()" style="width:100%;justify-content:center;background:var(--accent);color:#fff;border:none">订阅</button>
+        </div>
+      </div>
+      <div style="font-size:15px;font-weight:700;margin-bottom:12px">专业版功能</div>
+      <div style="display:flex;flex-direction:column;gap:12px;margin-bottom:24px">
+        ${[
+          {title:'编辑帖子',desc:'发布后30分钟内无限次编辑',icon:'✏️'},
+          {title:'撤销发帖',desc:'发布时提供撤销窗口',icon:'⏪'},
+          {title:'长帖模式',desc:'支持最长25,000字符',icon:'📝'},
+          {title:'加粗与斜体',desc:'更丰富的文字格式',icon:'💎'},
+          {title:'自定义主题',desc:'创建你的专属主题配色',icon:'🎨'},
+          {title:'书签文件夹',desc:'用文件夹整理你的书签',icon:'📁'},
+          {title:'优先支持',desc:'获取专属客服支持',icon:'🛎️'},
+          {title:'无广告',desc:'纯净浏览体验',icon:'🚀'}
+        ].map(f=>`
+          <div style="display:flex;align-items:center;gap:12px">
+            <div style="font-size:20px">${f.icon}</div>
+            <div style="flex:1">
+              <div style="font-weight:700;font-size:14px">${f.title}</div>
+              <div style="font-size:13px;color:var(--text2)">${f.desc}</div>
+            </div>
+          </div>
+        `).join('')}
+      </div>
+      <div style="padding:12px;border:1px solid var(--border);border-radius:12px;text-align:center;color:var(--text2);font-size:13px">
+        订阅服务由 言 Corp. 提供。价格可能因地区而异。可随时取消。
+      </div>
+    </div>
+  `;
+}
+
+// ===== ACCESSIBILITY =====
+function renderAccessibility(){
+  const main = document.getElementById('mainContent');
+  main.innerHTML = `
+    <div class="ct">
+      <div class="main-header">
+        <button class="back-btn" onclick="navigate('home')"><svg viewBox="0 0 24 24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg></button>
+        <div class="page-title">辅助功能</div>
+      </div>
+    </div>
+    <div style="padding:16px">
+      <div style="font-size:15px;color:var(--text2);margin-bottom:20px">管理你的辅助功能设置，让 言 更易于使用。</div>
+      ${[
+        {title:'高对比度',desc:'增加颜色对比度，让文字更易辨认',toggle:false},
+        {title:'减少动画',desc:'减少界面动画和过渡效果',toggle:false},
+        {title:'减少透明度',desc:'移除透明效果，提高可读性',toggle:false},
+        {title:'图片替代文本',desc:'自动为图片添加描述文字',toggle:true},
+        {title:'大字模式',desc:'增大界面文字尺寸',toggle:false},
+        {title:'视频字幕',desc:'自动为视频生成字幕',toggle:true},
+        {title:'键盘导航',desc:'启用完整键盘导航支持',toggle:true}
+      ].map(item=>`
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 0;border-bottom:1px solid var(--border)">
+          <div style="flex:1;margin-right:16px">
+            <div style="font-weight:700;font-size:15px">${item.title}</div>
+            <div style="font-size:13px;color:var(--text2);margin-top:2px">${item.desc}</div>
+          </div>
+          <div style="width:48px;height:28px;border-radius:14px;cursor:pointer;position:relative;transition:background .3s;background:${item.toggle?'var(--accent)':'var(--border)'}" onclick="toggleSwitch(this)">
+            <div style="width:22px;height:22px;border-radius:50%;background:#fff;position:absolute;top:3px;left:${item.toggle?'23px':'3px'};transition:left .3s;box-shadow:0 1px 3px rgba(0,0,0,.3)"></div>
+          </div>
+        </div>
+      `).join('')}
+      <div style="padding:20px 0;text-align:center;color:var(--text2);font-size:13px">
+        更多辅助功能设置请访问 <span style="color:var(--accent);cursor:pointer" onclick="navigate('help')">帮助中心</span>
+      </div>
+    </div>
+  `;
+}
+function toggleSwitch(el){
+  const isOn = el.style.background.includes('var(--accent)');
+  el.style.background = isOn ? 'var(--border)' : 'var(--accent)';
+  const dot = el.querySelector('div');
+  dot.style.left = isOn ? '3px' : '23px';
+}
+
+// ===== EDIT PROFILE MODAL =====
+function openEditProfileModal(){
+  const u = state.user;
+  const overlay = document.createElement('div');
+  overlay.className='modal-overlay';
+  overlay.id='editProfileModal';
+  overlay.innerHTML = `
+    <div class="modal" style="max-width:520px;max-height:90vh;overflow-y:auto">
+      <div class="modal-header">
+        <button class="modal-close" onclick="closeEditProfileModal()">
+          <svg viewBox="0 0 24 24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+        <div style="font-size:17px;font-weight:800">编辑个人资料</div>
+        <button class="modal-btn primary" onclick="saveProfile()" style="border-radius:9999px;padding:8px 20px;font-size:14px">保存</button>
+      </div>
+      <div class="modal-body">
+        <div class="profile-cover" style="height:160px;border-radius:0;background:linear-gradient(135deg,#1a1a2e,#16213e);cursor:pointer;display:flex;align-items:center;justify-content:center" onclick="changeProfileCover(this)">
+          <svg viewBox="0 0 24 24" fill="var(--text2)" style="width:32px;height:32px"><path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"/></svg>
+        </div>
+        <div style="margin-top:-48px;margin-left:16px;margin-bottom:24px">
+          <div class="av" style="width:80px;height:80px;font-size:32px;background:linear-gradient(135deg,#667eea,#764ba2);border:4px solid var(--bg);cursor:pointer" onclick="changeProfileAvatar(this)">${u.name.slice(0,1)}</div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:16px">
+          <div>
+            <label style="display:block;font-size:13px;color:var(--text2);margin-bottom:6px">姓名</label>
+            <input type="text" id="editName" value="${u.name}" style="width:100%;padding:12px;border:1px solid var(--border);border-radius:8px;background:var(--bg);color:var(--text);font-size:15px">
+          </div>
+          <div>
+            <label style="display:block;font-size:13px;color:var(--text2);margin-bottom:6px">个人简介</label>
+            <textarea id="editBio" maxlength="160" style="width:100%;padding:12px;border:1px solid var(--border);border-radius:8px;background:var(--bg);color:var(--text);font-size:15px;resize:none;min-height:80px;font-family:inherit;line-height:1.5">${u.bio||''}</textarea>
+            <div style="text-align:right;font-size:12px;color:var(--text2);margin-top:4px"><span id="bioCount">${(u.bio||'').length}</span>/160</div>
+          </div>
+          <div>
+            <label style="display:block;font-size:13px;color:var(--text2);margin-bottom:6px">所在地</label>
+            <input type="text" id="editLocation" value="${u.location||''}" style="width:100%;padding:12px;border:1px solid var(--border);border-radius:8px;background:var(--bg);color:var(--text);font-size:15px">
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(overlay);
+  setTimeout(()=>{overlay.classList.add('active');document.getElementById('editName').focus()},10);
+  setTimeout(()=>{
+    const bioEl = document.getElementById('editBio');
+    if(bioEl) bioEl.addEventListener('input',function(){document.getElementById('bioCount').textContent=this.value.length});
+  },50);
+}
+function closeEditProfileModal(){
+  const m = document.getElementById('editProfileModal');
+  if(m){m.classList.remove('active');setTimeout(()=>m.remove(),200)}
+}
+function saveProfile(){
+  const name = document.getElementById('editName').value.trim();
+  const bio = document.getElementById('editBio').value.trim();
+  const location = document.getElementById('editLocation').value.trim();
+  if(!name) return;
+  state.user.name = name;
+  state.user.bio = bio;
+  state.user.location = location;
+  LS.save();
+  closeEditProfileModal();
+  renderProfile();
+}
+
+// ===== SEND IMAGE MESSAGE =====
+function sendImageMsg(){
+  const now = new Date();
+  const timeStr = now.getHours().toString().padStart(2,'0')+':'+now.getMinutes().toString().padStart(2,'0');
+  if(!activeChat) return;
+  const colors = ['linear-gradient(135deg,#667eea,#764ba2)','linear-gradient(135deg,#f093fb,#f5576c)','linear-gradient(135deg,#4facfe,#00f2fe)','linear-gradient(135deg,#43e97b,#38f9d7)','linear-gradient(135deg,#fa709a,#fee140)','linear-gradient(135deg,#a18cd1,#fbc2eb)'];
+  const bg = colors[Math.floor(Math.random()*colors.length)];
+  activeChat.messages.push({sent:true,text:'📷 图片消息',time:timeStr,seen:true,isImage:true,imageBg:bg});
+  const cb = document.getElementById('chatBody');
+  if(cb){
+    const wrapper=document.createElement('div');
+    wrapper.style.cssText='display:flex;flex-direction:column;align-items:flex-end;margin-bottom:12px';
+    wrapper.innerHTML = `
+      <div style="width:200px;height:150px;border-radius:16px;${bg};display:flex;align-items:center;justify-content:center;font-size:48px;overflow:hidden">
+        <div style="text-align:center">🖼️</div>
+      </div>
+      <div class="chat-time seen" style="margin-top:4px">${timeStr} · 已读</div>
+    `;
+    cb.appendChild(wrapper);
+    cb.scrollTop=cb.scrollHeight;
+  }
+}
+
+// ===== SCHEDULE MODAL =====
+function openScheduleModal(){
+  const now = new Date();
+  const tomorrow = new Date(now);
+  tomorrow.setDate(tomorrow.getDate()+1);
+  const dateStr = tomorrow.toISOString().split('T')[0];
+  const overlay = document.createElement('div');
+  overlay.className='modal-overlay';
+  overlay.id='scheduleModal';
+  overlay.innerHTML = `
+    <div class="modal" style="max-width:400px">
+      <div class="modal-header">
+        <button class="modal-close" onclick="closeScheduleModal()">
+          <svg viewBox="0 0 24 24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+        <div style="font-size:17px;font-weight:800">安排发布</div>
+        <button class="modal-btn primary" onclick="confirmSchedule()" style="border-radius:9999px;padding:8px 20px;font-size:14px">确认</button>
+      </div>
+      <div class="modal-body" style="padding:20px">
+        <div style="color:var(--text2);font-size:14px;margin-bottom:20px">选择帖子发布的日期和时间</div>
+        <div style="margin-bottom:16px">
+          <label style="display:block;font-size:13px;color:var(--text2);margin-bottom:6px">日期</label>
+          <input type="date" id="schedDate" value="${dateStr}" min="${now.toISOString().split('T')[0]}" style="width:100%;padding:12px;border:1px solid var(--border);border-radius:8px;background:var(--bg);color:var(--text);font-size:15px">
+        </div>
+        <div style="margin-bottom:16px">
+          <label style="display:block;font-size:13px;color:var(--text2);margin-bottom:6px">时间</label>
+          <input type="time" id="schedTime" value="09:00" style="width:100%;padding:12px;border:1px solid var(--border);border-radius:8px;background:var(--bg);color:var(--text);font-size:15px">
+        </div>
+        <div style="padding:12px;background:var(--bg2);border-radius:8px;font-size:13px;color:var(--text2)">
+          💡 安排好的帖子会在指定时间自动发出。你可以在「已安排」页面查看和修改。
+        </div>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(overlay);
+  setTimeout(()=>overlay.classList.add('active'),10);
+}
+function closeScheduleModal(){
+  const m = document.getElementById('scheduleModal');
+  if(m){m.classList.remove('active');setTimeout(()=>m.remove(),200)}
+}
+function confirmSchedule(){
+  const dateEl = document.getElementById('schedDate');
+  const timeEl = document.getElementById('schedTime');
+  if(!dateEl||!timeEl)return;
+  const dateVal = dateEl.value;
+  const timeVal = timeEl.value;
+  if(!dateVal){return;}
+  const scheduledAt = `${dateVal} ${timeVal||'09:00'}`;
+  closeScheduleModal();
+  // Show a toast notification instead of alert
+  showToast(`已安排于 ${scheduledAt} 发布`);
+}
+
+// ===== LOCATION MODAL =====
+const LOCATIONS_DATA = [
+  {name:'北京',emoji:'🏙️'},
+  {name:'上海',emoji:'🌆'},
+  {name:'广州',emoji:'🌇'},
+  {name:'深圳',emoji:'🌃'},
+  {name:'武汉',emoji:'🌉'},
+  {name:'杭州',emoji:'🏞️'},
+  {name:'成都',emoji:'🎋'},
+  {name:'重庆',emoji:'⛰️'},
+  {name:'西安',emoji:'🏛️'},
+  {name:'南京',emoji:'🌸'}
+];
+function openLocationModal(){
+  const overlay = document.createElement('div');
+  overlay.className='modal-overlay';
+  overlay.id='locationModal';
+  overlay.innerHTML = `
+    <div class="modal" style="max-width:400px;max-height:80vh">
+      <div class="modal-header">
+        <button class="modal-close" onclick="closeLocationModal()">
+          <svg viewBox="0 0 24 24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+        <div style="font-size:17px;font-weight:800">添加位置</div>
+        <button class="modal-btn" onclick="selectLocation(null)" style="border-radius:9999px;padding:8px 16px;font-size:13px;color:var(--accent);font-weight:700">删除</button>
+      </div>
+      <div class="modal-body">
+        <div class="search-bar" style="padding:12px 16px">
+          <div class="sbw">
+            <svg viewBox="0 0 24 24" fill="var(--text2)"><path d="M10.25 3.75c-3.59 0-6.5 2.91-6.5 6.5s2.91 6.5 6.5 6.5c1.795 0 3.419-.726 4.596-1.904 1.178-1.177 1.904-2.801 1.904-4.596 0-3.59-2.91-6.5-6.5-6.5z"/></svg>
+            <input class="sin" id="locationSearch" placeholder="搜索位置" oninput="filterLocations(this.value)" style="flex:1">
+          </div>
+        </div>
+        <div id="locationList">
+          ${LOCATIONS_DATA.map(l=>`
+            <div class="fi" style="padding:14px 16px;cursor:pointer" onclick="selectLocation('${l.name}')">
+              <div style="font-size:20px;margin-right:12px">${l.emoji}</div>
+              <div style="font-size:15px">${l.name}</div>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(overlay);
+  setTimeout(()=>{overlay.classList.add('active');document.getElementById('locationSearch').focus()},10);
+}
+function closeLocationModal(){
+  const m = document.getElementById('locationModal');
+  if(m){m.classList.remove('active');setTimeout(()=>m.remove(),200)}
+}
+function filterLocations(q){
+  const list = document.getElementById('locationList');
+  if(!list)return;
+  const filtered = q.trim()?LOCATIONS_DATA.filter(l=>l.name.includes(q)):LOCATIONS_DATA;
+  list.innerHTML = filtered.length>0?filtered.map(l=>`
+    <div class="fi" style="padding:14px 16px;cursor:pointer" onclick="selectLocation('${l.name}')">
+      <div style="font-size:20px;margin-right:12px">${l.emoji}</div>
+      <div style="font-size:15px">${l.name}</div>
+    </div>
+  `).join(''):'<div style="text-align:center;padding:24px;color:var(--text2)">没有找到相关位置</div>';
+}
+function selectLocation(loc){
+  closeLocationModal();
+  const ta = document.getElementById('postTextarea')||document.querySelector('.compose-box textarea');
+  if(loc){
+    // 在工具栏下方显示位置标签
+    let locationTag = document.getElementById('selectedLocationTag');
+    if(!locationTag&&ta){
+      locationTag = document.createElement('div');
+      locationTag.id = 'selectedLocationTag';
+      locationTag.style.cssText = 'display:inline-flex;align-items:center;gap:4px;background:rgba(29,155,240,.15);color:var(--accent);border-radius:9999px;padding:4px 10px;font-size:13px;margin-bottom:8px;cursor:pointer';
+      locationTag.onclick = ()=>selectLocation(null);
+      ta.parentElement.insertBefore(locationTag,ta.nextSibling);
+    }
+    if(locationTag){
+      locationTag.innerHTML = `<svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5S10.62 6.5 12 6.5s2.5 1.12 2.5 2.5S13.38 11.5 12 11.5z"/></svg> ${loc} ×`;
+    }
+    showToast(`已添加位置：${loc}`);
+  } else {
+    const tag = document.getElementById('selectedLocationTag');
+    if(tag)tag.remove();
+  }
+}
+
+// ===== SPACE INTERACTIONS =====
+function joinSpace(btn){
+  if(btn.textContent==='加入收听'){
+    btn.textContent='正在收听 🎧';
+    btn.style.background='transparent';
+    btn.style.border='1px solid var(--border)';
+    btn.style.color='var(--text)';
+    showToast('已加入空间，正在收听');
+  } else {
+    btn.textContent='加入收听';
+    btn.style.cssText='';
+    showToast('已离开空间');
+  }
+}
+function scheduleSpaceReminder(btn,id){
+  const s = SPACES_DATA.find(x=>x.id===id);
+  if(!s)return;
+  if(btn.textContent==='预约'){
+    btn.textContent='已预约 ✓';
+    btn.style.background='transparent';
+    btn.style.border='1px solid var(--border)';
+    btn.style.color='var(--text)';
+    showToast(`已预约「${s.title}」的提醒`);
+  } else {
+    btn.textContent='预约';
+    btn.style.cssText='';
+    showToast('已取消预约');
+  }
+}
+
+// ===== CREATE AD =====
+function createNewAd(btn){
+  const body = btn.closest('[style]');
+  const inputs = btn.closest('div').querySelectorAll('input');
+  const name = inputs[0]?.value?.trim()||'新广告活动';
+  const budget = inputs[1]?.value?.trim()||'¥100';
+  const maxId = ADS_DATA.length>0?Math.max(...ADS_DATA.map(a=>a.id))+1:1;
+  ADS_DATA.push({id:maxId,name,budget,status:'active',impressions:0,clicks:0,spend:'¥0'});
+  closeMoreMenu();
+  renderAds();
+  showToast('广告创建成功！');
+}
+
+// ===== TOAST NOTIFICATION =====
+function showToast(msg,duration=3000){
+  let toast = document.getElementById('globalToast');
+  if(!toast){
+    toast = document.createElement('div');
+    toast.id = 'globalToast';
+    toast.style.cssText = 'position:fixed;bottom:80px;left:50%;transform:translateX(-50%) translateY(20px);background:#1d9bf0;color:#fff;padding:12px 24px;border-radius:9999px;font-size:14px;font-weight:600;z-index:9999;opacity:0;transition:all .3s;pointer-events:none;white-space:nowrap;max-width:90vw;text-align:center';
+    document.body.appendChild(toast);
+  }
+  toast.textContent = msg;
+  toast.style.opacity='1';
+  toast.style.transform='translateX(-50%) translateY(0)';
+  clearTimeout(toast._timer);
+  toast._timer = setTimeout(()=>{
+    toast.style.opacity='0';
+    toast.style.transform='translateX(-50%) translateY(20px)';
+  },duration);
+}
+
+// ===== NOTIFICATION SETTINGS SHORTCUT =====
+function openNotifSettings(){
+  closeMoreMenu();
+  navigate('settings');
+  // 滚动到通知设置区
+  setTimeout(()=>{
+    const el = document.getElementById('notifSettingsSection');
+    if(el) el.scrollIntoView({behavior:'smooth'});
+  },200);
+}
+
+// ===== AVATAR / COVER CHANGE =====
+const AVATAR_GRADIENTS = [
+  'linear-gradient(135deg,#667eea,#764ba2)',
+  'linear-gradient(135deg,#f093fb,#f5576c)',
+  'linear-gradient(135deg,#4facfe,#00f2fe)',
+  'linear-gradient(135deg,#43e97b,#38f9d7)',
+  'linear-gradient(135deg,#fa709a,#fee140)',
+  'linear-gradient(135deg,#a18cd1,#fbc2eb)',
+  'linear-gradient(135deg,#ffecd2,#fcb69f)',
+  'linear-gradient(135deg,#a1c4fd,#c2e9fb)'
+];
+const COVER_GRADIENTS = [
+  'linear-gradient(135deg,#1a1a2e,#16213e)',
+  'linear-gradient(135deg,#0f2027,#203a43,#2c5364)',
+  'linear-gradient(135deg,#200122,#6f0000)',
+  'linear-gradient(135deg,#093028,#237a57)',
+  'linear-gradient(135deg,#141e30,#243b55)',
+  'linear-gradient(135deg,#2c3e50,#4ca1af)',
+  'linear-gradient(135deg,#1f1c2c,#928dab)',
+  'linear-gradient(135deg,#0f0c29,#302b63,#24243e)'
+];
+function changeProfileAvatar(el){
+  const cur = AVATAR_GRADIENTS.indexOf(el.style.background.replace(/;.*/,'').trim())||0;
+  const next = (cur+1)%AVATAR_GRADIENTS.length;
+  el.style.background = AVATAR_GRADIENTS[next];
+  showToast('头像颜色已更换');
+}
+function changeProfileCover(el){
+  const cur = COVER_GRADIENTS.findIndex(g=>el.style.background===g);
+  const next = (cur+1)%COVER_GRADIENTS.length;
+  el.style.background = COVER_GRADIENTS[next];
+  showToast('封面已更换，点击保存生效');
+}
+
+// ===== CREATE SPACE =====
+function createSpace(btn){
+  const container = btn.closest('div');
+  const inputs = container.querySelectorAll('input');
+  const title = inputs[0]?.value?.trim()||'我的直播空间';
+  const maxId = SPACES_DATA.length>0?Math.max(...SPACES_DATA.map(s=>s.id))+1:1;
+  SPACES_DATA.unshift({id:maxId,title,host:state.user.name,listeners:0,live:true,duration:'00:00',speakers:[state.user.name]});
+  closeMoreMenu();
+  showToast(`「${title}」已开始直播！`);
+  navigate('spaces');
+}
+
+// ===== 消息列表辅助函数 =====
+function renderMsgListItems(list){
+  if(!list || list.length === 0){
+    return '<div class="empty-state" style="padding:40px"><h3>暂无新消息</h3><p>向感兴趣的人发送私信消息吧</p></div>';
+  }
+  return list.map(m=>`
+    <div class="msg-item" id="msg-${m.id}" onclick="openChat(${m.id})">
+      <div class="msg-av ${m.online?'online':''}" style="background:${m.avatarBg}">${m.avatar}</div>
+      <div class="msg-info">
+        <div class="msg-name">${m.name} <span class="msg-time">${m.time}</span></div>
+        <div class="msg-preview">${m.unread?'<span style="color:var(--text);font-weight:700">'+m.preview+'</span>':m.preview}</div>
+      </div>
+      ${m.unread>0?'<div class="msg-unread"></div>':''}
+    </div>
+  `).join('');
+}
+function filterMsgList(q){
+  const area = document.getElementById('msgListItems');
+  if(!area) return;
+  const filtered = q.trim() ? DB.messages.filter(m=>m.name.includes(q)||m.handle.includes(q)||(m.preview&&m.preview.includes(q))) : DB.messages;
+  area.innerHTML = renderMsgListItems(filtered);
+}
+
+// ===== 退出登录 =====
+function handleLogout(){
+  // 自定义确认弹层
+  const existing = document.getElementById('logoutConfirm');
+  if(existing){existing.remove();return;}
+  const div = document.createElement('div');
+  div.id = 'logoutConfirm';
+  div.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:var(--bg2);border:1px solid var(--border);color:var(--text);padding:32px 28px;border-radius:16px;z-index:9999;text-align:center;box-shadow:0 8px 32px rgba(0,0,0,.5);min-width:300px';
+  div.innerHTML = `
+    <div style="font-size:20px;font-weight:800;margin-bottom:8px">退出「言」?</div>
+    <div style="font-size:15px;color:var(--text2);margin-bottom:24px">你可以随时重新登录</div>
+    <div style="display:flex;flex-direction:column;gap:12px">
+      <button onclick="confirmLogout()" style="padding:12px;border-radius:9999px;border:none;background:#f4212e;color:#fff;cursor:pointer;font-size:15px;font-weight:700;width:100%">退出登录</button>
+      <button onclick="document.getElementById('logoutConfirm').remove()" style="padding:12px;border-radius:9999px;border:1px solid var(--border);background:transparent;color:var(--text);cursor:pointer;font-size:15px;font-weight:700;width:100%">取消</button>
+    </div>`;
+  document.body.appendChild(div);
+}
+function confirmLogout(){
+  state.currentUser = null;
+  localStorage.removeItem('yan_current_user');
+  const lg = document.getElementById('logoutConfirm');
+  if(lg) lg.remove();
+  // 重新渲染侧边栏
+  renderGuestSidebar();
+  document.getElementById('sidebarRight').style.display='none';
+  navigate('home');
+  showToast('已退出登录');
+}
+
+// ===== 探索页搜索联动 =====
+let _exploreSearchTimer = null;
+function handleExploreLiveSearch(q){
+  clearTimeout(_exploreSearchTimer);
+  if(!q.trim()){return;}
+  _exploreSearchTimer = setTimeout(()=>{
+    navigate('search', q.trim());
+  }, 500);
+}
+
+// ===== FAQ 展开/收起 =====
+function toggleFaq(el){
+  const answer = el.querySelector('.faq-answer');
+  const arrow = el.querySelector('.faq-arrow');
+  const isOpen = answer.style.maxHeight !== '0px' && answer.style.maxHeight !== '';
+  if(isOpen){
+    answer.style.maxHeight = '0';
+    answer.style.marginTop = '0';
+    arrow.style.transform = 'rotate(0deg)';
+  } else {
+    answer.style.maxHeight = answer.scrollHeight + 'px';
+    answer.style.marginTop = '12px';
+    arrow.style.transform = 'rotate(180deg)';
+  }
+}
+
+// ===== 媒体图片选择与预览 =====
+if(!state.composeMedia) state.composeMedia = [];
+function handleMediaPick(e){
+  const files = Array.from(e.target.files);
+  if(files.length === 0) return;
+  if(state.composeMedia.length + files.length > 4){
+    showToast('最多只能添加 4 张图片');
+    e.target.value = '';
+    return;
+  }
+  let loaded = 0;
+  files.forEach(file => {
+    const reader = new FileReader();
+    reader.onload = function(ev){
+      state.composeMedia.push({url: ev.target.result, name: file.name});
+      loaded++;
+      if(loaded === files.length){
+        renderComposeMedia();
+        e.target.value = '';
+      }
+    };
+    reader.readAsDataURL(file);
+  });
+}
+function renderComposeMedia(){
+  const homePreview = document.getElementById('homeMediaPreview');
+  const modalPreview = document.getElementById('modalMediaPreview');
+  const media = state.composeMedia;
+  const html = media.length > 0 ? `
+    <div style="display:grid;grid-template-columns:repeat(${Math.min(media.length,3)},1fr);gap:4px;border-radius:12px;overflow:hidden">
+      ${media.map((m,i)=>`
+        <div style="position:relative;aspect-ratio:1;overflow:hidden;border-radius:8px">
+          <img src="${m.url}" style="width:100%;height:100%;object-fit:cover" alt="preview">
+          <button onclick="removeComposeMedia(${i})" style="position:absolute;top:4px;right:4px;width:24px;height:24px;border-radius:50%;background:rgba(0,0,0,.7);border:none;color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:14px;line-height:1">×</button>
+        </div>
+      `).join('')}
+    </div>
+  ` : '';
+  [homePreview, modalPreview].forEach(el => {
+    if(el){
+      el.innerHTML = html;
+      el.style.display = media.length > 0 ? 'block' : 'none';
+    }
+  });
+}
+function removeComposeMedia(idx){
+  state.composeMedia.splice(idx, 1);
+  renderComposeMedia();
+}
+function clearComposeMedia(){
+  state.composeMedia = [];
+  renderComposeMedia();
+}
+
+// ===== @提及自动补全 =====
+const MENTION_USERS = [
+  {name:'林小雨',handle:'linxiaoyu',avatar:'林',avatarBg:'linear-gradient(135deg,#667eea,#764ba2)',verified:true},
+  {name:'科技日报',handle:'techdaily',avatar:'科',avatarBg:'linear-gradient(135deg,#f093fb,#f5576c)',verified:true},
+  {name:'张伟',handle:'zhangwei',avatar:'张',avatarBg:'linear-gradient(135deg,#4facfe,#00f2fe)',verified:false},
+  {name:'李娜',handle:'lina_tech',avatar:'李',avatarBg:'linear-gradient(135deg,#43e97b,#38f9d7)',verified:false},
+  {name:'前端开发者社区',handle:'fe_community',avatar:'前',avatarBg:'linear-gradient(135deg,#fa709a,#fee140)',verified:true},
+  {name:'陈明',handle:'chenming_ai',avatar:'陈',avatarBg:'linear-gradient(135deg,#43e97b,#38f9d7)',verified:true},
+  {name:'产品猎人',handle:'producthunt_cn',avatar:'产',avatarBg:'linear-gradient(135deg,#f093fb,#f5576c)',verified:false},
+  {name:'阿里云',handle:'aliyun',avatar:'阿',avatarBg:'linear-gradient(135deg,#f6d365,#fda085)',verified:true},
+  {name:'GitHub',handle:'github',avatar:'G',avatarBg:'linear-gradient(135deg,#333,#555)',verified:true},
+  {name:'Vue.js',handle:'vuejs',avatar:'V',avatarBg:'linear-gradient(135deg,#42b883,#35495e)',verified:true},
+  {name:'王珊珊',handle:'wangshanshan',avatar:'王',avatarBg:'linear-gradient(135deg,#fa709a,#fee140)',verified:false},
+  {name:'刘宇航',handle:'liuyuhang',avatar:'刘',avatarBg:'linear-gradient(135deg,#a18cd1,#fbc2eb)',verified:false},
+  {name:'赵晓梅',handle:'zhaoxiaomei',avatar:'赵',avatarBg:'linear-gradient(135deg,#ffecd2,#fcb69f)',verified:false},
+  {name:'周杰',handle:'zhoujie',avatar:'周',avatarBg:'linear-gradient(135deg,#a1c4fd,#c2e9fb)',verified:false},
+  {name:'林小雨工作室',handle:'linxiaoyu_studio',avatar:'林',avatarBg:'linear-gradient(135deg,#667eea,#764ba2)',verified:false},
+  {name:'言支持',handle:'yan_support',avatar:'言',avatarBg:'linear-gradient(135deg,#1d9bf0,#1a8cd8)',verified:true}
+];
+let mentionQuery = '';
+let mentionActiveIdx = -1;
+function handleMentionInput(el){
+  const val = el.value;
+  const pos = el.selectionStart;
+  const textBefore = val.slice(0, pos);
+  const atMatch = textBefore.match(/@([\w\u4e00-\u9fa5]*)$/);
+  const existing = document.getElementById('mentionDropdown');
+  if(!atMatch){
+    if(existing) existing.remove();
+    mentionQuery = '';
+    mentionActiveIdx = -1;
+    return;
+  }
+  mentionQuery = atMatch[1].toLowerCase();
+  const filtered = MENTION_USERS.filter(u =>
+    u.handle.toLowerCase().includes(mentionQuery) ||
+    u.name.toLowerCase().includes(mentionQuery)
+  ).slice(0, 6);
+  if(filtered.length === 0){
+    if(existing) existing.remove();
+    mentionActiveIdx = -1;
+    return;
+  }
+  // 计算位置
+  const rect = el.getBoundingClientRect();
+  let dropdown = existing;
+  if(!dropdown){
+    dropdown = document.createElement('div');
+    dropdown.id = 'mentionDropdown';
+    dropdown.style.cssText = 'position:fixed;background:var(--bg3);border:1px solid var(--border);border-radius:12px;overflow:hidden;z-index:9999;min-width:240px;box-shadow:0 8px 32px rgba(0,0,0,.5);max-height:280px;overflow-y:auto';
+    document.body.appendChild(dropdown);
+  }
+  dropdown.style.top = (rect.top - dropdown.offsetHeight - 8) + 'px';
+  dropdown.style.left = rect.left + 'px';
+  mentionActiveIdx = -1;
+  dropdown.innerHTML = filtered.map((u,i)=>`
+    <div class="mention-item" data-idx="${i}" onclick="insertMention('${u.handle}',document.activeElement)" style="display:flex;align-items:center;gap:10px;padding:10px 14px;cursor:pointer;transition:background .15s;font-size:14px" onmouseenter="this.style.background='var(--bg2)';mentionActiveIdx=${i}" onmouseleave="this.style.background='';mentionActiveIdx=-1">
+      <div style="width:36px;height:36px;border-radius:50%;background:${u.avatarBg};display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;flex-shrink:0;color:#fff">${u.avatar}</div>
+      <div style="flex:1;min-width:0">
+        <div style="font-weight:700">${u.name}${u.verified?'<span class="vb" style="display:inline-flex;transform:scale(.75);vertical-align:middle;margin-left:2px"><svg viewBox="0 0 24 24" width="18" height="18"><path fill="var(--accent)" d="M20.396 11c-.018-.646-.215-1.275-.57-1.816-.354-.54-.852-.972-1.438-1.246.223-.607.27-1.264.14-1.897-.131-.634-.437-1.218-.882-1.687-.47-.445-1.053-.75-1.687-.882-.633-.13-1.29-.083-1.897.14-.273-.587-.704-1.086-1.245-1.44S11.647 1.62 11 1.604c-.646.017-1.273.213-1.813.568s-.969.854-1.24 1.441c-.608-.223-1.267-.272-1.902-.14-.635.13-1.22.436-1.69.882-.445.47-.749 1.055-.878 1.688-.13.633-.08 1.29.144 1.896-.587.274-1.087.705-1.443 1.245-.356.54-.555 1.17-.574 1.817.02.647.218 1.276.574 1.817.356.54.856.972 1.443 1.245-.224.606-.274 1.263-.144 1.896.13.634.433 1.218.877 1.688.47.443 1.054.747 1.687.878.633.132 1.29.084 1.897-.136.274.586.705 1.084 1.246 1.439.54.354 1.17.551 1.816.569.647-.016 1.276-.213 1.817-.567s.972-.854 1.245-1.44c.604.239 1.266.296 1.903.164.636-.132 1.22-.447 1.68-.907.46-.46.776-1.044.908-1.681s.075-1.299-.165-1.903c.586-.274 1.084-.705 1.439-1.246.354-.54.551-1.17.569-1.816z"/></svg></span>':''}</div>
+        <div style="color:var(--text2);font-size:13px">@${u.handle}</div>
+      </div>
+    </div>
+  `).join('');
+  // Reposition after content is set
+  setTimeout(()=>{
+    const h = Math.min(dropdown.scrollHeight, 280);
+    dropdown.style.top = Math.max(10, rect.top - h - 8) + 'px';
+  }, 10);
+}
+function insertMention(handle, el){
+  const dropdown = document.getElementById('mentionDropdown');
+  if(dropdown) dropdown.remove();
+  if(!el) return;
+  const val = el.value;
+  const pos = el.selectionStart;
+  const atIdx = val.lastIndexOf('@', pos);
+  if(atIdx === -1) return;
+  el.value = val.slice(0, atIdx) + '@' + handle + ' ' + val.slice(pos);
+  // 移动光标到插入位置之后
+  const newPos = atIdx + handle.length + 2;
+  el.setSelectionRange(newPos, newPos);
+  el.focus();
+  mentionQuery = '';
+  mentionActiveIdx = -1;
+  // 触发 input 事件以便更新字数等
+  el.dispatchEvent(new Event('input', {bubbles: true}));
+}
+function handleMentionKeydown(el, e){
+  const dropdown = document.getElementById('mentionDropdown');
+  if(!dropdown) return;
+  const items = dropdown.querySelectorAll('.mention-item');
+  if(e.key === 'ArrowDown'){
+    e.preventDefault();
+    mentionActiveIdx = Math.min(mentionActiveIdx + 1, items.length - 1);
+    highlightMentionItem(items);
+  } else if(e.key === 'ArrowUp'){
+    e.preventDefault();
+    mentionActiveIdx = Math.max(mentionActiveIdx - 1, 0);
+    highlightMentionItem(items);
+  } else if(e.key === 'Enter' || e.key === 'Tab'){
+    if(mentionActiveIdx >= 0 && items[mentionActiveIdx]){
+      e.preventDefault();
+      items[mentionActiveIdx].click();
+    }
+  } else if(e.key === 'Escape'){
+    dropdown.remove();
+    mentionQuery = '';
+    mentionActiveIdx = -1;
+  }
+}
+function highlightMentionItem(items){
+  items.forEach((item,i)=>{
+    if(i === mentionActiveIdx){
+      item.style.background = 'var(--bg2)';
+    } else {
+      item.style.background = '';
+    }
+  });
+}
+// 点击空白关闭 mention dropdown
+document.addEventListener('click', function(e){
+  if(!e.target.closest('#mentionDropdown') && !e.target.closest('textarea')){
+    const dropdown = document.getElementById('mentionDropdown');
+    if(dropdown){ dropdown.remove(); mentionQuery = ''; mentionActiveIdx = -1; }
+  }
+});
+
+// ===== 侧边栏徽章更新 =====
+function updateSidebarBadges(){
+  // 通知徽章
+  const notifBadge = document.getElementById('notif-badge');
+  if(notifBadge){
+    const unreadCount = (DB.notifications||[]).filter(n=>!n.read).length;
+    if(unreadCount > 0){
+      notifBadge.querySelector('.b').textContent = unreadCount > 99 ? '99+' : unreadCount;
+      notifBadge.style.display = 'flex';
+    } else {
+      notifBadge.style.display = 'none';
+    }
+  }
+  // 消息徽章
+  const msgBadge = document.getElementById('msg-badge');
+  if(msgBadge){
+    const unreadMsg = (DB.messages||[]).reduce((s,m)=>s+(m.unread||0), 0);
+    if(unreadMsg > 0){
+      msgBadge.querySelector('.b').textContent = unreadMsg > 99 ? '99+' : unreadMsg;
+      msgBadge.style.display = 'flex';
+    } else {
+      msgBadge.style.display = 'none';
+    }
+  }
+}
+// 在每次路由切换后更新徽章（hook navigate）
+const _origNav = window.navigate;
+window.navigate = function(page, param){
+  _origNav.call(this, page, param);
+  setTimeout(updateSidebarBadges, 80);
+};
+// 初始加载时也更新一次
+setTimeout(updateSidebarBadges, 300);

@@ -2,16 +2,16 @@
 const DB = {
 
   tweets: [
-    {id:1,name:"林小雨",handle:"@linxiaoyu",verified:true,time:"2小时",text:"今天用 AI 写了一段代码，效率提升了三倍。以前需要半天的工作，现在一小时搞定。技术真的在改变我们的工作方式 🚀",avatar:"林",avatarBg:"linear-gradient(135deg,#667eea,#764ba2)",likes:1024,retweets:238,replies:56,views:"8.3万",liked:true,retweeted:false,bookmarked:false},
+    {id:1,name:"林小雨",handle:"@linxiaoyu",verified:true,time:"2小时",text:"今天用 AI 写了一段代码，效率提升了三倍。以前需要半天的工作，现在一小时搞定。技术真的在改变我们的工作方式 🚀",avatar:"林",avatarBg:"linear-gradient(135deg,#667eea,#764ba2)",likes:1024,retweets:238,replies:56,views:"8.3万",liked:true,retweeted:false,bookmarked:false,listTags:[1,2]},
     {id:2,name:"科技日报",handle:"@techdaily",verified:true,time:"4小时",text:"【重磅】国内首款自研芯片正式量产，性能超越国际同类产品20%。这标志着我国在半导体领域取得重大突破，打破了长期以来的技术封锁。",avatar:"科",avatarBg:"linear-gradient(135deg,#f093fb,#f5576c)",likes:5820,retweets:2341,replies:428,views:"42万",liked:false,retweeted:false,bookmarked:false},
-    {id:3,name:"创业老王",handle:"@chuangyelaowang",verified:false,time:"6小时",text:"创业第三年的感悟：\n\n1. 找到真正的痛点比找资金更重要\n2. 团队比产品更关键\n3. 现金流是命脉\n4. 不要追风口，要做有价值的事\n5. 失败是最好的老师\n\n共勉 💪",avatar:"王",avatarBg:"linear-gradient(135deg,#4facfe,#00f2fe)",likes:892,retweets:445,replies:103,views:"6.1万",liked:false,retweeted:false,bookmarked:false},
+    {id:3,name:"创业老王",handle:"@chuangyelaowang",verified:false,time:"6小时",text:"创业第三年的感悟：\n\n1. 找到真正的痛点比找资金更重要\n2. 团队比产品更关键\n3. 现金流是命脉\n4. 不要追风口，要做有价值的事\n5. 失败是最好的老师\n\n共勉 💪",avatar:"王",avatarBg:"linear-gradient(135deg,#4facfe,#00f2fe)",likes:892,retweets:445,replies:103,views:"6.1万",liked:false,retweeted:false,bookmarked:false,listTags:[3]},
     {id:4,name:"摄影师阿明",handle:"@photographer_aming",verified:false,time:"8小时",text:"早晨六点的城市，属于少数清醒的人。",avatar:"阿",avatarBg:"linear-gradient(135deg,#43e97b,#38f9d7)",likes:3201,retweets:189,replies:67,views:"15万",liked:false,retweeted:false,bookmarked:false,media:[
       {bg:"linear-gradient(135deg,#0f2027,#203a43,#2c5364)",icon:"🏙️"},
       {bg:"linear-gradient(135deg,#e65c00,#f9d423)",icon:"🌅"},
       {bg:"linear-gradient(135deg,#232526,#414345)",icon:"🌆"},
       {bg:"linear-gradient(135deg,#1a2a6c,#b21f1f,#fdbb2d)",icon:"🌄"}
     ]},
-    {id:5,name:"前端开发者社区",handle:"@fe_community",verified:true,time:"10小时",text:"Vue 4.0 正式发布！主要更新：\n• 全新编译器，性能提升 50%\n• 更好的 TypeScript 支持\n• 全新的响应式系统\n• 更小的包体积\n\n大家都用上了吗？评论区分享体验！",avatar:"前",avatarBg:"linear-gradient(135deg,#fa709a,#fee140)",likes:4567,retweets:1823,replies:312,views:"28.9万",liked:false,retweeted:false,bookmarked:false,poll:{tweetId:5,endsIn:"还剩18小时",options:[{label:"已经用上了，体验很好",votes:4521},{label:"准备升级，观望中",votes:2341},{label:"还在用 Vue 3，暂时不升级",votes:1678},{label:"不用 Vue，路过看看",votes:892}]},media:[
+    {id:5,name:"前端开发者社区",handle:"@fe_community",verified:true,time:"10小时",text:"Vue 4.0 正式发布！主要更新：\n• 全新编译器，性能提升 50%\n• 更好的 TypeScript 支持\n• 全新的响应式系统\n• 更小的包体积\n\n大家都用上了吗？评论区分享体验！",avatar:"前",avatarBg:"linear-gradient(135deg,#fa709a,#fee140)",likes:4567,retweets:1823,replies:312,views:"28.9万",liked:false,retweeted:false,bookmarked:false,listTags:[1],poll:{tweetId:5,endsIn:"还剩18小时",options:[{label:"已经用上了，体验很好",votes:4521},{label:"准备升级，观望中",votes:2341},{label:"还在用 Vue 3，暂时不升级",votes:1678},{label:"不用 Vue，路过看看",votes:892}]},media:[
       {bg:"linear-gradient(135deg,#42b883,#35495e)",icon:"💚"},
       {bg:"linear-gradient(135deg,#42b883,#64d8a0)",icon:"🚀"}
     ]},
@@ -35,7 +35,7 @@ const DB = {
     {id:21,name:"历史老师王",handle:"@history_teacher",verified:true,time:"3天前",text:"唐朝为什么能成为历史上最开放的朝代？因为李家人有胡人血统，文化包容性强。这说明什么？开放带来繁荣。",avatar:"历",avatarBg:"linear-gradient(135deg,#4facfe,#00f2fe)",likes:1234,retweets:345,replies:123,views:"8.9万",liked:false,retweeted:false,bookmarked:false},
     {id:22,name:"时尚博主",handle:"@fashion_blog",verified:false,time:"4天前",text:"2026年流行色预测：#年度代表色「PANTONE 15-1335」Terra Rose 陶土玫瑰，温暖又高级！这件单品你入手了吗？",avatar:"时",avatarBg:"linear-gradient(135deg,#fa709a,#fee140)",likes:3456,retweets:890,replies:234,views:"21.7万",liked:false,retweeted:false,bookmarked:false},
     {id:23,name:"户外运动",handle:"@outdoor_sports",verified:false,time:"4天前",text:"徒步穿越可可西里，终于看到了藏羚羊！这是世界上最艰苦的徒步路线之一，但也是最震撼的。高原反应真的要命，但值了。",avatar:"户",avatarBg:"linear-gradient(135deg,#43e97b,#38f9d7)",likes:4567,retweets:1234,replies:345,views:"34.5万",liked:false,retweeted:false,bookmarked:false},
-    {id:24,name:"科技评论员",handle:"@tech_critic",verified:true,time:"5天前",text:"OpenAI 发布 GPT-5，性能提升10倍。这次直接能写小说、做设计、编音乐了。留给人类的时间不多了？",avatar:"评",avatarBg:"linear-gradient(135deg,#667eea,#764ba2)",likes:8901,retweets:4567,replies:1234,views:"78.9万",liked:false,retweeted:false,bookmarked:false},
+    {id:24,name:"科技评论员",handle:"@tech_critic",verified:true,time:"5天前",text:"OpenAI 发布 GPT-5，性能提升10倍。这次直接能写小说、做设计、编音乐了。留给人类的时间不多了？",avatar:"评",avatarBg:"linear-gradient(135deg,#667eea,#764ba2)",likes:8901,retweets:4567,replies:1234,views:"78.9万",liked:false,retweeted:false,bookmarked:false,listTags:[2]},
     {id:25,name:"教育工作者",handle:"@edu_worker",verified:false,time:"5天前",text:"教育的本质是点燃火焰，不是灌满容器。现在AI时代，死记硬背已经没用了，培养创造力和批判性思维才是关键。",avatar:"教",avatarBg:"linear-gradient(135deg,#a18cd1,#fbc2eb)",likes:1678,retweets:456,replies:178,views:"11.2万",liked:false,retweeted:false,bookmarked:false},
     {id:26,name:"养生专家",handle:"@health_expert",verified:false,time:"6天前",text:"早起第一杯水要喝温的，不要喝凉的。晚上11点前必须睡觉，这是养肝的黄金时间。健康是最大的财富。",avatar:"养",avatarBg:"linear-gradient(135deg,#ff9a9e,#fecfef)",likes:2345,retweets:567,replies:234,views:"15.8万",liked:false,retweeted:false,bookmarked:false},
     {id:27,name:"投资顾问",handle:"@invest_advisor",verified:true,time:"6天前",text:"2026年投资建议：配置30%股票、30%债券、20%黄金、20%现金。不要把鸡蛋放在一个篮子里，分散风险才是王道。",avatar:"投",avatarBg:"linear-gradient(135deg,#4facfe,#00f2fe)",likes:3456,retweets:890,replies:345,views:"26.4万",liked:false,retweeted:false,bookmarked:false},
@@ -46,15 +46,15 @@ const DB = {
     {id:102,name:"王坤",handle:"@wngkn5393218313",verified:false,time:"3月27日",text:"又快清明节了",avatar:"王",avatarBg:"linear-gradient(135deg,#667eea,#764ba2)",likes:5,retweets:0,replies:0,views:"108",liked:false,retweeted:false,bookmarked:false}
   ],
   notifications: [
-    {id:1,type:"mention",name:"S.",handle:"@s_example",avatar:"S",avatarBg:"linear-gradient(135deg,#667eea,#764ba2)",text:"So, let me get this straight. We're not entitled to clean water, but AI data centers are???",time:"2小时",unread:true,extra:{icon:"star",iconColor:"#a855f7"},target:""},
+    {id:1,type:"mention",name:"S.",handle:"@s_example",avatar:"S",avatarBg:"linear-gradient(135deg,#667eea,#764ba2)",text:"So, let me get this straight. We're not entitled to clean water, but AI data centers are???",time:"2小时",unread:true,extra:{icon:"star",iconColor:"#a855f7"},target:"",tweetId:3},
     {id:2,type:"follow",name:"诗雅",handle:"@shiya",avatar:"诗",avatarBg:"linear-gradient(135deg,#f093fb,#f5576c)",text:"关注了你",time:"4月27日",unread:true},
-    {id:3,type:"like",name:"はるみ@おふぱこ/プロフ見てね",handle:"@harumi",avatar:"は",avatarBg:"linear-gradient(135deg,#4facfe,#00f2fe)",text:"喜欢了你的回复",time:"4月19日",unread:false,target:"多大",multi:true,others:[{avatar:"は",avatarBg:"linear-gradient(135deg,#4facfe,#00f2fe)"}]},
-    {id:4,type:"like",name:"Amelia",handle:"@amelia",avatar:"A",avatarBg:"linear-gradient(135deg,#43e97b,#38f9d7)",text:"喜欢了你的回复",time:"4月19日",unread:false,target:"哪里的"},
-    {id:5,type:"like",name:"无",handle:"@wu",avatar:"无",avatarBg:"linear-gradient(135deg,#fa709a,#fee140)",text:"和另外 2 人喜欢了你的回复",time:"4月16日",unread:false,target:"无聊的一笔",multi:true,others:[{avatar:"",avatarBg:"#333"},{avatar:"",avatarBg:"#555"}]},
+    {id:3,type:"like",name:"はるみ@おふぱこ/プロフ見てね",handle:"@harumi",avatar:"は",avatarBg:"linear-gradient(135deg,#4facfe,#00f2fe)",text:"喜欢了你的回复",time:"4月19日",unread:false,target:"多大",multi:true,others:[{avatar:"は",avatarBg:"linear-gradient(135deg,#4facfe,#00f2fe)"}],tweetId:1},
+    {id:4,type:"like",name:"Amelia",handle:"@amelia",avatar:"A",avatarBg:"linear-gradient(135deg,#43e97b,#38f9d7)",text:"喜欢了你的回复",time:"4月19日",unread:false,target:"哪里的",tweetId:5},
+    {id:5,type:"like",name:"无",handle:"@wu",avatar:"无",avatarBg:"linear-gradient(135deg,#fa709a,#fee140)",text:"和另外 2 人喜欢了你的回复",time:"4月16日",unread:false,target:"无聊的一笔",multi:true,others:[{avatar:"",avatarBg:"#333"},{avatar:"",avatarBg:"#555"}],tweetId:8},
     {id:6,type:"follow",name:"张伟",handle:"@zhangwei",avatar:"张",avatarBg:"linear-gradient(135deg,#f093fb,#f5576c)",text:"关注了你",time:"5小时前",unread:false},
-    {id:7,type:"like",name:"李娜",handle:"@lina_tech",avatar:"李",avatarBg:"linear-gradient(135deg,#4facfe,#00f2fe)",text:"赞了你的帖子",time:"1小时前",unread:true,target:"今天用 AI 写了一段代码..."},
-    {id:8,type:"reply",name:"王珊珊",handle:"@wangshanshan",avatar:"王",avatarBg:"linear-gradient(135deg,#fa709a,#fee140)",text:"回复了你的帖子：说的太对了！",time:"3小时前",unread:true,target:"创业第三年的感悟"},
-    {id:9,type:"mention",name:"科技日报",handle:"@techdaily",avatar:"科",avatarBg:"linear-gradient(135deg,#f093fb,#f5576c)",text:"提及了你：@wngkn5393218313",time:"6小时前",unread:false,target:"今天 AI 领域又有新突破"}
+    {id:7,type:"like",name:"李娜",handle:"@lina_tech",avatar:"李",avatarBg:"linear-gradient(135deg,#4facfe,#00f2fe)",text:"赞了你的帖子",time:"1小时前",unread:true,target:"今天用 AI 写了一段代码...",tweetId:1},
+    {id:8,type:"reply",name:"王珊珊",handle:"@wangshanshan",avatar:"王",avatarBg:"linear-gradient(135deg,#fa709a,#fee140)",text:"回复了你的帖子：说的太对了！",time:"3小时前",unread:true,target:"创业第三年的感悟",tweetId:3},
+    {id:9,type:"mention",name:"科技日报",handle:"@techdaily",avatar:"科",avatarBg:"linear-gradient(135deg,#f093fb,#f5576c)",text:"提及了你：@wngkn5393218313",time:"6小时前",unread:false,target:"今天 AI 领域又有新突破",tweetId:2}
   ],
   messages: [
     {id:1,name:"张伟",handle:"@zhangwei",avatar:"张",avatarBg:"linear-gradient(135deg,#f093fb,#f5576c)",preview:"好的，明天见！",time:"14:32",unread:1,online:true,messages:[
@@ -93,7 +93,7 @@ const DB = {
       {id:209,replyTo:102,name:"诗雅",handle:"@shiya",avatar:"诗",avatarBg:"linear-gradient(135deg,#f093fb,#f5576c)",time:"3月27日",text:"是啊，准备回老家一趟",likes:2,liked:false}
     ]
   },
-  bookmarks: [],
+  bookmarks: [1, 5, 8, 12, 19, 24],
   searchResults: [],
   likersList: [
     {name:'林小雨',handle:'@linxiaoyu',avatar:'林',avatarBg:'linear-gradient(135deg,#667eea,#764ba2)',verified:true,following:true},
