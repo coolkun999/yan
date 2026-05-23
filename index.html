@@ -1894,9 +1894,10 @@ function renderCommunities(){
       </div>
     </div>
     <div class="tab-row" style="border-bottom:none;padding:0 16px">
-      <div class="tab active">推荐</div>
-      <div class="tab">我的社群</div>
+      <div class="tab active" onclick="switchCommunityTab(this,'recommended')">推荐</div>
+      <div class="tab" onclick="switchCommunityTab(this,'mine')">我的社群</div>
     </div>
+    <div id="communityList">
     ${COMMUNITIES_DATA.map(c=>`
       <div class="tweet" style="cursor:pointer" onclick="openCommunityDetail(${c.id})">
         <div class="ta" style="background:${c.avatarBg}" onclick="event.stopPropagation()">${c.avatar}</div>
@@ -1913,7 +1914,29 @@ function renderCommunities(){
         </div>
       </div>
     `).join('')}
+    </div>
+    <div id="communityMine" style="display:none">
+    ${COMMUNITIES_DATA.filter(c=>c.joined).length>0?COMMUNITIES_DATA.filter(c=>c.joined).map(c=>`
+      <div class="tweet" style="cursor:pointer" onclick="openCommunityDetail(${c.id})">
+        <div class="ta" style="background:${c.avatarBg}" onclick="event.stopPropagation()">${c.avatar}</div>
+        <div class="tbdy">
+          <div class="th"><span class="tn">${c.name}</span><span class="thandle">· ${c.members} 成员</span></div>
+          <div class="ttxt" style="font-size:14px;color:var(--text2)">${c.desc}</div>
+          <div style="display:flex;align-items:center;gap:12px;margin-top:8px">
+            <span style="font-size:13px;color:var(--text2)">${c.posts} 帖子</span>
+            <button class="fbtn following" onclick="event.stopPropagation();toggleCommunityJoin(${c.id},this)">已加入</button>
+          </div>
+        </div>
+      </div>
+    `).join(''):'<div class="empty-state"><h3>还没有加入任何社群</h3><p>去发现页面寻找感兴趣的社群吧</p></div>'}
+    </div>
   `;
+}
+function switchCommunityTab(el,tab){
+  document.querySelectorAll('.tab-row .tab').forEach(t=>t.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('communityList').style.display=tab==='recommended'?'block':'none';
+  document.getElementById('communityMine').style.display=tab==='mine'?'block':'none';
 }
 function toggleCommunityJoin(id,btn){
   const c = COMMUNITIES_DATA.find(x=>x.id===id);
@@ -1950,6 +1973,43 @@ const MONETIZATION_DATA = [
   {id:2,title:'创作者订阅',desc:'通过内容获利',price:'免费',features:['Super Follows','Super Likes','Super Retweets','Tips','订阅内容']},
   {id:3,title:'广告管理',desc:'推广你的业务',price:'¥100/天起',features:['精准投放','数据分析','多种广告形式','转化追踪']}
 ];
+function closeMonetizationModal(){
+  document.getElementById('monetizationModal')?.classList.remove('active');
+}
+function openMonetizationModal(id){
+  const m = MONETIZATION_DATA.find(x=>x.id===id);
+  if(!m)return;
+  const modal = document.getElementById('monetizationModal') || createMonetizationModal();
+  modal.classList.add('active');
+  document.getElementById('monModalTitle').textContent = m.title;
+  document.getElementById('monModalPrice').textContent = m.price;
+  document.getElementById('monModalDesc').textContent = m.desc;
+  document.getElementById('monModalFeatures').innerHTML = m.features.map(f=>\`<li style="padding:4px 0;font-size:14px">✓ \${f}</li>\`).join('');
+}
+function createMonetizationModal(){
+  const div = document.createElement('div');
+  div.id = 'monetizationModal';
+  div.className = 'modal-overlay';
+  div.innerHTML = \`
+    <div class="modal" style="max-width:400px">
+      <div class="modal-header">
+        <button class="modal-close" onclick="closeMonetizationModal()"><svg viewBox="0 0 24 24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg></button>
+        <div class="modal-title" id="monModalTitle">订阅</div>
+      </div>
+      <div class="modal-body">
+        <div style="text-align:center;margin-bottom:20px">
+          <div style="font-size:32px;font-weight:800" id="monModalPrice">¥68/月</div>
+          <div style="font-size:14px;color:var(--text2);margin-top:4px" id="monModalDesc"></div>
+        </div>
+        <ul id="monModalFeatures" style="list-style:none;display:flex;flex-direction:column;gap:8px"></ul>
+        <div class="modal-btn primary" style="width:100%;margin-top:20px;padding:12px;text-align:center" onclick="showToast('订阅成功！🎉');closeMonetizationModal()">立即订阅</div>
+      </div>
+    </div>
+  \`;
+  document.body.appendChild(div);
+  return div;
+}
+
 function renderMonetization(){
   const main = document.getElementById('mainContent');
   main.innerHTML = `
@@ -2774,6 +2834,36 @@ function renderSettings(){
     </div>
   `;
 }
+function saveSettings(){
+  try{
+    const settings = {
+      sensitive: document.getElementById('sensitiveToggle')?.classList.contains('on'),
+      browseHistory: document.getElementById('browseHistoryToggle')?.classList.contains('on'),
+      notifReplies: document.getElementById('notifReplies')?.classList.contains('on'),
+      notifFollowers: document.getElementById('notifFollowers')?.classList.contains('on'),
+      notifMessages: document.getElementById('notifMessages')?.classList.contains('on'),
+    };
+    localStorage.setItem('yan-settings',JSON.stringify(settings));
+    showToast('设置已保存 ✓');
+  }catch(e){showToast('设置保存失败');}
+}
+(function(){
+  try{
+    const saved=JSON.parse(localStorage.getItem('yan-settings'));
+    if(saved){
+      if(saved.sensitive) document.getElementById('sensitiveToggle')?.classList.add('on');
+      if(saved.browseHistory) document.getElementById('browseHistoryToggle')?.classList.add('on');
+      else document.getElementById('browseHistoryToggle')?.classList.remove('on');
+      if(saved.notifReplies) document.getElementById('notifReplies')?.classList.add('on');
+      else document.getElementById('notifReplies')?.classList.remove('on');
+      if(saved.notifFollowers) document.getElementById('notifFollowers')?.classList.add('on');
+      else document.getElementById('notifFollowers')?.classList.remove('on');
+      if(saved.notifMessages) document.getElementById('notifMessages')?.classList.add('on');
+      else document.getElementById('notifMessages')?.classList.remove('on');
+    }
+  }catch(e){}
+})();
+
 function setTheme(theme,el){
   state.theme=theme;
   document.querySelectorAll('.theme-opt').forEach(e=>e.classList.remove('active'));
