@@ -6,7 +6,7 @@ const state = {
   exploreTab: 'foryou',
   profileTab: 'posts',
   theme: 'dark',
-  user: { name:'王坤', handle:'@wngkn5393218313', bio:'我在中国 我是中国人，有没有交朋友', location:'中国 湖北', joinedDate:'2023年7月', followers:7, following:64, posts:392, liked:1562, verified:false },
+  user: { name:'王坤', handle:'@wangkun', bio:'我在中国 我是中国人，有没有交朋友', location:'中国 湖北', joinedDate:'2023年7月', followers:7, following:64, posts:392, liked:1562, verified:false },
   notifCount: 3,
   currentUser: null,
   modalTweet: null,
@@ -1818,7 +1818,7 @@ function toggleUserDropdown(event){
       <div class="av" style="width:40px;height:40px;font-size:16px;background:${u.avatarBg||'linear-gradient(135deg,#667eea,#764ba2)'}">${(u.name||'王').slice(0,1)}</div>
       <div class="user-menu-header-info">
         <div class="user-menu-header-name">${u.name||'王坤'}</div>
-        <div class="user-menu-header-handle">${u.handle||'@wngkn5393218313'}</div>
+        <div class="user-menu-header-handle">${u.handle||'@wangkun'}</div>
       </div>
     </div>
     <div class="user-menu-switch" onclick="toggleAccount()">
@@ -1892,8 +1892,8 @@ function renderProfile(){
     {key:'media',label:'媒体'},
     {key:'likes',label:'喜欢'}
   ];
-  const myHandle = isLoggedIn() ? currentUser().handle : '@wngkn5393218313';
-  const userTweets = DB.tweets.filter(t=>t.handle===myHandle || t.handle==='@wngkn5393218313');
+  const myHandle = isLoggedIn() ? currentUser().handle : '@wangkun';
+  const userTweets = DB.tweets.filter(t=>t.handle===myHandle || t.handle==='@wangkun');
   let content = '';
 
   if(tab==='posts'){
@@ -2803,7 +2803,7 @@ function handleAuth(){
     const p = document.getElementById('loginPass').value;
     if(!u||!p){err.style.display='block';err.textContent='请填写所有字段';return}
     err.style.display='none';
-    state.currentUser={name:'王坤',handle:'@wngkn5393218313'};
+    state.currentUser={name:'王坤',handle:'@wangkun'};
     navigate('home');
   } else {
     const name = document.getElementById('regName').value.trim();
@@ -2818,7 +2818,7 @@ function handleAuth(){
   }
 }
 function handleGoogleAuth(){
-  state.currentUser={name:'王坤',handle:'@wngkn5393218313'};
+  state.currentUser={name:'王坤',handle:'@wangkun'};
   navigate('home');
 }
 
@@ -3029,7 +3029,7 @@ function openMoreMenu(id,event){
   const body=document.getElementById('moreModalBody');
   const t=DB.tweets.find(x=>x.id===id);
   const myHandle = isLoggedIn() ? currentUser().handle : '';
-  const isMine = t && (t.handle === myHandle || t.handle === '@wngkn5393218313');
+  const isMine = t && (t.handle === myHandle || t.handle === '@wangkun');
   body.innerHTML=`
     <div class="d-item" onclick="toggleBookmarkFromMore(${id});closeMoreMenu()"><svg viewBox="0 0 24 24"><path d="M17 3H7c-1.1 0-1.99.9-1.99 2L5 21l7-3 7 3V5c0-1.1-.9-2-2-2z"/></svg> ${t&&t.bookmarked?'从书签中移除':'添加到书签'}</div>
     ${isMine ? `

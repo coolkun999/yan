@@ -42,8 +42,8 @@ const DB = {
     {id:28,name:"摄影技巧",handle:"@photo_tips",verified:false,time:"7天前",text:"学会这三招，手机也能拍大片：1️⃣ 利用光线 2️⃣ 三分构图 3️⃣ 后期调色。收藏起来慢慢练！",avatar:"摄",avatarBg:"linear-gradient(135deg,#fa709a,#fee140)",likes:5678,retweets:2345,replies:678,views:"42.3万",liked:false,retweeted:false,bookmarked:false},
     {id:29,name:"程序员小明",handle:"@coder_xiaoming",verified:false,time:"7天前",text:"为什么程序员喜欢用命令行？因为GUI是给用户用的，我们是来控制电脑的，不是被电脑控制的。",avatar:"程",avatarBg:"linear-gradient(135deg,#667eea,#764ba2)",likes:3456,retweets:1234,replies:456,views:"25.1万",liked:false,retweeted:false,bookmarked:false},
     {id:30,name:"生活小妙招",handle:"@life_hacks",verified:false,time:"1周前",text:"把过期牛奶用来浇花，花会长得特别好！还有用香蕉皮擦皮鞋，鞋子又亮又干净。这些生活小妙招你都知道吗？",avatar:"生",avatarBg:"linear-gradient(135deg:#43e97b,#38f9d7)",likes:4567,retweets:1678,replies:456,views:"35.6万",liked:false,retweeted:false,bookmarked:false},
-    {id:101,name:"王坤",handle:"@wngkn5393218313",verified:false,time:"4月9日",text:"26.4、9 天气有点冷 下雨",avatar:"王",avatarBg:"linear-gradient(135deg,#667eea,#764ba2)",likes:3,retweets:0,replies:3,views:"98",liked:false,retweeted:false,bookmarked:false},
-    {id:102,name:"王坤",handle:"@wngkn5393218313",verified:false,time:"3月27日",text:"又快清明节了",avatar:"王",avatarBg:"linear-gradient(135deg,#667eea,#764ba2)",likes:5,retweets:0,replies:0,views:"108",liked:false,retweeted:false,bookmarked:false}
+    {id:101,name:"王坤",handle:"@wangkun",verified:false,time:"4月9日",text:"26.4、9 天气有点冷 下雨",avatar:"王",avatarBg:"linear-gradient(135deg,#667eea,#764ba2)",likes:3,retweets:0,replies:3,views:"98",liked:false,retweeted:false,bookmarked:false},
+    {id:102,name:"王坤",handle:"@wangkun",verified:false,time:"3月27日",text:"又快清明节了",avatar:"王",avatarBg:"linear-gradient(135deg,#667eea,#764ba2)",likes:5,retweets:0,replies:0,views:"108",liked:false,retweeted:false,bookmarked:false}
   ],
   notifications: [
     {id:1,type:"mention",name:"S.",handle:"@s_example",avatar:"S",avatarBg:"linear-gradient(135deg,#667eea,#764ba2)",text:"So, let me get this straight. We're not entitled to clean water, but AI data centers are???",time:"2小时",unread:true,extra:{icon:"star",iconColor:"#a855f7"},target:"",tweetId:3},
@@ -54,7 +54,7 @@ const DB = {
     {id:6,type:"follow",name:"张伟",handle:"@zhangwei",avatar:"张",avatarBg:"linear-gradient(135deg,#f093fb,#f5576c)",text:"关注了你",time:"5小时前",unread:false},
     {id:7,type:"like",name:"李娜",handle:"@lina_tech",avatar:"李",avatarBg:"linear-gradient(135deg,#4facfe,#00f2fe)",text:"赞了你的帖子",time:"1小时前",unread:true,target:"今天用 AI 写了一段代码...",tweetId:1},
     {id:8,type:"reply",name:"王珊珊",handle:"@wangshanshan",avatar:"王",avatarBg:"linear-gradient(135deg,#fa709a,#fee140)",text:"回复了你的帖子：说的太对了！",time:"3小时前",unread:true,target:"创业第三年的感悟",tweetId:3},
-    {id:9,type:"mention",name:"科技日报",handle:"@techdaily",avatar:"科",avatarBg:"linear-gradient(135deg,#f093fb,#f5576c)",text:"提及了你：@wngkn5393218313",time:"6小时前",unread:false,target:"今天 AI 领域又有新突破",tweetId:2}
+    {id:9,type:"mention",name:"科技日报",handle:"@techdaily",avatar:"科",avatarBg:"linear-gradient(135deg,#f093fb,#f5576c)",text:"提及了你：@wangkun",time:"6小时前",unread:false,target:"今天 AI 领域又有新突破",tweetId:2}
   ],
   messages: [
     {id:1,name:"张伟",handle:"@zhangwei",avatar:"张",avatarBg:"linear-gradient(135deg,#f093fb,#f5576c)",preview:"好的，明天见！",time:"14:32",unread:1,online:true,messages:[

@@ -162,7 +162,7 @@ function genHandle(identifier) {
     base = identifier.split('@')[0].replace(/[^a-zA-Z0-9_]/g, '').slice(0, 12);
     if (!base) base = 'user';
   } else {
-    base = 'u' + identifier.slice(-8);
+    base = 'user_' + identifier.slice(-4);
   }
   let handle = '@' + base;
   let i = 1;
