@@ -126,7 +126,9 @@ textarea,input{font-family:inherit;outline:none;border:none;background:transpare
 
 /* ===== RIGHT SIDEBAR ===== */
 .sidebar-right{width:350px;flex-shrink:0;display:flex;flex-direction:column;position:relative}
-.sidebar-right-inner{position:sticky;top:0;height:100vh;overflow-y:auto;padding:0 16px 16px;display:flex;flex-direction:column;gap:16px}
+.sidebar-right-inner{position:sticky;top:0;height:100vh;overflow-y:auto;padding:0 16px 16px}
+.sidebar-right-inner>*{margin-bottom:16px}
+.sidebar-right-inner>:last-child{margin-bottom:0}
 .sidebar-right-inner::-webkit-scrollbar{width:6px}
 .sidebar-right-inner::-webkit-scrollbar-track{background:transparent}
 .sidebar-right-inner::-webkit-scrollbar-thumb{background:var(--bg4);border-radius:3px}
