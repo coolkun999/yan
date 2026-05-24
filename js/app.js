@@ -641,6 +641,7 @@ function renderHome(){
       <div class="av" style="background:${currentUser()&&currentUser().avatarBg||'linear-gradient(135deg,#667eea,#764ba2)'}">${currentUser()&&currentUser().name?currentUser().name.slice(0,1):'我'}</div>
       <div class="ca">
         <textarea class="cin" placeholder="有什么新鲜事？" id="homeCompose" oninput="updateComposeBtn();updateCharCount('homeCompose','homeCharCount')" maxlength="500"></textarea>
+        <div class="compose-media-preview" id="homeMediaPreview" style="display:none;margin-bottom:8px"></div>
         <div class="ctb">
           <div class="ctools">
             <button class="tb" title="媒体" onclick="document.getElementById('mediaFileInput').click()"><svg viewBox="0 0 24 24"><path fill-rule="evenodd" d="M3 5.5C3 4.12 4.12 3 5.5 3h13C19.88 3 21 4.12 21 5.5v13c0 1.38-1.12 2.5-2.5 2.5h-13C4.12 21 3 19.88 3 18.5v-13zM5.5 5c-.28 0-.5.22-.5.5v9.09l3.4-3.4a.5.5 0 0 1 .7 0l3.06 3.06 2.63-1.32a.5.5 0 0 1 .48.04l2.23 1.63V5.5c0-.28-.22-.5-.5-.5h-12zM9 8.5a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3z"/></svg></button>
@@ -650,7 +651,6 @@ function renderHome(){
             <button class="tb" onclick="openScheduleModal()" title="安排"><svg viewBox="0 0 24 24"><path d="M7 11h2v2H7v-2zm4 0h2v2h-2v-2zm4 0h2v2h-2v-2zM19 4h-1V2h-2v2H8V2H6v2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 16H5V9h14v11z"/></svg></button>
             <button class="tb" onclick="openLocationModal()" title="位置"><svg viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5S10.62 6.5 12 6.5s2.5 1.12 2.5 2.5S13.38 11.5 12 11.5z"/></svg></button>
           </div>
-          <div class="compose-media-preview" id="homeMediaPreview" style="display:none;margin-top:8px"></div>
           <div style="display:flex;align-items:center;gap:8px">
             <button class="tb reply-scope-btn" onclick="toggleReplyScope()" title="所有人可以回复">
               <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zM8.46 14.45l-1.36-.62c.28-.61.41-1.24.4-1.86-.02-1.47-.75-3-1.06-3.38.67-.34 3-1.35 5.6-.33 3.35 1.34 3.58 5.01 3.58 5.74H8.46z"/></svg>
