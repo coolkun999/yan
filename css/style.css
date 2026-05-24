@@ -136,7 +136,7 @@ textarea,input{font-family:inherit;outline:none;border:none;background:transpare
 .sbw svg{width:18px;height:18px;fill:var(--text2);flex-shrink:0}
 .sin{flex:1;background:transparent;border:none;outline:none;color:var(--text);font-size:15px;padding:12px 0;font-family:inherit}
 .sin::placeholder{color:var(--text2)}
-.widget{background:var(--bg2);border-radius:16px;overflow:hidden}
+.widget{background:var(--bg2);border-radius:16px}
 .wt{font-size:20px;font-weight:800;padding:12px 16px}
 .trend-item{padding:12px 16px;cursor:pointer;transition:background .2s;border-bottom:1px solid var(--border)}
 .trend-item:last-child{border-bottom:none}
