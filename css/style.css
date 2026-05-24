@@ -34,8 +34,8 @@ textarea,input{font-family:inherit;outline:none;border:none;background:transpare
 .user-menu{margin-bottom:12px;display:flex;align-items:center;gap:12px;padding:12px;border-radius:var(--r);cursor:pointer;transition:background .2s}
 .user-menu:hover{background:rgba(231,233,234,.1)}
 .av{width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,#667eea,#764ba2);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:16px;color:#fff;flex-shrink:0;position:relative;overflow:hidden}
-.un{font-weight:700;font-size:15px}
-.uh{color:var(--text2);font-size:14px}
+.un{font-weight:700;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.uh{color:var(--text2);font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .dots{color:var(--text2);font-size:18px;margin-left:auto}
 
 /* ===== MAIN ===== */
