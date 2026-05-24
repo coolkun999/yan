@@ -1111,7 +1111,8 @@ function searchExplore(q){
 function renderNotifications(){
   const main = document.getElementById('mainContent');
   state.notifCount = 0;
-  document.getElementById('notif-badge').classList.remove('has');
+  const nb = document.getElementById('notif-badge');
+  if(nb){ nb.querySelector('.b').style.display = 'none'; }
   const tab = state.notifTab;
   let n = DB.notifications;
   if(tab==='mentions') n = n.filter(x=>x.type==='mention'||x.type==='reply');
@@ -4045,22 +4046,24 @@ function updateSidebarBadges(){
   const notifBadge = document.getElementById('notif-badge');
   if(notifBadge){
     const unreadCount = (DB.notifications||[]).filter(n=>!n.read).length;
+    const b = notifBadge.querySelector('.b');
     if(unreadCount > 0){
-      notifBadge.querySelector('.b').textContent = unreadCount > 99 ? '99+' : unreadCount;
-      notifBadge.style.display = 'flex';
+      b.textContent = unreadCount > 99 ? '99+' : unreadCount;
+      b.style.display = 'block';
     } else {
-      notifBadge.style.display = 'none';
+      b.style.display = 'none';
     }
   }
   // 消息徽章
   const msgBadge = document.getElementById('msg-badge');
   if(msgBadge){
     const unreadMsg = (DB.messages||[]).reduce((s,m)=>s+(m.unread||0), 0);
+    const b = msgBadge.querySelector('.b');
     if(unreadMsg > 0){
-      msgBadge.querySelector('.b').textContent = unreadMsg > 99 ? '99+' : unreadMsg;
-      msgBadge.style.display = 'flex';
+      b.textContent = unreadMsg > 99 ? '99+' : unreadMsg;
+      b.style.display = 'block';
     } else {
-      msgBadge.style.display = 'none';
+      b.style.display = 'none';
     }
   }
 }
