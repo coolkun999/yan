@@ -797,7 +797,8 @@ function switchHomeTab(tab){
 function updateComposeBtn(){
   const v = document.getElementById('homeCompose').value.trim();
   const btn = document.getElementById('homePostBtn');
-  btn.disabled = v.length === 0 || document.getElementById('homeCompose').value.length > 500;
+  const hasMedia = state.composeMedia && state.composeMedia.length > 0;
+  btn.disabled = (v.length === 0 && !hasMedia) || document.getElementById('homeCompose').value.length > 500;
 }
 // 字数计数器（通用）
 function updateCharCount(textareaId, countId){
@@ -818,7 +819,8 @@ function updateCharCount(textareaId, countId){
 function homePost(){
   if(!requireLogin()) return;
   const v = document.getElementById('homeCompose').value.trim();
-  if(!v) return;
+  const hasMedia = state.composeMedia && state.composeMedia.length > 0;
+  if(!v && !hasMedia) return;
   const viewsOptions=['15','28','47','89','124','203'];
   const u = currentUser() || {};
   const t = {id:Date.now(),name:u.name||'用户',handle:u.handle||'@user',verified:u.verified||false,time:"刚刚",text:v,avatar:(u.name||'用').slice(0,1),avatarBg:u.avatarBg||"linear-gradient(135deg,#667eea,#764ba2)",likes:0,retweets:0,replies:0,views:viewsOptions[Math.floor(Math.random()*viewsOptions.length)],liked:false,retweeted:false,bookmarked:false};
@@ -2967,12 +2969,14 @@ function closePostModal(){
 }
 function updateModalPostBtn(){
   const v=document.getElementById('modalText').value.trim();
-  document.getElementById('modalPostBtn').disabled=v.length===0;
+  const hasMedia = state.composeMedia && state.composeMedia.length > 0;
+  document.getElementById('modalPostBtn').disabled=v.length===0&&!hasMedia;
 }
 function submitPost(){
   if(!requireLogin()) return;
   const v=document.getElementById('modalText').value.trim();
-  if(!v)return;
+  const hasMedia = state.composeMedia && state.composeMedia.length > 0;
+  if(!v && !hasMedia) return;
   const viewsOptions=['12','32','58','103','156','234'];
   const u = currentUser() || {};
   if(state.editingTweetId){
@@ -3902,6 +3906,8 @@ function renderComposeMedia(){
       el.style.display = media.length > 0 ? 'block' : 'none';
     }
   });
+  updateComposeBtn();
+  updateModalPostBtn();
 }
 function removeComposeMedia(idx){
   state.composeMedia.splice(idx, 1);
