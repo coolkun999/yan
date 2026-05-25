@@ -689,7 +689,7 @@ function renderHome(){
           <div class="ctools">
             <button class="tb" title="媒体" onclick="document.getElementById('mediaFileInput').click()"><svg viewBox="0 0 24 24"><path fill-rule="evenodd" d="M3 5.5C3 4.12 4.12 3 5.5 3h13C19.88 3 21 4.12 21 5.5v13c0 1.38-1.12 2.5-2.5 2.5h-13C4.12 21 3 19.88 3 18.5v-13zM5.5 5c-.28 0-.5.22-.5.5v9.09l3.4-3.4a.5.5 0 0 1 .7 0l3.06 3.06 2.63-1.32a.5.5 0 0 1 .48.04l2.23 1.63V5.5c0-.28-.22-.5-.5-.5h-12zM9 8.5a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3z"/></svg></button>
             <button class="tb" title="GIF" onclick="toggleGif('home')"><svg viewBox="0 0 24 24"><path d="M19 10.5V8.8h-4.4v6.4h1.7v-2h2v-1.7h-2v-1H19zm-7.3-1.7h1.7v6.4h-1.7V8.8zm-3.6 1.6c.4 0 .9.2 1.2.5l1.2-1C9.9 9.2 9 8.8 8.1 8.8c-1.8 0-3.2 1.4-3.2 3.2s1.4 3.2 3.2 3.2c1 0 1.8-.4 2.4-1.1v-2.5H7.7v1.2h1.2v.6c-.2.1-.5.2-.8.2-.9 0-1.6-.7-1.6-1.6 0-.8.7-1.6 1.6-1.6z"/></svg></button>
-            <button class="tb" title="投票"><svg viewBox="0 0 24 24"><path d="M18 5h-1V3a1 1 0 0 0-2 0v2h-2V3a1 1 0 1 0-2 0v2H9V3a1 1 0 0 0-2 0v2H6a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2zM6 19V9h12v10H6zm3-7h2v5H9v-5zm4-3h2v8h-2V9z"/></svg></button>
+            <button class="tb" title="投票" onclick="openPollModal()"><svg viewBox="0 0 24 24"><path d="M18 5h-1V3a1 1 0 0 0-2 0v2h-2V3a1 1 0 1 0-2 0v2H9V3a1 1 0 0 0-2 0v2H6a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2zM6 19V9h12v10H6zm3-7h2v5H9v-5zm4-3h2v8h-2V9z"/></svg></button>
             <button class="tb" onclick="toggleEmoji('home')" title="表情"><svg viewBox="0 0 24 24"><path fill-rule="evenodd" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zM8.5 9a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3zm7 0a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3zm-8 6c.6.8 1.6 1.5 3 1.5s2.4-.7 3-1.5l-1-.7c-.3.4-1 .8-2 .8s-1.7-.4-2-.8l-1 .7z"/></svg></button>
             <button class="tb" onclick="openScheduleModal()" title="安排"><svg viewBox="0 0 24 24"><path d="M7 11h2v2H7v-2zm4 0h2v2h-2v-2zm4 0h2v2h-2v-2zM19 4h-1V2h-2v2H8V2H6v2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 16H5V9h14v11z"/></svg></button>
             <button class="tb" onclick="openLocationModal()" title="位置"><svg viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5S10.62 6.5 12 6.5s2.5 1.12 2.5 2.5S13.38 11.5 12 11.5z"/></svg></button>
@@ -3837,6 +3837,82 @@ function sendImageMsg(){
     cb.appendChild(wrapper);
     cb.scrollTop=cb.scrollHeight;
   }
+}
+
+// ===== POLL CREATOR =====
+let _pollOptions = ['',''];
+let _pollDuration = 24; // 小时
+
+function openPollModal(){
+  _pollOptions = ['',''];
+  _pollDuration = 24;
+  renderPollCreator();
+}
+function renderPollCreator(){
+  let m = document.getElementById('pollCreatorModal');
+  if(!m){
+    m = document.createElement('div');
+    m.className='modal-overlay';
+    m.id='pollCreatorModal';
+    document.body.appendChild(m);
+  }
+  m.innerHTML = `
+    <div class="modal" style="max-width:440px">
+      <div class="modal-header">
+        <button class="modal-close" onclick="closePollModal()">
+          <svg viewBox="0 0 24 24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+        <div style="font-size:17px;font-weight:800">创建投票</div>
+        <button class="modal-btn primary" onclick="confirmPoll()" style="border-radius:9999px;padding:8px 20px;font-size:14px">添加</button>
+      </div>
+      <div class="modal-body" style="padding:20px">
+        <div id="pollOptionList">
+          ${_pollOptions.map((o,i)=>`
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">
+              <span style="font-size:15px;color:var(--text2);min-width:20px">${i+1}.</span>
+              <input class="poll-option-input" value="${o}" placeholder="选项 ${i+1}" oninput="_pollOptions[${i}]=this.value" style="flex:1;padding:10px 14px;border:1px solid var(--border);border-radius:8px;background:var(--bg);color:var(--text);font-size:15px;outline:none">
+              ${_pollOptions.length>2?`<button onclick="_pollOptions.splice(${i},1);renderPollCreator()" style="width:32px;height:32px;border-radius:50%;background:transparent;border:none;cursor:pointer;color:var(--text2);display:flex;align-items:center;justify-content:center"><svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg></button>`:''}
+            </div>
+          `).join('')}
+        </div>
+        ${_pollOptions.length<4?`<button onclick="_pollOptions.push('');renderPollCreator()" style="display:flex;align-items:center;gap:6px;padding:8px 0;border:none;background:transparent;color:var(--accent);cursor:pointer;font-size:14px;font-weight:600"><svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>添加选项</button>`:''}
+        <div style="margin-top:20px;border-top:1px solid var(--border);padding-top:16px">
+          <label style="display:block;font-size:13px;color:var(--text2);margin-bottom:8px">投票时长</label>
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            ${[{l:'1小时',v:1},{l:'6小时',v:6},{l:'12小时',v:12},{l:'1天',v:24},{l:'3天',v:72},{l:'7天',v:168}].map(d=>`
+              <button onclick="_pollDuration=${d.v};renderPollCreator()" style="padding:8px 14px;border-radius:9999px;border:1px solid ${_pollDuration===d.v?'var(--accent)':'var(--border)'};background:${_pollDuration===d.v?'rgba(29,155,240,.15)':'transparent'};color:${_pollDuration===d.v?'var(--accent)':'var(--text)'};cursor:pointer;font-size:13px;font-weight:600;transition:all .2s">${d.l}</button>
+            `).join('')}
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+  setTimeout(()=>m.classList.add('active'),10);
+}
+function closePollModal(){
+  const m = document.getElementById('pollCreatorModal');
+  if(m){m.classList.remove('active');setTimeout(()=>m.remove(),200)}
+}
+function confirmPoll(){
+  const options = _pollOptions.filter(o=>o.trim());
+  if(options.length<2){
+    showToast('请至少填写 2 个选项');
+    return;
+  }
+  closePollModal();
+  // 在输入框中插入投票标记
+  let ta = _lastFocusedInput || document.querySelector('.cin:focus,.ri-textarea:focus,#modalText:focus');
+  if(!ta) ta = document.querySelector('.cin') || document.getElementById('modalText');
+  if(ta){
+    const pollMark = `\n📊 投票：${options.join(' | ')}（${_pollDuration>=24?(_pollDuration/24)+'天':_pollDuration+'小时'}）`;
+    const s = ta.selectionStart || ta.value.length;
+    ta.value = ta.value.slice(0,s) + pollMark + ta.value.slice(ta.selectionEnd||s);
+    ta.selectionStart = ta.selectionEnd = s + pollMark.length;
+    ta.focus();
+    if(ta.id==='modalText')updateModalPostBtn();
+    if(ta.classList.contains('cin'))updateComposeBtn();
+  }
+  showToast('投票已添加');
 }
 
 // ===== SCHEDULE MODAL =====
