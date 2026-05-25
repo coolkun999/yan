@@ -3528,6 +3528,14 @@ document.addEventListener('click',function(e){
   if(!e.target.closest('#replyScopeMenu')&&!e.target.closest('.reply-scope-btn')){
     const m = document.getElementById('replyScopeMenu'); if(m) m.remove();
   }
+  // 关闭 GIF/表情选择器（点击外部区域时）
+  if(!e.target.closest('.gif-picker')&&!e.target.closest('[onclick*="toggleGif"]')){
+    document.querySelectorAll('.gif-picker.active').forEach(p=>p.classList.remove('active'));
+  }
+  if(!e.target.closest('.emoji-picker')&&!e.target.closest('[onclick*="toggleEmoji"]')&&!e.target.closest('[onclick*="toggleEmojiPicker"]')){
+    document.querySelectorAll('.emoji-picker.active').forEach(p=>p.classList.remove('active'));
+    document.querySelectorAll('.emoji-picker.show').forEach(p=>p.classList.remove('show'));
+  }
 });
 
 // ===== INFINITE SCROLL =====
