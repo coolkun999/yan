@@ -53,7 +53,7 @@ textarea,input{font-family:inherit;outline:none;border:none;background:transpare
 
 /* ===== COMPOSE ===== */
 .compose{display:flex;gap:12px;padding:12px 16px;border-bottom:1px solid var(--border)}
-.ca{flex:1}
+.ca{flex:1;position:relative}
 .cin{width:100%;background:transparent;border:none;outline:none;color:var(--text);font-size:20px;resize:none;padding:8px 0;min-height:52px;font-family:inherit;line-height:1.5}
 .cin::placeholder{color:var(--text2)}
 .ct{position:sticky;top:0;background:var(--bg)}
@@ -347,10 +347,9 @@ textarea,input{font-family:inherit;outline:none;border:none;background:transpare
 .chat-tool{width:32px;height:32px;border-radius:50%;border:none;background:transparent;color:var(--accent);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background .2s}
 .chat-tool:hover{background:rgba(29,155,240,.1)}
 .chat-tool svg{width:18px;height:18px;fill:currentColor}
-.emoji-picker{position:absolute;bottom:60px;left:16px;background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:8px;display:none;flex-wrap:wrap;gap:4px;max-width:280px;z-index:10}
-.emoji-picker.show{display:flex}
-.emoji-btn{display:flex;align-items:center;justify-content:center;width:32px;height:32px;font-size:18px;border-radius:6px;border:none;background:transparent;cursor:pointer;transition:background .2s}
-.emoji-btn:hover{background:var(--bg3)}
+/* 私信聊天内的 emoji picker 覆盖 */
+.msg-chat .emoji-picker{bottom:60px;left:16px;max-width:280px;padding:8px;z-index:10}
+.msg-chat .emoji-btn{display:flex;align-items:center;justify-content:center;width:32px;height:32px;font-size:18px}
 
 /* ===== EXPLORE ===== */
 .explore-search{padding:12px 16px;border-bottom:1px solid var(--border)}
@@ -431,10 +430,21 @@ textarea,input{font-family:inherit;outline:none;border:none;background:transpare
 .d-divider{height:1px;background:var(--border);margin:4px 0}
 
 /* Emoji picker */
-.emoji-picker{position:absolute;background:var(--bg2);border:1px solid var(--border);border-radius:16px;padding:12px;z-index:200;display:none;width:300px;flex-wrap:wrap;gap:4px}
+.emoji-picker{position:absolute;background:var(--bg2);border:1px solid var(--border);border-radius:16px;padding:12px;z-index:200;display:none;width:300px;max-height:240px;overflow-y:auto;flex-wrap:wrap;gap:4px}
 .emoji-picker.active{display:flex}
 .emoji-btn{font-size:22px;cursor:pointer;padding:4px;border-radius:6px;transition:background .2s}
 .emoji-btn:hover{background:rgba(231,233,234,.1);transform:scale(1.2)}
+
+/* GIF picker */
+.gif-picker{position:absolute;background:var(--bg2);border:1px solid var(--border);border-radius:16px;padding:12px;z-index:200;display:none;width:320px;max-height:320px;overflow-y:auto;flex-direction:column;gap:8px}
+.gif-picker.active{display:flex}
+.gif-search{width:100%;padding:8px 12px;border-radius:9999px;border:1px solid var(--border);background:var(--bg);color:var(--text);font-size:14px;outline:none}
+.gif-search:focus{border-color:var(--accent)}
+.gif-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.gif-item{border-radius:12px;overflow:hidden;cursor:pointer;position:relative;aspect-ratio:16/9;background:var(--bg3);display:flex;align-items:center;justify-content:center;transition:opacity .2s}
+.gif-item:hover{opacity:.85}
+.gif-item-label{position:absolute;bottom:0;left:0;right:0;padding:4px 8px;font-size:11px;font-weight:700;color:#fff;background:linear-gradient(transparent,rgba(0,0,0,.7));text-align:center}
+.gif-item img{width:100%;height:100%;object-fit:cover}
 
 /* ===== LIKERS LIST ===== */
 .likers-list{display:flex;flex-direction:column}

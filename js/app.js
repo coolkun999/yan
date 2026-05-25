@@ -688,9 +688,9 @@ function renderHome(){
         <div class="ctb">
           <div class="ctools">
             <button class="tb" title="媒体" onclick="document.getElementById('mediaFileInput').click()"><svg viewBox="0 0 24 24"><path fill-rule="evenodd" d="M3 5.5C3 4.12 4.12 3 5.5 3h13C19.88 3 21 4.12 21 5.5v13c0 1.38-1.12 2.5-2.5 2.5h-13C4.12 21 3 19.88 3 18.5v-13zM5.5 5c-.28 0-.5.22-.5.5v9.09l3.4-3.4a.5.5 0 0 1 .7 0l3.06 3.06 2.63-1.32a.5.5 0 0 1 .48.04l2.23 1.63V5.5c0-.28-.22-.5-.5-.5h-12zM9 8.5a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3z"/></svg></button>
-            <button class="tb" title="GIF"><svg viewBox="0 0 24 24"><path d="M19 10.5V8.8h-4.4v6.4h1.7v-2h2v-1.7h-2v-1H19zm-7.3-1.7h1.7v6.4h-1.7V8.8zm-3.6 1.6c.4 0 .9.2 1.2.5l1.2-1C9.9 9.2 9 8.8 8.1 8.8c-1.8 0-3.2 1.4-3.2 3.2s1.4 3.2 3.2 3.2c1 0 1.8-.4 2.4-1.1v-2.5H7.7v1.2h1.2v.6c-.2.1-.5.2-.8.2-.9 0-1.6-.7-1.6-1.6 0-.8.7-1.6 1.6-1.6z"/></svg></button>
+            <button class="tb" title="GIF" onclick="toggleGif('home')"><svg viewBox="0 0 24 24"><path d="M19 10.5V8.8h-4.4v6.4h1.7v-2h2v-1.7h-2v-1H19zm-7.3-1.7h1.7v6.4h-1.7V8.8zm-3.6 1.6c.4 0 .9.2 1.2.5l1.2-1C9.9 9.2 9 8.8 8.1 8.8c-1.8 0-3.2 1.4-3.2 3.2s1.4 3.2 3.2 3.2c1 0 1.8-.4 2.4-1.1v-2.5H7.7v1.2h1.2v.6c-.2.1-.5.2-.8.2-.9 0-1.6-.7-1.6-1.6 0-.8.7-1.6 1.6-1.6z"/></svg></button>
             <button class="tb" title="投票"><svg viewBox="0 0 24 24"><path d="M18 5h-1V3a1 1 0 0 0-2 0v2h-2V3a1 1 0 1 0-2 0v2H9V3a1 1 0 0 0-2 0v2H6a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2zM6 19V9h12v10H6zm3-7h2v5H9v-5zm4-3h2v8h-2V9z"/></svg></button>
-            <button class="tb" onclick="toggleEmoji()" title="表情"><svg viewBox="0 0 24 24"><path fill-rule="evenodd" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zM8.5 9a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3zm7 0a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3zm-8 6c.6.8 1.6 1.5 3 1.5s2.4-.7 3-1.5l-1-.7c-.3.4-1 .8-2 .8s-1.7-.4-2-.8l-1 .7z"/></svg></button>
+            <button class="tb" onclick="toggleEmoji('home')" title="表情"><svg viewBox="0 0 24 24"><path fill-rule="evenodd" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zM8.5 9a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3zm7 0a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3zm-8 6c.6.8 1.6 1.5 3 1.5s2.4-.7 3-1.5l-1-.7c-.3.4-1 .8-2 .8s-1.7-.4-2-.8l-1 .7z"/></svg></button>
             <button class="tb" onclick="openScheduleModal()" title="安排"><svg viewBox="0 0 24 24"><path d="M7 11h2v2H7v-2zm4 0h2v2h-2v-2zm4 0h2v2h-2v-2zM19 4h-1V2h-2v2H8V2H6v2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 16H5V9h14v11z"/></svg></button>
             <button class="tb" onclick="openLocationModal()" title="位置"><svg viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5S10.62 6.5 12 6.5s2.5 1.12 2.5 2.5S13.38 11.5 12 11.5z"/></svg></button>
           </div>
@@ -703,6 +703,16 @@ function renderHome(){
             <button class="pb" id="homePostBtn" disabled onclick="homePost()">发帖</button>
           </div>
         </div>
+        <div class="emoji-picker" id="homeEmojiPicker"></div>
+        <div class="gif-picker" id="homeGifPicker">
+          <input class="gif-search" placeholder="搜索 GIF" oninput="filterGifs(this.value,'homeGifGrid')">
+          <div class="gif-grid" id="homeGifGrid">${GIF_DATA.map(g=>`
+            <div class="gif-item" onclick="pickGif('${g.id}','home')" data-keywords="${g.keywords}">
+              <div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:${g.color}22;font-size:36px">${g.label.split(' ')[0]}</div>
+              <div class="gif-item-label">${g.label.split(' ').slice(1).join(' ')}</div>
+            </div>
+          `).join('')}</div>
+        </div>
       </div>
     </div>` : `
     <div class="compose" style="cursor:pointer;padding:16px;display:flex;align-items:center;justify-content:space-between" onclick="openAuthModal()">
@@ -712,6 +722,7 @@ function renderHome(){
     <div id="homeFeed">${forYouActive ? renderForYouFeed() : renderFollowingFeed()}</div>
   `;
   initEmojiPicker();
+  initHomeEmojiPicker();
 }
 
 function renderPromoCard(){
@@ -3316,6 +3327,8 @@ function closeAllDropdowns(){
 // ===== EMOJI PICKER =====
 const EMOJIS='😀 😃 😄 😁 😅 😂 🙂 😉 😊 😍 🤩 😘 😎 🥳 🤗 🤔 🧐 😇 😈 🤡 💀 👻 🙈 🙉 🙊 ❤️ 🧡 💛 💚 💙 💜 🖤 🤍 💔 🌸 🌺 🌻 🌼 🌷 🌹 🍀 🍎 🍕 🍜 🍣 🍦 🍰 ☕ 🍵 🚀 ✈️ 🏠 💼 📱 💻 🎮 🎬 🎵 🎨 📚 🏆 ⚽ 🏀 🏃 💪 🏋️ 🧘 🧠 💡 🔥 ✨ 💫 🌈 ⭐ 🌍 🎉 🎊 ✅ ❌ ⚠️ 🔔 📣 💬 🗣️ 👀 👋 🤝 👏 🙌 🎯 🎁 🏷️ 📌 ⚡ 🌙 ☀️ ⭐ 💰 💳 🎁 📊 📈 📉 🔒 🔓 💳 ✏️ 📝 🖊️ 📸 📷 🎥 📹 🎙️ 📻 🧲 🔍 💡 🛠️ ⚙️ 🔧 🧰 💊 🩺 🏥 🌡️ 🤒 😷';
 let emojiPickerInit=false;
+let homeEmojiPickerInit=false;
+let _lastFocusedInput=null; // 记住最后聚焦的输入框，解决点击表情按钮失焦问题
 function initEmojiPicker(){
   if(emojiPickerInit)return;
   emojiPickerInit=true;
@@ -3329,21 +3342,122 @@ function initEmojiPicker(){
     picker.appendChild(btn);
   });
 }
-function toggleEmoji(){
-  const picker=document.getElementById('emojiPicker');
+function initHomeEmojiPicker(){
+  if(homeEmojiPickerInit)return;
+  homeEmojiPickerInit=true;
+  const picker=document.getElementById('homeEmojiPicker');
   if(!picker)return;
-  picker.classList.toggle('active');
+  EMOJIS.split(' ').filter(e=>e).forEach(e=>{
+    const btn=document.createElement('button');
+    btn.className='emoji-btn';
+    btn.textContent=e;
+    btn.onclick=()=>insertEmoji(e);
+    picker.appendChild(btn);
+  });
+}
+function toggleEmoji(ctx){
+  // 关闭 GIF picker
+  document.querySelectorAll('.gif-picker.active').forEach(p=>p.classList.remove('active'));
+  if(ctx==='home'){
+    initHomeEmojiPicker();
+    const picker=document.getElementById('homeEmojiPicker');
+    if(picker)picker.classList.toggle('active');
+  }else{
+    initEmojiPicker();
+    const picker=document.getElementById('emojiPicker');
+    if(picker)picker.classList.toggle('active');
+  }
 }
 function insertEmoji(e){
-  const ta=document.querySelector('.cin:focus,.ri-textarea:focus,#modalText:focus');
+  let ta=_lastFocusedInput||document.querySelector('.cin:focus,.ri-textarea:focus,#modalText:focus');
   if(ta){
     const s=ta.selectionStart||ta.value.length;
-    ta.value=ta.value.slice(0,s)+e+ta.value.slice(s);
+    ta.value=ta.value.slice(0,s)+e+ta.value.slice(ta.selectionEnd||s);
     ta.selectionStart=ta.selectionEnd=s+e.length;
     ta.focus();
     if(ta.id==='modalText')updateModalPostBtn();
+    if(ta.classList.contains('cin'))updateComposeBtn();
   }
-  document.getElementById('emojiPicker')?.classList.remove('active');
+  document.querySelectorAll('.emoji-picker.active').forEach(p=>p.classList.remove('active'));
+}
+
+// ===== GIF PICKER =====
+const GIF_DATA=[
+  {id:'applause',label:'👏 鼓掌',color:'#1a73e8',keywords:'鼓掌 掌声 clap applause'},
+  {id:'fire',label:'🔥 火焰',color:'#e53935',keywords:'火焰 火 fire hot'},
+  {id:'heart',label:'❤️ 爱心',color:'#c62828',keywords:'爱心 爱 heart love'},
+  {id:'laugh',label:'😂 笑哭',color:'#f9a825',keywords:'笑 大笑 哈哈 laugh lol'},
+  {id:'thumbsup',label:'👍 点赞',color:'#2e7d32',keywords:'点赞 赞 good thumbs up'},
+  {id:'celebrate',label:'🎉 庆祝',color:'#6a1b9a',keywords:'庆祝 派对 celebrate party'},
+  {id:'cool',label:'😎 酷',color:'#0277bd',keywords:'酷 cool sunglasses'},
+  {id:'thinking',label:'🤔 思考',color:'#4e342e',keywords:'思考 想 think hmm'},
+  {id:'wave',label:'👋 打招呼',color:'#00838f',keywords:'打招呼 嗨 wave hello hi'},
+  {id:'strong',label:'💪 强',color:'#bf360c',keywords:'强 力量 strong muscle'},
+  {id:'100',label:'💯 满分',color:'#e65100',keywords:'满分 100 perfect'},
+  {id:'sparkles',label:'✨ 闪亮',color:'#7c4dff',keywords:'闪亮 星星 sparkles shine'},
+  {id:'coffee',label:'☕ 咖啡',color:'#4e342e',keywords:'咖啡 茶 coffee tea'},
+  {id:'rocket',label:'🚀 起飞',color:'#1565c0',keywords:'起飞 火箭 rocket launch'},
+  {id:'eyes',label:'👀 关注',color:'#1b5e20',keywords:'关注 看 eyes watch'},
+  {id:'shrug',label:'🤷 无语',color:'#546e7a',keywords:'无语 耸肩 shrug idk'},
+  {id:'facepalm',label:'🤦 尴尬',color:'#6d4c41',keywords:'尴尬 facepalm'},
+  {id:'dance',label:'💃 跳舞',color:'#ad1457',keywords:'跳舞 舞蹈 dance'},
+  {id:'sleep',label:'😴 睡觉',color:'#283593',keywords:'睡觉 困 sleep zzz'},
+  {id:'angry',label:'😡 生气',color:'#b71c1c',keywords:'生气 angry mad'},
+];
+function initGifPicker(){
+  if(document.getElementById('gifPicker'))return;
+  const emojiPicker=document.getElementById('emojiPicker');
+  if(!emojiPicker)return;
+  const parent=emojiPicker.parentElement;
+  const picker=document.createElement('div');
+  picker.className='gif-picker';
+  picker.id='gifPicker';
+  picker.innerHTML=`
+    <input class="gif-search" placeholder="搜索 GIF" oninput="filterGifs(this.value,'gifGrid')">
+    <div class="gif-grid" id="gifGrid">${GIF_DATA.map(g=>`
+      <div class="gif-item" onclick="pickGif('${g.id}','modal')" data-keywords="${g.keywords}">
+        <div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:${g.color}22;font-size:36px">${g.label.split(' ')[0]}</div>
+        <div class="gif-item-label">${g.label.split(' ').slice(1).join(' ')}</div>
+      </div>
+    `).join('')}</div>
+  `;
+  parent.insertBefore(picker,emojiPicker);
+}
+function toggleGif(ctx){
+  // 关闭所有 emoji picker
+  document.querySelectorAll('.emoji-picker.active').forEach(p=>p.classList.remove('active'));
+  if(ctx==='home'){
+    const picker=document.getElementById('homeGifPicker');
+    if(picker)picker.classList.toggle('active');
+  }else{
+    initGifPicker();
+    const picker=document.getElementById('gifPicker');
+    if(picker)picker.classList.toggle('active');
+  }
+}
+function filterGifs(query,gridId){
+  const grid=document.getElementById(gridId||'gifGrid');
+  if(!grid)return;
+  const q=query.trim().toLowerCase();
+  grid.querySelectorAll('.gif-item').forEach(item=>{
+    const kw=item.dataset.keywords||'';
+    item.style.display=(!q||kw.includes(q))?'':'none';
+  });
+}
+function pickGif(id,ctx){
+  const gif=GIF_DATA.find(g=>g.id===id);
+  if(!gif)return;
+  let ta=_lastFocusedInput||document.querySelector('.cin:focus,.ri-textarea:focus,#modalText:focus');
+  if(ta){
+    const s=ta.selectionStart||ta.value.length;
+    const text=gif.label;
+    ta.value=ta.value.slice(0,s)+text+ta.value.slice(ta.selectionEnd||s);
+    ta.selectionStart=ta.selectionEnd=s+text.length;
+    ta.focus();
+    if(ta.id==='modalText')updateModalPostBtn();
+    if(ta.classList.contains('cin'))updateComposeBtn();
+  }
+  document.querySelectorAll('.gif-picker.active').forEach(p=>p.classList.remove('active'));
 }
 
 // ===== 回复范围 =====
@@ -4566,3 +4680,12 @@ function renderCookies(){
     </div>
   `;
 }
+
+// ===== INPUT FOCUS TRACKING =====
+// 跟踪最后聚焦的输入框，供表情/GIF插入使用
+document.addEventListener('focusin',function(e){
+  const el=e.target;
+  if(el&&(el.tagName==='TEXTAREA'||el.tagName==='INPUT')&&(el.classList.contains('cin')||el.classList.contains('ri-textarea')||el.id==='modalText')){
+    _lastFocusedInput=el;
+  }
+});
