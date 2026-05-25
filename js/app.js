@@ -2009,7 +2009,7 @@ function renderProfileReply(r){
   return `
     <div class="tweet reply-view">
       <div class="ta"><div class="av" style="background:${r.avatarBg}">${r.avatar}</div></div>
-      <div class="tb">
+      <div class="tbdy">
         <div class="th">
           <span class="tn">${r.name}</span>
           <span class="thandle">${r.handle}</span>
