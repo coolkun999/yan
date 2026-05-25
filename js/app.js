@@ -6,7 +6,7 @@ const state = {
   exploreTab: 'foryou',
   profileTab: 'posts',
   theme: 'dark',
-  user: { name:'王坤', handle:'@wangkun', bio:'我在中国 我是中国人，有没有交朋友', location:'中国 湖北', joinedDate:'2023年7月', followers:7, following:64, posts:392, liked:1562, verified:false },
+  user: { name:'王坤', handle:'@wangkun', bio:'我在中国 我是中国人，有没有交朋友', location:'中国 湖北', joinedDate:'2023年7月', followers:7, following:64, posts:392, liked:1562, verified:false }, // 兜底默认值，运行时优先使用 currentUser()
   notifCount: 3,
   currentUser: null,
   modalTweet: null,
@@ -438,6 +438,44 @@ function closeAuthModalAndRefresh(){
   // 刷新当前页面
   if(state && state.currentPage) navigate(state.currentPage);
 }
+// 相对时间格式化
+function formatTime(createdAt){
+  if(!createdAt) return '';
+  const now = Date.now();
+  const diff = now - createdAt;
+  if(diff < 60000) return '刚刚';
+  if(diff < 3600000) return Math.floor(diff/60000) + '分钟';
+  if(diff < 86400000) return Math.floor(diff/3600000) + '小时';
+  if(diff < 604800000) return Math.floor(diff/86400000) + '天';
+  const d = new Date(createdAt);
+  return (d.getMonth()+1) + '月' + d.getDate() + '日';
+}
+// 添加通知到 DB.notifications
+function addNotification(type, text, extra){
+  const u = currentUser();
+  if(!u) return;
+  // 从 FOLLOWERS_DATA 中随机选一个"通知来源"用户
+  const pool = (typeof FOLLOWERS_DATA!=='undefined') ? FOLLOWERS_DATA : [];
+  if(pool.length === 0) return;
+  const src = pool[Math.floor(Math.random()*pool.length)];
+  const notif = {
+    id: Date.now(),
+    type: type, // 'like','retweet','reply','follow','mention'
+    name: src.name,
+    handle: src.handle,
+    avatar: src.avatar,
+    avatarBg: src.avatarBg,
+    text: text,
+    time: '刚刚',
+    createdAt: Date.now(),
+    unread: true,
+    ...extra
+  };
+  DB.notifications.unshift(notif);
+  LS.save();
+  // 更新侧边栏通知徽章
+  if(typeof updateSidebarBadges === 'function') updateSidebarBadges();
+}
 function f(n){if(n>=10000)return(n/10000).toFixed(1)+'万';if(n>=1000)return(n/1000).toFixed(1)+'k';return n}
 function vSvg(){return'<svg viewBox="0 0 24 24"><path d="M20.884 13.19c-1.351 2.48-4.001 5.12-8.379 7.67l-.503.3-.504-.3c-4.379-2.55-7.029-5.19-8.382-7.67-1.36-2.5-1.41-4.86-.514-6.67.887-1.79 2.647-2.91 4.601-3.01 1.651-.09 3.368.56 4.798 2.01 1.429-1.45 3.146-2.1 4.796-2.01 1.954.1 3.714 1.22 4.601 3.01.896 1.81.846 4.17-.514 6.67z"/></svg>'}
 function vbSvg(){return'<svg viewBox="0 0 24 24"><path d="M4.5 3.88l4.432 4.14-1.364 1.46L5.5 7.55V16c0 1.1.896 2 2 2H13v2H7.5c-2.209 0-4-1.79-4-4V7.55L1.432 9.48.068 8.02 4.5 3.88z"/></svg>'}
@@ -468,7 +506,7 @@ function renderTweet(t, showReply=false){
         <span class="tn" onclick="event.stopPropagation();navigate('user','${t.handle}')">${t.name}</span>
         ${t.verified ? `<span class="vb"><svg viewBox="0 0 24 24"><path fill="var(--accent)" d="M20.396 11c-.018-.646-.215-1.275-.57-1.816-.354-.54-.852-.972-1.438-1.246.223-.607.27-1.264.14-1.897-.131-.634-.437-1.218-.882-1.687-.47-.445-1.053-.75-1.687-.882-.633-.13-1.29-.083-1.897.14-.273-.587-.704-1.086-1.245-1.44S11.647 1.62 11 1.604c-.646.017-1.273.213-1.813.568s-.969.854-1.24 1.441c-.608-.223-1.267-.272-1.902-.14-.635.13-1.22.436-1.69.882-.445.47-.749 1.055-.878 1.688-.13.633-.08 1.29.144 1.896-.587.274-1.087.705-1.443 1.245-.356.54-.555 1.17-.574 1.817.02.647.218 1.276.574 1.817.356.54.856.972 1.443 1.245-.224.606-.274 1.263-.144 1.896.13.634.433 1.218.877 1.688.47.443 1.054.747 1.687.878.633.132 1.29.084 1.897-.136.274.586.705 1.084 1.246 1.439.54.354 1.17.551 1.816.569.647-.016 1.276-.213 1.817-.567s.972-.854 1.245-1.44c.604.239 1.266.296 1.903.164.636-.132 1.22-.447 1.68-.907.46-.46.776-1.044.908-1.681s.075-1.299-.165-1.903c.586-.274 1.084-.705 1.439-1.246.354-.54.551-1.17.569-1.816z"/></svg></span>` : ''}
         <span class="thandle">${t.handle}</span>
-        <span class="tt">· ${t.time}</span>
+        <span class="tt">· ${formatTime(t.createdAt)}</span>
         <button class="more-btn" onclick="event.stopPropagation();openMoreMenu(${t.id},event)" style="position:relative"><svg viewBox="0 0 24 24"><path d="M3 12c0-1.1.9-2 2-2s2 .9 2 2-.9 2-2 2-2-.9-2-2zm9 2c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm7 0c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2z"/></svg></button>
       </div>
       <div class="ttxt">${formatTweetText(t.text)}</div>
@@ -488,7 +526,9 @@ function renderTweet(t, showReply=false){
 
 // 格式化推文文本
 function formatTweetText(text){
-  return text.replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n/g,'<br>').replace(/#(\S+)/g,'<a href="#" style="color:var(--accent)">#$1</a>').replace(/@(\S+)/g,'<a href="#" style="color:var(--accent)">@$1</a>');
+  return text.replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n/g,'<br>')
+    .replace(/#(\S+)/g,'<a href="#" onclick="event.preventDefault();event.stopPropagation();navigate(\'topic\',\'$1\')" style="color:var(--accent)">#$1</a>')
+    .replace(/@(\S+)/g,'<a href="#" onclick="event.preventDefault();event.stopPropagation();navigate(\'user\',\'@$1\')" style="color:var(--accent)">@$1</a>');
 }
 
 // ===== MEDIA RENDER =====
@@ -533,7 +573,7 @@ function renderQuoteTweet(quoteId){
         <span style="font-weight:700;font-size:13px">${qt.name}</span>
         ${qt.verified?'<span class="vb" style="transform:scale(.85)"><svg viewBox="0 0 24 24"><path fill="var(--accent)" d="M20.396 11c-.018-.646-.215-1.275-.57-1.816-.354-.54-.852-.972-1.438-1.246.223-.607.27-1.264.14-1.897-.131-.634-.437-1.218-.882-1.687-.47-.445-1.053-.75-1.687-.882-.633-.13-1.29-.083-1.897.14-.273-.587-.704-1.086-1.245-1.44S11.647 1.62 11 1.604c-.646.017-1.273.213-1.813.568s-.969.854-1.24 1.441c-.608-.223-1.267-.272-1.902-.14-.635.13-1.22.436-1.69.882-.445.47-.749 1.055-.878 1.688-.13.633-.08 1.29.144 1.896-.587.274-1.087.705-1.443 1.245-.356.54-.555 1.17-.574 1.817.02.647.218 1.276.574 1.817.356.54.856.972 1.443 1.245-.224.606-.274 1.263-.144 1.896.13.634.433 1.218.877 1.688.47.443 1.054.747 1.687.878.633.132 1.29.084 1.897-.136.274.586.705 1.084 1.246 1.439.54.354 1.17.551 1.816.569.647-.016 1.276-.213 1.817-.567s.972-.854 1.245-1.44c.604.239 1.266.296 1.903.164.636-.132 1.22-.447 1.68-.907.46-.46.776-1.044.908-1.681s.075-1.299-.165-1.903c.586-.274 1.084-.705 1.439-1.246.354-.54.551-1.17.569-1.816z"/></svg></span>':''}
         <span style="color:var(--text2);font-size:13px">${qt.handle}</span>
-        <span style="color:var(--text2);font-size:13px">· ${qt.time}</span>
+        <span style="color:var(--text2);font-size:13px">· ${formatTime(qt.createdAt)}</span>
       </div>
       <div style="font-size:14px;color:var(--text);line-height:1.5">${qt.text.length>120?qt.text.slice(0,120)+'...':qt.text}</div>
     </div>
@@ -613,6 +653,9 @@ function navigate(page, param){
     case 'help': renderHelp(); break;
     case 'premium': renderPremium(); break;
     case 'accessibility': renderAccessibility(); break;
+    case 'terms': renderTerms(); break;
+    case 'privacy': renderPrivacy(); break;
+    case 'cookies': renderCookies(); break;
     case 'listDetail': renderListDetail(param); break;
     default: renderHome();
   }
@@ -622,7 +665,7 @@ function navigate(page, param){
 // ===== HOME PAGE =====
 function renderHome(){
   const main = document.getElementById('mainContent');
-  const u = state.user;
+  const u = currentUser() || state.user;
   const forYouActive = state.homeTab !== 'following';
   main.innerHTML = `
     <div class="ct">
@@ -671,8 +714,8 @@ function renderHome(){
   initEmojiPicker();
 }
 
-function renderForYouFeed(){
-  const promoted = `
+function renderPromoCard(){
+  return `
     <div class="tweet" style="cursor:default">
       <div style="padding:0 16px 4px 52px;font-size:13px;color:var(--text2);display:flex;align-items:center;gap:6px">
         <svg width="14" height="14" fill="var(--text2)" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 15h-2v-2h2v2zm2.07-7.75l-.9.92C12.45 11.9 12 13.5 12 15h-2v-.5c0-1.1.45-2.1 1.17-2.83l1.24-1.26c.37-.36.59-.86.59-1.41 0-1.1-.9-2-2-2s-2 .9-2 2H8c0-2.21 1.79-4 4-4s4 1.79 4 4c0 .88-.36 1.68-.93 2.25z"/></svg>
@@ -682,13 +725,13 @@ function renderForYouFeed(){
         <div style="width:48px;height:48px;border-radius:12px;background:linear-gradient(135deg,#1a73e8,#4285f4);display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:900;color:#fff;flex-shrink:0">IB</div>
         <div style="flex:1;min-width:0">
           <div style="display:flex;align-items:center;gap:6px">
-            <span style="font-weight:700;font-size:15px">Interactive Brokers</span>
+            <span style="font-weight:700;font-size:15px">盈透证券</span>
             <span style="color:var(--text2);font-size:15px">@IBKR</span>
             <span style="color:var(--text2);font-size:15px">· 赞助</span>
           </div>
-          <div style="margin-top:4px;font-size:15px;line-height:1.6">choose Interactive Brokers<br>Sign up for a free trial today!</div>
+          <div style="margin-top:4px;font-size:15px;line-height:1.6">选择盈透证券，全球交易一站式服务<br>立即注册，享受免费试用！</div>
           <div style="margin-top:8px;padding:12px;border:1px solid var(--border);border-radius:12px">
-            <div style="font-size:14px;color:var(--text2)">Interactive Brokers Hong Kong Ltd is regulated by the SFC. Your capital is at risk.</div>
+            <div style="font-size:14px;color:var(--text2)">盈透证券香港有限公司受香港证监会监管。投资有风险，入市需谨慎。</div>
             <div style="margin-top:4px;font-size:13px;color:var(--text2)">来自 interactivebrokers.com.hk</div>
           </div>
           <div class="tactions" style="margin-top:12px">
@@ -700,6 +743,10 @@ function renderForYouFeed(){
         </div>
       </div>
     </div>`;
+}
+
+function renderForYouFeed(){
+  const promoted = renderPromoCard();
 
   // 分页加载：获取当前页的数据
   const start = 0;
@@ -711,7 +758,13 @@ function renderForYouFeed(){
 }
 
 function renderFollowingFeed(){
-  const followingTweets = DB.tweets.filter(t => t.handle === '@linxiaoyu' || t.handle === '@techdaily');
+  // 读取 FOLLOWING_DATA 中的关注用户 handle 列表
+  const followingHandles = (typeof FOLLOWING_DATA !== 'undefined') ?
+    FOLLOWING_DATA.filter(u => u.following).map(u => u.handle) :
+    ['@linxiaoyu', '@techdaily']; // 兜底
+  // 也包含当前用户自己的帖子
+  const myHandle = isLoggedIn() ? currentUser().handle : '@wangkun';
+  const followingTweets = DB.tweets.filter(t => followingHandles.includes(t.handle) || t.handle === myHandle);
   if(followingTweets.length === 0){
     return `<div class="empty-state"><svg viewBox="0 0 24 24"><path d="M5.651 19h12.698c-.337-1.8-1.023-3.21-1.945-4.19C15.318 13.65 13.838 13 12 13s-3.317.65-4.404 1.81c-.922.98-1.608 2.39-1.945 4.19z"/></svg><h3>还没有内容</h3><p>关注更多用户，在这里看到他们的帖子</p></div>`;
   }
@@ -750,35 +803,7 @@ function loadMoreHome(){
 
     const feed = document.getElementById('homeFeed');
     if(feed){
-      // 创建新的推广内容
-      const promotedHTML = `
-        <div class="tweet" style="cursor:default">
-          <div style="padding:0 16px 4px 52px;font-size:13px;color:var(--text2);display:flex;align-items:center;gap:6px">
-            <svg width="14" height="14" fill="var(--text2)" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 15h-2v-2h2v2zm2.07-7.75l-.9.92C12.45 11.9 12 13.5 12 15h-2v-.5c0-1.1.45-2.1 1.17-2.83l1.24-1.26c.37-.36.59-.86.59-1.41 0-1.1-.9-2-2-2s-2 .9-2 2H8c0-2.21 1.79-4 4-4s4 1.79 4 4c0 .88-.36 1.68-.93 2.25z"/></svg>
-            <span>推广内容</span>
-          </div>
-          <div style="display:flex;gap:12px;padding:0 16px 12px">
-            <div style="width:48px;height:48px;border-radius:12px;background:linear-gradient(135deg,#1a73e8,#4285f4);display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:900;color:#fff;flex-shrink:0">IB</div>
-            <div style="flex:1;min-width:0">
-              <div style="display:flex;align-items:center;gap:6px">
-                <span style="font-weight:700;font-size:15px">Interactive Brokers</span>
-                <span style="color:var(--text2);font-size:15px">@IBKR</span>
-                <span style="color:var(--text2);font-size:15px">· 赞助</span>
-              </div>
-              <div style="margin-top:4px;font-size:15px;line-height:1.6">choose Interactive Brokers<br>Sign up for a free trial today!</div>
-              <div style="margin-top:8px;padding:12px;border:1px solid var(--border);border-radius:12px">
-                <div style="font-size:14px;color:var(--text2)">Interactive Brokers Hong Kong Ltd is regulated by the SFC. Your capital is at risk.</div>
-                <div style="margin-top:4px;font-size:13px;color:var(--text2)">来自 interactivebrokers.com.hk</div>
-              </div>
-              <div class="tactions" style="margin-top:12px">
-                <button class="ab"><svg viewBox="0 0 24 24"><path d="M1.751 10c0-1.381 1.119-2.5 2.5-2.5h15c1.381 0 2.5 1.119 2.5 2.5v13c0 1.381-1.119 2.5-2.5 2.5h-15c-1.381 0-2.5-1.119-2.5-2.5v-13z"/></svg><span class="ac">12</span></button>
-                <button class="ab"><svg viewBox="0 0 24 24"><path d="M4.5 3.88l4.432 4.14-1.364 1.46L5.5 7.55V16c0 1.1.896 2 2 2H13v2H7.5c-2.209 0-4-1.79-4-4V7.55L1.432 9.48.068 8.02 4.5 3.88z"/></svg><span class="ac">9</span></button>
-                <button class="ab"><svg viewBox="0 0 24 24"><path d="M16.697 5.5c-1.222-.06-2.679.51-3.89 2.16l-.805 1.09-.806-1.09C9.984 6.01 8.526 5.44 7.304 5.5c-1.243.07-2.349.78-2.91 1.91-.552 1.12-.633 2.78.479 4.82 1.074 1.97 3.257 4.27 7.129 6.61 3.87-2.34 6.052-4.64 7.126-6.61 1.111-2.04 1.03-3.7.477-4.82-.561-1.13-1.666-1.84-2.908-1.91z"/></svg><span class="ac">182</span></button>
-                <button class="ab"><svg viewBox="0 0 24 24"><path d="M8.75 21V3h2v18h-2zM18 21V8.5h2V21h-2zM4 21l.004-10h2L6 21H4zm9.248 0v-7h2v7h-2z"/></svg><span class="ac">408万</span></button>
-              </div>
-            </div>
-          </div>
-        </div>`;
+      const promotedHTML = renderPromoCard();
 
       const allTweetsHTML = pageTweets.map(t=>renderTweet(t)).join('');
       const loadMoreHTML = renderLoadMoreBtn('home');
@@ -823,7 +848,7 @@ function homePost(){
   if(!v && !hasMedia) return;
   const viewsOptions=['15','28','47','89','124','203'];
   const u = currentUser() || {};
-  const t = {id:Date.now(),name:u.name||'用户',handle:u.handle||'@user',verified:u.verified||false,time:"刚刚",text:v,avatar:(u.name||'用').slice(0,1),avatarBg:u.avatarBg||"linear-gradient(135deg,#667eea,#764ba2)",likes:0,retweets:0,replies:0,views:viewsOptions[Math.floor(Math.random()*viewsOptions.length)],liked:false,retweeted:false,bookmarked:false};
+  const t = {id:Date.now(),name:u.name||'用户',handle:u.handle||'@user',verified:u.verified||false,time:"刚刚",createdAt:Date.now(),text:v,avatar:(u.name||'用').slice(0,1),avatarBg:u.avatarBg||"linear-gradient(135deg,#667eea,#764ba2)",likes:0,retweets:0,replies:0,views:viewsOptions[Math.floor(Math.random()*viewsOptions.length)],liked:false,retweeted:false,bookmarked:false};
   if(state.composeMedia && state.composeMedia.length > 0){
     t.media = state.composeMedia.map(m=>({url:m.url}));
   }
@@ -831,7 +856,7 @@ function homePost(){
   u.posts = (u.posts||0) + 1;
   // 持久化更新后的用户数据
   const allUsers = JSON.parse(localStorage.getItem('yan_auth_users')||'{}');
-  if(allUsers[u.id]){ allUsers[u.id].posts = u.posts; localStorage.setItem('yan_auth_users', JSON.stringify(allUsers)); }
+  if(allUsers[u.identifier]){ allUsers[u.identifier].posts = u.posts; localStorage.setItem('yan_auth_users', JSON.stringify(allUsers)); }
   document.getElementById('homeCompose').value = '';
   document.getElementById('homePostBtn').disabled = true;
   clearComposeMedia();
@@ -1182,7 +1207,7 @@ function renderNotifItem(notif){
           <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
             <span style="font-weight:700;font-size:15px">${notif.name}</span>
             <span style="color:var(--text2);font-size:15px">${notif.handle}</span>
-            <span style="color:var(--text2);font-size:15px">· ${notif.time}</span>
+            <span style="color:var(--text2);font-size:15px">· ${formatTime(notif.createdAt||notif.time)}</span>
           </div>
           <div class="ntext">${notif.text}</div>
           ${notif.target?`<div class="ntarget">${notif.target}</div>`:''}
@@ -1407,6 +1432,7 @@ function sendMsg(){
 // ===== BOOKMARKS =====
 function renderBookmarks(){
   const main = document.getElementById('mainContent');
+  const u = currentUser() || state.user;
   main.innerHTML = `
     <div class="ct">
       <div class="main-header" style="justify-content:space-between">
@@ -1414,7 +1440,7 @@ function renderBookmarks(){
           <button class="back-btn" onclick="navigate('home')"><svg viewBox="0 0 24 24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg></button>
           <div>
             <div class="page-title">书签</div>
-            <div style="font-size:13px;color:var(--text2)">${state.user.handle}</div>
+            <div style="font-size:13px;color:var(--text2)">${u.handle}</div>
           </div>
         </div>
         ${DB.bookmarks.length>0?`<button class="back-btn" style="display:flex;color:var(--accent)" onclick="clearAllBookmarks()" title="清除所有书签">
@@ -1886,7 +1912,7 @@ function toggleAccount(){
 
 // ===== PROFILE =====
 function renderProfile(){
-  const u = state.user;
+  const u = currentUser() || state.user;
   const tab = state.profileTab;
   const main = document.getElementById('mainContent');
   const tabs = [
@@ -1951,7 +1977,7 @@ function renderProfile(){
     <div class="profile-header">
       <div class="profile-cover" onclick="changeProfileCover(this)" style="cursor:pointer" title="点击更换封面"></div>
       <div class="profile-avatar-wrap">
-        <div class="profile-avatar" onclick="changeProfileAvatar(this)" style="cursor:pointer" title="点击更换头像">${(state.user.name||'用').slice(0,1)}</div>
+        <div class="profile-avatar" onclick="changeProfileAvatar(this)" style="cursor:pointer" title="点击更换头像">${(u.name||'用').slice(0,1)}</div>
       </div>
       <button class="profile-edit-btn" onclick="openEditProfileModal()">编辑个人资料</button>
     </div>
@@ -1988,7 +2014,7 @@ function renderProfileReply(r){
           <span class="tn">${r.name}</span>
           <span class="thandle">${r.handle}</span>
           <span class="tdot">·</span>
-          <span class="ttime">${r.time}</span>
+          <span class="ttime">${formatTime(r.createdAt||r.time)}</span>
         </div>
         <div class="reply-to-line" style="color:var(--text2);font-size:13px;margin:2px 0 4px">回复 <span style="color:var(--accent)">${parent.handle}</span></div>
         <div class="ttext">${r.text}</div>
@@ -2102,8 +2128,11 @@ function switchUserProfileTab(el, tab, handle){
 }
 function toggleUserFollow(handle,btn){
   const text = btn.textContent.trim();
+  const isNowFollowing = text !== '正在关注';
   if(text==='关注'){btn.textContent='正在关注';btn.classList.add('following');btn.classList.remove('fbtn');btn.style.cssText='background:transparent;color:var(--text);border:1px solid var(--border);border-radius:9999px;padding:7px 18px;font-size:14px;font-weight:700'}
   else{btn.textContent='关注';btn.classList.remove('following');btn.style.cssText=''}
+  // 持久化关注状态
+  saveFollowState(handle, isNowFollowing);
 }
 function sendMsgToUser(handle){
   const cleanHandle = handle.replace('@','');
@@ -2144,7 +2173,7 @@ function renderPostDetail(id){
             <div class="th">
               <span class="tn">${r.name}</span>
               <span class="thandle">${r.handle}</span>
-              <span class="tt">· ${r.time}</span>
+              <span class="tt">· ${formatTime(r.createdAt||r.time)}</span>
             </div>
             <div class="ttxt">${r.text}</div>
             <div class="tactions">
@@ -2161,15 +2190,19 @@ function submitMainReply(id){
   const text = document.getElementById('replyTextMain').value.trim();
   if(!text) return;
   if(!DB.replies[id]) DB.replies[id]=[];
-  const r = {id:Date.now(),replyTo:id,name:currentUser()?.name||'用户',handle:currentUser()?.handle||'@user',avatar:(currentUser()?.name||'用').slice(0,1),avatarBg:currentUser()?.avatarBg||'linear-gradient(135deg,#667eea,#764ba2)',time:'刚刚',text,likes:0,liked:false};
+  const r = {id:Date.now(),replyTo:id,name:currentUser()?.name||'用户',handle:currentUser()?.handle||'@user',avatar:(currentUser()?.name||'用').slice(0,1),avatarBg:currentUser()?.avatarBg||'linear-gradient(135deg,#667eea,#764ba2)',time:'刚刚',createdAt:Date.now(),text,likes:0,liked:false};
   DB.replies[id].push(r);
   const t = DB.tweets.find(x=>x.id===id);
   if(t) t.replies++;
   LS.save();
+  // 模拟收到回复通知
+  if(t && t.handle !== (currentUser()||{}).handle){
+    addNotification('reply','回复了你的帖子：'+(text.length>20?text.slice(0,20)+'...':text),{target:t.text.length>20?t.text.slice(0,20)+'...':t.text,tweetId:t.id});
+  }
   const area = document.getElementById('repliesArea');
   const div = document.createElement('div');
   div.className='reply-item';
-  div.innerHTML=`<div class="ta" style="background:${r.avatarBg};width:36px;height:36px;font-size:14px">${r.avatar}</div><div class="tbdy"><div class="th"><span class="tn">${r.name}</span><span class="thandle">${r.handle}</span><span class="tt">· ${r.time}</span></div><div class="ttxt">${r.text}</div><div class="tactions"><button class="ab" onclick="doLikeReply(${r.id},${id},this)">${vSvg()}<span class="ac">0</span></button></div></div>`;
+  div.innerHTML=`<div class="ta" style="background:${r.avatarBg};width:36px;height:36px;font-size:14px">${r.avatar}</div><div class="tbdy"><div class="th"><span class="tn">${r.name}</span><span class="thandle">${r.handle}</span><span class="tt">· ${formatTime(r.createdAt||r.time)}</span></div><div class="ttxt">${r.text}</div><div class="tactions"><button class="ab" onclick="doLikeReply(${r.id},${id},this)">${vSvg()}<span class="ac">0</span></button></div></div>`;
   area.appendChild(div);
   document.getElementById('replyTextMain').value='';
 }
@@ -2284,9 +2317,24 @@ function setTheme(theme,el){
 }
 
 // ===== SEARCH =====
+let _searchTab = 'all';
 function renderSearch(q=''){
   const main = document.getElementById('mainContent');
-  const results = q?DB.tweets.filter(t=>t.text.includes(q)||t.name.includes(q)||t.handle.includes(q)):[];
+  const tweetResults = q ? DB.tweets.filter(t=>t.text.includes(q)||t.name.includes(q)||t.handle.includes(q)) : [];
+  // 增强搜索：同时搜索用户和话题
+  const allUserData = [...(typeof FOLLOWING_DATA!=='undefined'?FOLLOWING_DATA:[]), ...(typeof FOLLOWERS_DATA!=='undefined'?FOLLOWERS_DATA:[]), ...DB.likersList];
+  // 去重
+  const seenHandles = new Set();
+  const uniqueUsers = [];
+  allUserData.forEach(u => { if(!seenHandles.has(u.handle)){ seenHandles.add(u.handle); uniqueUsers.push(u); } });
+  const userResults = q ? uniqueUsers.filter(u=>u.name.includes(q)||u.handle.toLowerCase().includes(q.toLowerCase())||(u.bio&&u.bio.includes(q))) : [];
+  const topicResults = q && typeof TOPICS_DATA!=='undefined' ? TOPICS_DATA.filter(t=>t.name.includes(q)) : [];
+  const hasResults = tweetResults.length > 0 || userResults.length > 0 || topicResults.length > 0;
+  const totalCount = tweetResults.length + userResults.length + topicResults.length;
+  // 根据 tab 过滤显示
+  const tabTweets = _searchTab==='all'||_searchTab==='tweets' ? tweetResults : [];
+  const tabUsers = _searchTab==='all'||_searchTab==='users' ? userResults : [];
+  const tabTopics = _searchTab==='all'||_searchTab==='topics' ? topicResults : [];
   main.innerHTML = `
     <div class="ct">
       <div class="main-header">
@@ -2301,9 +2349,45 @@ function renderSearch(q=''){
         </div>
       </div>
     </div>
-    ${q?`<div style="padding:12px 16px;font-size:14px;color:var(--text2)">"${q}" 的搜索结果 · ${results.length} 条</div>`:''}
-    ${q&&results.length===0?'<div class="empty-state"><h3>未找到结果</h3><p>试试其他关键词</p></div>':
-      (q?results.map(t=>renderTweet(t)).join(''):
+    ${q?`
+      <div style="padding:12px 16px;font-size:14px;color:var(--text2)">"${q}" 的搜索结果 · ${totalCount} 条</div>
+      <div class="tab-row" style="padding:0 16px;border-bottom:1px solid var(--border)">
+        <div class="tab ${_searchTab==='all'?'active':''}" onclick="_searchTab='all';renderSearch('${q.replace(/'/g,"\\'")}')">全部${totalCount>0?' · '+totalCount:''}</div>
+        <div class="tab ${_searchTab==='users'?'active':''}" onclick="_searchTab='users';renderSearch('${q.replace(/'/g,"\\'")}')">用户${userResults.length>0?' · '+userResults.length:''}</div>
+        <div class="tab ${_searchTab==='topics'?'active':''}" onclick="_searchTab='topics';renderSearch('${q.replace(/'/g,"\\'")}')">话题${topicResults.length>0?' · '+topicResults.length:''}</div>
+        <div class="tab ${_searchTab==='tweets'?'active':''}" onclick="_searchTab='tweets';renderSearch('${q.replace(/'/g,"\\'")}')">帖子${tweetResults.length>0?' · '+tweetResults.length:''}</div>
+      </div>
+    `:''}
+    ${q&&!hasResults?'<div class="empty-state"><h3>未找到结果</h3><p>试试其他关键词</p></div>':
+      (q?`
+        ${tabUsers.length>0?`
+          <div style="padding:12px 16px 8px;font-size:15px;font-weight:700">用户</div>
+          ${tabUsers.slice(0, _searchTab==='users'?50:5).map(u=>`
+            <div class="fi" style="padding:12px 16px;cursor:pointer" onclick="navigate('user','${u.handle}')">
+              <div class="fa" style="background:${u.avatarBg};width:44px;height:44px;font-size:16px">${u.avatar}</div>
+              <div class="fi-info">
+                <div class="fi-name">${u.name}${u.verified?'<span style="color:var(--accent);display:inline-flex"><svg width="14" height="14" viewBox="0 0 24 24"><path fill="var(--accent)" d="M20.396 11c-.018-.646-.215-1.275-.57-1.816-.354-.54-.852-.972-1.438-1.246.223-.607.27-1.264.14-1.897-.131-.634-.437-1.218-.882-1.687-.47-.445-1.053-.75-1.687-.882-.633-.13-1.29-.083-1.897.14-.273-.587-.704-1.086-1.245-1.44S11.647 1.62 11 1.604c-.646.017-1.273.213-1.813.568s-.969.854-1.24 1.441c-.608-.223-1.267-.272-1.902-.14-.635.13-1.22.436-1.69.882-.445.47-.749 1.055-.878 1.688-.13.633-.08 1.29.144 1.896-.587.274-1.087.705-1.443 1.245-.356.54-.555 1.17-.574 1.817.02.647.218 1.276.574 1.817.356.54.856.972 1.443 1.245-.224.606-.274 1.263-.144 1.896.13.634.433 1.218.877 1.688.47.443 1.054.747 1.687.878.633.132 1.29.084 1.897-.136.274.586.705 1.084 1.246 1.439.54.354 1.17.551 1.816.569.647-.016 1.276-.213 1.817-.567s.972-.854 1.245-1.44c.604.239 1.266.296 1.903.164.636-.132 1.22-.447 1.68-.907.46-.46.776-1.044.908-1.681s.075-1.299-.165-1.903c.586-.274 1.084-.705 1.439-1.246.354-.54.551-1.17.569-1.816z"/></svg></span>':''}</div>
+                <div class="fi-handle">${u.handle}</div>
+                ${u.bio?`<div style="font-size:13px;color:var(--text2);margin-top:2px">${u.bio.length>60?u.bio.slice(0,60)+'...':u.bio}</div>`:''}
+              </div>
+            </div>
+          `).join('')}
+        `:''}
+        ${tabTopics.length>0?`
+          <div style="padding:12px 16px 8px;font-size:15px;font-weight:700">话题</div>
+          ${tabTopics.slice(0, _searchTab==='topics'?50:5).map(t=>`
+            <div class="trend-item" style="padding:16px;cursor:pointer" onclick="navigate('topic','${t.name}')">
+              <div style="font-size:20px;margin-bottom:4px">${t.icon||''}</div>
+              <div class="tn2" style="font-size:15px">${t.name}</div>
+              <div class="tc">${t.posts} 条帖子</div>
+            </div>
+          `).join('')}
+        `:''}
+        ${tabTweets.length>0?`
+          <div style="padding:12px 16px 8px;font-size:15px;font-weight:700">帖子</div>
+          ${tabTweets.map(t=>renderTweet(t)).join('')}
+        `:''}
+      `:
       `<div class="empty-state"><h3>搜索「言」</h3><p>输入关键词搜索帖子、用户或话题</p></div>
       ${state.searchHistory&&state.searchHistory.length>0?`<div style="padding:12px 16px"><div style="display:flex;justify-content:space-between;align-items:center;padding:0 0 12px"><div style="font-size:15px;font-weight:700">搜索历史</div><button onclick="state.searchHistory=[];renderSearch()" style="background:none;border:none;color:var(--accent);cursor:pointer;font-size:13px">清除</button></div>${state.searchHistory.map(k=>`<div style="display:flex;align-items:center;gap:12px;padding:8px 0;border-bottom:1px solid var(--border)"><svg viewBox="0 0 24 24" width="16" height="16" fill="var(--text2)"><path d="M13.5 5.5c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zM9.8 8.9L7 23h2.1l1.8-8 2.1 2v6h2v-7.5l-2.1-2 .6-3C14.8 12 16.8 13 19 13v-2c-1.9 0-3.5-1-4.3-2.4l-1-1.6c-.4-.6-1-1-1.7-1-.3 0-.5.1-.8.1L6 8.3V13h2V9.6l1.8-.7"/></svg><span style="flex:1;cursor:pointer" onclick="document.getElementById('searchInput').value='${k}';navigate('search','${k}')">${k}</span><button onclick="event.stopPropagation();state.searchHistory=state.searchHistory.filter(h=>h!=='${k}');renderSearch()" style="background:none;border:none;color:var(--text2);cursor:pointer">✕</button></div>`).join('')}</div>`:''}
       <div style="padding:12px 16px"><div class="wt" style="padding:0 0 12px">推荐搜索</div>
@@ -2319,6 +2403,7 @@ function doSearch(q){
   // 实时搜索：300ms 防抖，输入少于2字不触发
   clearTimeout(_searchTimer);
   if(q.length < 2){ if(state.currentPage==='search') navigate('search',''); return; }
+  _searchTab = 'all'; // 新搜索重置 tab
   _searchTimer = setTimeout(()=>{
     if(!state.searchHistory) state.searchHistory = [];
     state.searchHistory = state.searchHistory.filter(h=>h!==q);
@@ -2663,6 +2748,8 @@ function toggleFollowItem(btn,handle){
   const allUsers = [...FOLLOWING_DATA, ...FOLLOWERS_DATA];
   const user = allUsers.find(u=>u.handle===handle);
   if(user) user.following=!user.following;
+  // 持久化关注状态到 LocalStorage
+  saveFollowState(handle, user ? user.following : false);
   if(btn.classList.contains('following')){
     btn.classList.remove('following');
     btn.classList.add('fbtn');
@@ -2674,6 +2761,24 @@ function toggleFollowItem(btn,handle){
     btn.style.cssText='background:transparent;color:var(--text);border:1px solid var(--border);border-radius:9999px;padding:7px 18px;font-size:14px;font-weight:700';
     btn.onmouseout=function(){this.style.cssText='background:transparent;color:var(--text);border:1px solid var(--border);border-radius:9999px;padding:7px 18px;font-size:14px;font-weight:700'};
   }
+}
+// 关注状态持久化
+function saveFollowState(handle, following){
+  const key = 'yan_follow_state';
+  let states = {};
+  try { states = JSON.parse(localStorage.getItem(key)) || {}; } catch(e) {}
+  states[handle] = following;
+  localStorage.setItem(key, JSON.stringify(states));
+}
+function loadFollowStates(){
+  const key = 'yan_follow_state';
+  try {
+    const states = JSON.parse(localStorage.getItem(key)) || {};
+    // 应用到 FOLLOWING_DATA 和 FOLLOWERS_DATA
+    [...FOLLOWING_DATA, ...FOLLOWERS_DATA].forEach(u => {
+      if(states[u.handle] !== undefined) u.following = states[u.handle];
+    });
+  } catch(e) {}
 }
 
 // ===== LIKERS LIST =====
@@ -2749,6 +2854,10 @@ function closeLikersModal(){
 function toggleLikerFollow(btn,handle){
   const user = DB.likersList.find(u=>u.handle===handle);
   if(user) user.following=!user.following;
+  // 持久化关注状态到 LocalStorage
+  if(typeof saveFollowState === 'function'){
+    saveFollowState(handle, user ? user.following : false);
+  }
   if(btn.classList.contains('following')){
     btn.classList.remove('following');
     btn.classList.add('fbtn');
@@ -2806,7 +2915,13 @@ function handleAuth(){
     const p = document.getElementById('loginPass').value;
     if(!u||!p){err.style.display='block';err.textContent='请填写所有字段';return}
     err.style.display='none';
-    state.currentUser={name:'王坤',handle:'@wangkun'};
+    // 使用 auth.js 的登录逻辑
+    // auth 页面目前只有密码字段，统一走密码验证（type='email'）
+    // 手机号注册时也存储了密码，所以密码校验对两种账号都适用
+    const result = authLogin(u, p, 'email');
+    if(!result.ok){err.style.display='block';err.textContent=result.msg;return}
+    // 登录成功，恢复侧边栏
+    restoreAuthUI(result.user);
     navigate('home');
   } else {
     const name = document.getElementById('regName').value.trim();
@@ -2816,13 +2931,74 @@ function handleAuth(){
     if(!name||!handle||!email||!pass){err.style.display='block';err.textContent='请填写所有字段';return}
     if(pass.length<8){err.style.display='block';err.textContent='密码至少8位';return}
     err.style.display='none';
-    state.currentUser={name,handle:'@'+handle};
+    // 使用 auth.js 的注册逻辑
+    const result = authRegister(email, pass, 'email', name);
+    if(!result.ok){err.style.display='block';err.textContent=result.msg;return}
+    // 注册成功后，将用户输入的 handle 覆盖 genHandle 生成的默认值
+    if(handle && handle.trim()){
+      const userHandle = handle.trim().startsWith('@') ? handle.trim() : '@' + handle.trim();
+      updateCurrentUser({ handle: userHandle });
+      result.user.handle = userHandle;
+    }
+    // 注册成功，恢复侧边栏
+    restoreAuthUI(result.user);
     navigate('home');
   }
 }
+function restoreAuthUI(user){
+  // 恢复侧边栏和右侧栏显示
+  document.getElementById('sidebar').style.display='';
+  document.getElementById('sidebarRight').style.display='';
+  // 退出 auth 页面
+  const auth = document.getElementById('authPage');
+  if(auth) auth.classList.remove('active');
+  // 更新侧边栏用户菜单
+  const guestMenu = document.getElementById('guestMenu');
+  if(guestMenu){
+    guestMenu.outerHTML = `
+    <div class="user-menu" id="userMenu" onclick="toggleUserDropdown(event)">
+      <div class="av" style="background:${user.avatarBg||'linear-gradient(135deg,#667eea,#764ba2)'}">${(user.name||'用').slice(0,1)}</div>
+      <div class="user-menu-text" style="flex:1;min-width:0">
+        <div class="un">${user.name||'用户'}</div>
+        <div class="uh">${user.handle||'@user'}</div>
+      </div>
+      <div class="dots">···</div>
+    </div>`;
+  }
+  // 发帖按钮改为已登录模式
+  const postBtn = document.querySelector('.post-btn');
+  if(postBtn) postBtn.onclick = function(){ openPostModal(); };
+  // 同步更新 state.user 为当前用户信息
+  Object.assign(state.user, {
+    identifier: user.identifier || state.user.identifier,
+    name: user.name || state.user.name,
+    handle: user.handle || state.user.handle,
+    avatarBg: user.avatarBg || state.user.avatarBg,
+    bio: user.bio || state.user.bio,
+    location: user.location || state.user.location,
+    verified: user.verified || false,
+    followers: user.followers || 0,
+    following: user.following || 0,
+    posts: user.posts || 0,
+    liked: user.liked || 0
+  });
+}
 function handleGoogleAuth(){
-  state.currentUser={name:'王坤',handle:'@wangkun'};
-  navigate('home');
+  // 模拟 Google OAuth：直接通过 session 机制登录
+  // 每次生成唯一的 Google 模拟账号
+  const googleId = 'google_' + Date.now() + '@yan.com';
+  const result = authRegister(googleId, 'google_oauth_' + Date.now(), 'email', 'Google 用户');
+  if(result.ok){
+    restoreAuthUI(result.user);
+    navigate('home');
+  } else {
+    // 如果注册失败（不太可能，因为 ID 带 timestamp），尝试登录管理员账号
+    const fallback = authLogin('admin@yan.com', 'admin888', 'email');
+    if(fallback.ok){
+      restoreAuthUI(fallback.user);
+      navigate('home');
+    }
+  }
 }
 
 // ===== INTERACTIONS =====
@@ -2836,6 +3012,10 @@ function doLike(id,btn){
   btn.classList.toggle('liked',t.liked);
   const lk=document.getElementById('lk-'+id);
   if(lk)lk.textContent=f(t.likes);
+  // 模拟收到点赞通知（点赞别人的帖子时，模拟有人也赞了你的帖子）
+  if(t.liked && t.handle !== (currentUser()||{}).handle){
+    addNotification('like','赞了你的帖子',{target:t.text.length>20?t.text.slice(0,20)+'...':t.text,tweetId:t.id});
+  }
 }
 function doRetweet(id,btn){
   if(!requireLogin()) return;
@@ -2866,6 +3046,10 @@ function doNormalRetweet(id){
   t.retweeted=!t.retweeted;
   t.retweets+=t.retweeted?1:-1;
   LS.save();
+  // 模拟收到转帖通知
+  if(t.retweeted && t.handle !== (currentUser()||{}).handle){
+    addNotification('retweet','转帖了你的帖子',{target:t.text.length>20?t.text.slice(0,20)+'...':t.text,tweetId:t.id});
+  }
   // 刷新当前页面以更新UI
   if(state.currentPage==='home')renderHome();
   else if(state.currentPage==='post')renderPostDetail(id);
@@ -2922,6 +3106,10 @@ function submitQuoteRetweet(){
 function toggleFollow(btn){
   if(!requireLogin()) return;
   const isFollowing = btn.textContent.trim() === '正在关注';
+  // 尝试获取对应的 handle（从最近的 .fi 元素中的 handle 数据）
+  const fiEl = btn.closest('.fi');
+  const handleEl = fiEl ? fiEl.querySelector('.fi-handle') : null;
+  const handle = handleEl ? handleEl.textContent.trim() : null;
   if(isFollowing){
     btn.textContent = '关注';
     btn.classList.remove('following');
@@ -2930,6 +3118,11 @@ function toggleFollow(btn){
     btn.textContent = '正在关注';
     btn.classList.add('following');
     btn.style.cssText = 'background:transparent;color:var(--text);border:1px solid var(--border);border-radius:9999px;padding:7px 18px;font-size:14px;font-weight:700';
+    btn.onmouseout=function(){this.style.cssText='background:transparent;color:var(--text);border:1px solid var(--border);border-radius:9999px;padding:7px 18px;font-size:14px;font-weight:700'};
+  }
+  // 持久化关注状态到 LocalStorage
+  if(handle && typeof saveFollowState === 'function'){
+    saveFollowState(handle, !isFollowing);
   }
 }
 function openReplyModal(id){
@@ -2997,6 +3190,7 @@ function submitPost(){
       handle:u.handle||'@user',
       verified:u.verified||false,
       time:'刚刚',
+      createdAt:Date.now(),
       text:v,
       avatar:(u.name||'用').slice(0,1),
       avatarBg:u.avatarBg||'linear-gradient(135deg,#667eea,#764ba2)',
@@ -3011,7 +3205,7 @@ function submitPost(){
     u.posts = (u.posts||0) + 1;
     // 持久化更新后的用户数据
     const allUsers = JSON.parse(localStorage.getItem('yan_auth_users')||'{}');
-    if(allUsers[u.id]){ allUsers[u.id].posts = u.posts; localStorage.setItem('yan_auth_users', JSON.stringify(allUsers)); }
+    if(allUsers[u.identifier]){ allUsers[u.identifier].posts = u.posts; localStorage.setItem('yan_auth_users', JSON.stringify(allUsers)); }
     LS.save();
   }
   closePostModal();
@@ -3441,7 +3635,7 @@ function toggleSwitch(el){
 
 // ===== EDIT PROFILE MODAL =====
 function openEditProfileModal(){
-  const u = state.user;
+  const u = currentUser() || state.user;
   const overlay = document.createElement('div');
   overlay.className='modal-overlay';
   overlay.id='editProfileModal';
@@ -3495,9 +3689,14 @@ function saveProfile(){
   const bio = document.getElementById('editBio').value.trim();
   const location = document.getElementById('editLocation').value.trim();
   if(!name) return;
+  // 更新 state.user（兜底）
   state.user.name = name;
   state.user.bio = bio;
   state.user.location = location;
+  // 同步更新 auth.js 中的当前用户
+  if(isLoggedIn() && typeof updateCurrentUser === 'function'){
+    updateCurrentUser({ name, bio, location });
+  }
   LS.save();
   closeEditProfileModal();
   renderProfile();
@@ -3778,7 +3977,7 @@ function createSpace(btn){
   const inputs = container.querySelectorAll('input');
   const title = inputs[0]?.value?.trim()||'我的直播空间';
   const maxId = SPACES_DATA.length>0?Math.max(...SPACES_DATA.map(s=>s.id))+1:1;
-  SPACES_DATA.unshift({id:maxId,title,host:state.user.name,listeners:0,live:true,duration:'00:00',speakers:[state.user.name]});
+  SPACES_DATA.unshift({id:maxId,title,host:(currentUser()||state.user).name,listeners:0,live:true,duration:'00:00',speakers:[(currentUser()||state.user).name]});
   closeMoreMenu();
   showToast(`「${title}」已开始直播！`);
   navigate('spaces');
@@ -3876,15 +4075,37 @@ function handleMediaPick(e){
   files.forEach(file => {
     const reader = new FileReader();
     reader.onload = function(ev){
-      state.composeMedia.push({url: ev.target.result, name: file.name});
-      loaded++;
-      if(loaded === files.length){
-        renderComposeMedia();
-        e.target.value = '';
-      }
+      // 压缩图片：限制尺寸和质量
+      compressImage(ev.target.result, 800, 0.6, function(compressed){
+        state.composeMedia.push({url: compressed, name: file.name});
+        loaded++;
+        if(loaded === files.length){
+          renderComposeMedia();
+          e.target.value = '';
+        }
+      });
     };
     reader.readAsDataURL(file);
   });
+}
+// 图片压缩：限制最大宽高 + 降低质量
+function compressImage(dataUrl, maxSize, quality, callback){
+  const img = new Image();
+  img.onload = function(){
+    let w = img.width, h = img.height;
+    if(w > maxSize || h > maxSize){
+      if(w > h){ h = Math.round(h * maxSize / w); w = maxSize; }
+      else { w = Math.round(w * maxSize / h); h = maxSize; }
+    }
+    const canvas = document.createElement('canvas');
+    canvas.width = w; canvas.height = h;
+    const ctx = canvas.getContext('2d');
+    ctx.drawImage(img, 0, 0, w, h);
+    const result = canvas.toDataURL('image/jpeg', quality);
+    // 如果压缩后反而更大（小图），返回原图
+    callback(result.length < dataUrl.length ? result : dataUrl);
+  };
+  img.src = dataUrl;
 }
 function renderComposeMedia(){
   const homePreview = document.getElementById('homeMediaPreview');
@@ -4078,6 +4299,270 @@ const _origNav = window.navigate;
 window.navigate = function(page, param){
   _origNav.call(this, page, param);
   setTimeout(updateSidebarBadges, 80);
+  // 更新移动端底部导航栏激活状态
+  setTimeout(updateMobileNav, 80);
 };
+// 更新移动端底部导航栏的 active 状态
+function updateMobileNav(){
+  const page = state.currentPage;
+  document.querySelectorAll('.mbn-item').forEach(el=>el.classList.remove('active'));
+  const map = {home:'mbn-home',explore:'mbn-explore',notifications:'mbn-notif',messages:'mbn-messages'};
+  const id = map[page];
+  if(id){const el=document.getElementById(id);if(el)el.classList.add('active')}
+}
 // 初始加载时也更新一次
 setTimeout(updateSidebarBadges, 300);
+setTimeout(updateMobileNav, 300);
+// 初始加载关注状态
+if(typeof loadFollowStates === 'function') loadFollowStates();
+
+// ===== TERMS OF SERVICE =====
+function renderTerms(){
+  const main = document.getElementById('mainContent');
+  main.innerHTML = `
+    <div class="ct">
+      <div class="main-header">
+        <button class="back-btn" onclick="navigate('home')"><svg viewBox="0 0 24 24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg></button>
+        <div class="page-title">服务条款</div>
+      </div>
+    </div>
+    <div style="padding:16px">
+      <div style="font-size:20px;font-weight:800;margin-bottom:4px">言 服务条款</div>
+      <div style="font-size:13px;color:var(--text2);margin-bottom:24px">最后更新：2026 年 5 月 1 日 · 生效日期：2026 年 5 月 15 日</div>
+
+      <div style="font-size:15px;font-weight:700;margin-bottom:8px">一、接受条款</div>
+      <div style="font-size:14px;color:var(--text2);line-height:1.8;margin-bottom:20px">
+        注册或使用「言」平台（以下简称"本平台"）即表示你同意遵守本服务条款。如果你不同意任何条款，请停止使用本平台。本条款适用于所有用户，包括普通用户、认证用户和商业账号。
+      </div>
+
+      <div style="font-size:15px;font-weight:700;margin-bottom:8px">二、账号注册与管理</div>
+      <div style="font-size:14px;color:var(--text2);line-height:1.8;margin-bottom:20px">
+        1. 你必须年满 14 周岁方可注册账号。未满 18 周岁的用户需在监护人同意下使用。<br>
+        2. 每人仅限注册一个个人账号，禁止批量注册、买卖或转让账号。<br>
+        3. 你需对账号安全负责，包括妥善保管密码、不在公共设备上保存登录状态。因账号保管不善导致的损失由你自行承担。<br>
+        4. 如发现未经授权使用你账号的情况，应立即通知我们。
+      </div>
+
+      <div style="font-size:15px;font-weight:700;margin-bottom:8px">三、内容规范</div>
+      <div style="font-size:14px;color:var(--text2);line-height:1.8;margin-bottom:20px">
+        1. 你对发布的内容承担全部法律责任。不得发布违反法律法规的内容，包括但不限于：危害国家安全、煽动仇恨与暴力、传播虚假信息、侵犯他人知识产权或隐私权。<br>
+        2. 禁止发布垃圾信息、恶意刷屏、欺诈性内容及恶意链接。<br>
+        3. 你授予本平台非独占性、全球性、免费的许可，以展示、分发和推广你发布的内容。<br>
+        4. 本平台有权但无义务审查用户内容，对违规内容可采取删除、限制传播或封禁账号等措施。
+      </div>
+
+      <div style="font-size:15px;font-weight:700;margin-bottom:8px">四、社区行为准则</div>
+      <div style="font-size:14px;color:var(--text2);line-height:1.8;margin-bottom:20px">
+        1. 尊重其他用户，禁止骚扰、威胁、人身攻击或歧视性言论。<br>
+        2. 禁止冒充他人或机构，认证账号需提供真实身份信息。<br>
+        3. 禁止利用平台进行网络攻击、数据爬取或自动化操作。<br>
+        4. 鼓励理性讨论和建设性互动，违反社区准则的行为将受到处罚。
+      </div>
+
+      <div style="font-size:15px;font-weight:700;margin-bottom:8px">五、知识产权</div>
+      <div style="font-size:14px;color:var(--text2);line-height:1.8;margin-bottom:20px">
+        1. 你保留对原创内容的知识产权。发布内容不意味着放弃任何权利。<br>
+        2. 你保证发布的内容不侵犯第三方的知识产权，包括著作权、商标权和专利权。<br>
+        3. 平台标识、界面设计和核心功能属于本平台所有，未经许可不得使用。<br>
+        4. 如认为你的知识产权受到侵犯，请通过 <span style="color:var(--accent)">legal@yan-app.com</span> 提交投诉。
+      </div>
+
+      <div style="font-size:15px;font-weight:700;margin-bottom:8px">六、免责声明</div>
+      <div style="font-size:14px;color:var(--text2);line-height:1.8;margin-bottom:20px">
+        1. 本平台按"现状"提供服务，不作任何明示或暗示的保证。<br>
+        2. 对因使用或无法使用本平台导致的任何直接或间接损失，我们不承担责任。<br>
+        3. 用户内容不代表本平台观点，我们不对其准确性、完整性或可靠性负责。<br>
+        4. 平台可能因维护、升级等原因暂停服务，我们将尽量提前通知。
+      </div>
+
+      <div style="font-size:15px;font-weight:700;margin-bottom:8px">七、条款变更与终止</div>
+      <div style="font-size:14px;color:var(--text2);line-height:1.8;margin-bottom:20px">
+        1. 我们有权随时修改本条款，修改后的条款将在平台公布后 15 日生效。继续使用即视为接受修改后的条款。<br>
+        2. 你可随时注销账号并停止使用本平台。注销后你的内容可能在一定时期内仍可被检索。<br>
+        3. 如你严重违反本条款，我们有权立即暂停或终止你的账号，并保留追究法律责任的权利。
+      </div>
+
+      <div style="font-size:15px;font-weight:700;margin-bottom:8px">八、适用法律与争议解决</div>
+      <div style="font-size:14px;color:var(--text2);line-height:1.8;margin-bottom:20px">
+        本条款适用中华人民共和国法律。因本条款产生的争议，双方应首先协商解决；协商不成的，任何一方均可向本平台所在地有管辖权的人民法院提起诉讼。
+      </div>
+
+      <div style="text-align:center;padding:24px;color:var(--text2);font-size:13px">
+        如有疑问请联系 <span style="color:var(--accent);cursor:pointer" onclick="navigate('help')">帮助中心</span> 或发送邮件至 legal@yan-app.com
+      </div>
+    </div>
+  `;
+}
+
+// ===== PRIVACY POLICY =====
+function renderPrivacy(){
+  const main = document.getElementById('mainContent');
+  main.innerHTML = `
+    <div class="ct">
+      <div class="main-header">
+        <button class="back-btn" onclick="navigate('home')"><svg viewBox="0 0 24 24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg></button>
+        <div class="page-title">隐私政策</div>
+      </div>
+    </div>
+    <div style="padding:16px">
+      <div style="font-size:20px;font-weight:800;margin-bottom:4px">言 隐私政策</div>
+      <div style="font-size:13px;color:var(--text2);margin-bottom:24px">最后更新：2026 年 5 月 1 日 · 生效日期：2026 年 5 月 15 日</div>
+
+      <div style="font-size:15px;font-weight:700;margin-bottom:8px">一、我们收集哪些信息</div>
+      <div style="font-size:14px;color:var(--text2);line-height:1.8;margin-bottom:20px">
+        <div style="font-weight:600;margin-bottom:4px">1. 你提供的信息</div>
+        · 注册信息：手机号、邮箱地址、用户名<br>
+        · 个人资料：头像、昵称、个人简介、生日<br>
+        · 内容信息：你发布的帖子、评论、私信、图片和视频<br>
+        · 交易信息：订阅付费功能时的支付信息（由第三方支付平台处理，我们不存储银行卡号）
+        <div style="font-weight:600;margin-top:12px;margin-bottom:4px">2. 自动收集的信息</div>
+        · 设备信息：设备型号、操作系统版本、浏览器类型<br>
+        · 使用数据：访问时间、浏览页面、点击操作、停留时长<br>
+        · 位置信息：经你授权后的粗略位置（精确到城市级别）
+        <div style="font-weight:600;margin-top:12px;margin-bottom:4px">3. 第三方来源的信息</div>
+        · 第三方登录授权提供的公开信息<br>
+        · 合作伙伴提供的验证信息
+      </div>
+
+      <div style="font-size:15px;font-weight:700;margin-bottom:8px">二、我们如何使用信息</div>
+      <div style="font-size:14px;color:var(--text2);line-height:1.8;margin-bottom:20px">
+        1. 提供和改善服务：账号注册与验证、内容展示与推送、个性化推荐、安全防护与反欺诈。<br>
+        2. 通信与通知：发送服务通知、安全提醒、系统更新信息（你可以随时关闭非必要通知）。<br>
+        3. 数据分析：了解用户行为模式、优化产品体验、进行匿名化统计分析。<br>
+        4. 法律合规：遵守法律法规要求、响应司法机关和监管机构的合法请求。
+      </div>
+
+      <div style="font-size:15px;font-weight:700;margin-bottom:8px">三、信息的共享与披露</div>
+      <div style="font-size:14px;color:var(--text2);line-height:1.8;margin-bottom:20px">
+        1. 我们不会向第三方出售你的个人信息。<br>
+        2. 以下情形我们可能共享你的信息：<br>
+        &nbsp;&nbsp;· 经你明确同意<br>
+        &nbsp;&nbsp;· 与授权的服务提供商共享（如云存储、数据分析、支付处理），仅限于提供服务所必需<br>
+        &nbsp;&nbsp;· 法律法规要求或司法机关、行政机关依法要求<br>
+        &nbsp;&nbsp;· 为保护平台及用户的合法权益所必需<br>
+        3. 我们要求第三方对共享信息严格保密，并仅用于约定目的。
+      </div>
+
+      <div style="font-size:15px;font-weight:700;margin-bottom:8px">四、信息存储与安全</div>
+      <div style="font-size:14px;color:var(--text2);line-height:1.8;margin-bottom:20px">
+        1. 你的信息存储在中华人民共和国境内的服务器上。如需跨境传输，我们将依法进行安全评估并获得你的同意。<br>
+        2. 我们采取行业标准的安全措施保护你的信息，包括数据加密、访问控制、安全审计和应急响应机制。<br>
+        3. 数据保留期限：账号信息保留至账号注销后 30 日；发布内容按你的设置保留；日志数据保留不超过 180 日。
+      </div>
+
+      <div style="font-size:15px;font-weight:700;margin-bottom:8px">五、你的权利</div>
+      <div style="font-size:14px;color:var(--text2);line-height:1.8;margin-bottom:20px">
+        1. 查询与访问：你可在设置中查看和下载你的个人信息。<br>
+        2. 更正与删除：你可修改或删除你的个人资料和发布内容。<br>
+        3. 账号注销：你可随时申请注销账号，注销后我们将停止处理你的个人信息。<br>
+        4. 撤回同意：你可随时关闭个性化推荐、位置服务等非必要功能。<br>
+        5. 获取副本：你可请求导出你的个人数据副本。
+      </div>
+
+      <div style="font-size:15px;font-weight:700;margin-bottom:8px">六、未成年人保护</div>
+      <div style="font-size:14px;color:var(--text2);line-height:1.8;margin-bottom:20px">
+        我们高度重视未成年人保护。如你在未满 18 周岁时向平台提供了个人信息，你的监护人有权联系我们查阅、更正或删除相关信息。我们不会对未成年人进行定向广告推送，也不会公开其非公开的个人资料。
+      </div>
+
+      <div style="font-size:15px;font-weight:700;margin-bottom:8px">七、隐私政策的更新</div>
+      <div style="font-size:14px;color:var(--text2);line-height:1.8;margin-bottom:20px">
+        我们可能不时更新本隐私政策。重大变更将通过平台公告或邮件通知你。更新后的政策自公布之日起 15 日后生效。继续使用平台即视为接受更新后的政策。
+      </div>
+
+      <div style="text-align:center;padding:24px;color:var(--text2);font-size:13px">
+        如有隐私相关问题请联系 <span style="color:var(--accent);cursor:pointer" onclick="navigate('help')">帮助中心</span> 或发送邮件至 privacy@yan-app.com
+      </div>
+    </div>
+  `;
+}
+
+// ===== COOKIE POLICY =====
+function renderCookies(){
+  const main = document.getElementById('mainContent');
+  main.innerHTML = `
+    <div class="ct">
+      <div class="main-header">
+        <button class="back-btn" onclick="navigate('home')"><svg viewBox="0 0 24 24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg></button>
+        <div class="page-title">Cookie 政策</div>
+      </div>
+    </div>
+    <div style="padding:16px">
+      <div style="font-size:20px;font-weight:800;margin-bottom:4px">言 Cookie 政策</div>
+      <div style="font-size:13px;color:var(--text2);margin-bottom:24px">最后更新：2026 年 5 月 1 日 · 生效日期：2026 年 5 月 15 日</div>
+
+      <div style="font-size:15px;font-weight:700;margin-bottom:8px">一、什么是 Cookie</div>
+      <div style="font-size:14px;color:var(--text2);line-height:1.8;margin-bottom:20px">
+        Cookie 是当你访问网站时，浏览器保存在你设备上的小型文本文件。它们帮助网站识别你的设备、记住你的偏好设置，并改善你的使用体验。除 Cookie 外，我们还可能使用类似的本地存储技术（如 LocalStorage、SessionStorage），本政策同样适用于这些技术。
+      </div>
+
+      <div style="font-size:15px;font-weight:700;margin-bottom:8px">二、我们使用的 Cookie 类型</div>
+      <div style="font-size:14px;color:var(--text2);line-height:1.8;margin-bottom:20px">
+        <div style="font-weight:600;margin-bottom:4px">1. 必需 Cookie（始终启用）</div>
+        这些 Cookie 是平台正常运行所必需的，无法关闭。它们用于：<br>
+        · 维持登录状态和会话信息<br>
+        · 记住你的安全偏好和认证信息<br>
+        · 防止恶意请求和跨站脚本攻击<br>
+        · 确保页面加载和功能响应正常
+        <div style="font-weight:600;margin-top:12px;margin-bottom:4px">2. 功能性 Cookie</div>
+        这些 Cookie 用于提供增强功能和个人化体验：<br>
+        · 记住你的界面设置（主题、语言、字体大小）<br>
+        · 保存你的搜索历史和浏览偏好<br>
+        · 记住你关闭的提示和通知<br>
+        · 提供本地化内容和服务
+        <div style="font-weight:600;margin-top:12px;margin-bottom:4px">3. 分析性 Cookie</div>
+        这些 Cookie 帮助我们了解用户如何使用平台：<br>
+        · 统计页面访问量和用户停留时间<br>
+        · 分析用户行为路径和功能使用频率<br>
+        · 识别性能瓶颈和错误信息<br>
+        · 优化平台设计和功能改进方向
+        <div style="font-weight:600;margin-top:12px;margin-bottom:4px">4. 广告 Cookie</div>
+        这些 Cookie 用于提供相关广告和衡量广告效果：<br>
+        · 展示与你兴趣相关的推广内容<br>
+        · 限制同一广告的展示频次<br>
+        · 衡量广告的点击率和转化效果<br>
+        · 支持平台的免费运营模式
+      </div>
+
+      <div style="font-size:15px;font-weight:700;margin-bottom:8px">三、如何管理 Cookie</div>
+      <div style="font-size:14px;color:var(--text2);line-height:1.8;margin-bottom:20px">
+        <div style="font-weight:600;margin-bottom:4px">平台内管理</div>
+        你可在「设置和隐私」>「隐私与安全」>「Cookie 偏好」中管理各类 Cookie 的启用状态。必需 Cookie 无法关闭，其他类型可自由开关。
+        <div style="font-weight:600;margin-top:12px;margin-bottom:4px">浏览器管理</div>
+        你也可通过浏览器设置管理或删除 Cookie：<br>
+        · Chrome：设置 > 隐私与安全 > Cookie 及其他网站数据<br>
+        · Firefox：选项 > 隐私与安全 > Cookie 和网站数据<br>
+        · Safari：偏好设置 > 隐私 > 管理网站数据<br>
+        · Edge：设置 > Cookie 和网站权限 > 管理和删除 Cookie
+        <div style="font-weight:600;margin-top:12px;margin-bottom:4px">注意事项</div>
+        关闭某些 Cookie 可能影响平台功能。例如，关闭功能性 Cookie 后，你的偏好设置将不会被记住；关闭必需 Cookie 则可能无法正常登录和使用平台。
+      </div>
+
+      <div style="font-size:15px;font-weight:700;margin-bottom:8px">四、第三方 Cookie</div>
+      <div style="font-size:14px;color:var(--text2);line-height:1.8;margin-bottom:20px">
+        部分合作方可能在我们的平台上设置 Cookie，包括：<br>
+        · 数据分析服务（如统计平台访问量）<br>
+        · 广告网络（如展示个性化推广内容）<br>
+        · 社交分享功能（如分享到第三方平台）<br>
+        · 视频和多媒体服务（如提供内容播放支持）<br>
+        我们要求第三方遵守适用的隐私法规，并仅收集必要信息。
+      </div>
+
+      <div style="font-size:15px;font-weight:700;margin-bottom:8px">五、Cookie 的存储期限</div>
+      <div style="font-size:14px;color:var(--text2);line-height:1.8;margin-bottom:20px">
+        · 会话 Cookie：浏览器关闭后自动删除<br>
+        · 持久 Cookie：根据用途设定有效期限，一般为 30 天至 1 年<br>
+        · 过期 Cookie 将自动被浏览器清除<br>
+        · 你可随时手动清除已保存的 Cookie
+      </div>
+
+      <div style="font-size:15px;font-weight:700;margin-bottom:8px">六、政策更新</div>
+      <div style="font-size:14px;color:var(--text2);line-height:1.8;margin-bottom:20px">
+        我们可能不时更新本 Cookie 政策。重大变更将通过平台公告通知你。建议你定期查看本政策以了解最新信息。
+      </div>
+
+      <div style="text-align:center;padding:24px;color:var(--text2);font-size:13px">
+        如有疑问请联系 <span style="color:var(--accent);cursor:pointer" onclick="navigate('help')">帮助中心</span> 或发送邮件至 privacy@yan-app.com
+      </div>
+    </div>
+  `;
+}

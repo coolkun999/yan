@@ -21,7 +21,7 @@ const DB = {
     ]},
     {id:8,name:"产品经理小李",handle:"@pm_xiaoli",verified:true,time:"16小时",text:"好的产品不是功能堆砌出来的，而是对用户需求的深刻理解。少即是多，克制是一种能力。",avatar:"李",avatarBg:"linear-gradient(135deg,#a1c4fd,#c2e9fb)",likes:1823,retweets:934,replies:156,views:"12.8万",liked:true,retweeted:false,bookmarked:false},
     {id:9,name:"美食达人",handle:"@foodie_daily",verified:false,time:"18小时",text:"分享一家藏在巷子里的老字号砂锅粥，开了三十年了。地址就在城隍庙后街，每天限量供应，去晚了可就没有啦！",avatar:"美",avatarBg:"linear-gradient(135deg,#ff9a9e,#fecfef)",likes:1567,retweets:234,replies:89,views:"8.7万",liked:false,retweeted:false,bookmarked:false},
-    {id:10,name:"旅行家小周",handle:"@travel_zhou",verified:true,time:"20小时",text:"刚从西藏回来，洗涤心灵之旅。青藏高原的天空蓝得不像真的，牦牛比人还多。强烈建议大家有机会都去一次！",avatar:"旅",avatarBg:"linear-gradient(135deg:#a8edea,#fed6e3)",likes:4523,retweets:1234,replies:345,views:"32.1万",liked:false,retweeted:false,bookmarked:false,media:[{bg:"linear-gradient(135deg,#56ab2f,#a8e063)",icon:"🏔️"},{bg:"linear-gradient(135deg,#2193b0,#6dd5ed)",icon:"🏖️"},{bg:"linear-gradient(135deg,#ee9ca7,#ffdde1)",icon:"🕊️"}]},
+    {id:10,name:"旅行家小周",handle:"@travel_zhou",verified:true,time:"20小时",text:"刚从西藏回来，洗涤心灵之旅。青藏高原的天空蓝得不像真的，牦牛比人还多。强烈建议大家有机会都去一次！",avatar:"旅",avatarBg:"linear-gradient(135deg,#a8edea,#fed6e3)",likes:4523,retweets:1234,replies:345,views:"32.1万",liked:false,retweeted:false,bookmarked:false,media:[{bg:"linear-gradient(135deg,#56ab2f,#a8e063)",icon:"🏔️"},{bg:"linear-gradient(135deg,#2193b0,#6dd5ed)",icon:"🏖️"},{bg:"linear-gradient(135deg,#ee9ca7,#ffdde1)",icon:"🕊️"}]},
     {id:11,name:"程序员老张",handle:"@coder_laozhang",verified:false,time:"22小时",text:"写代码十年了，最大的感悟是：注释不是给机器看的，是给未来的自己看的。别偷懒，写好注释。",avatar:"程",avatarBg:"linear-gradient(135deg,#667eea,#764ba2)",likes:2341,retweets:567,replies:123,views:"15.6万",liked:false,retweeted:false,bookmarked:false},
     {id:12,name:"游戏评测师",handle:"@game_reviewer",verified:true,time:"1天前",text:"《黑神话：悟空》DLC终于来了！新增三个章节，Boss战难度爆表，画质又有提升。STEAM直接冲！",avatar:"游",avatarBg:"linear-gradient(135deg,#667eea,#f093fb)",likes:8923,retweets:3456,replies:678,views:"67.8万",liked:false,retweeted:false,bookmarked:false,poll:{tweetId:12,endsIn:"还剩2天",options:[{label:"已经买了，太好玩了！",votes:6721},{label:"准备入手",votes:3456},{label:"等打折再买",votes:1892}]}},
     {id:13,name:"健身教练阿杰",handle:"@fitness_ajie",verified:false,time:"1天前",text:"减脂不是饿肚子，是调整饮食结构。给大家分享我的每日三餐食谱，简单易做，亲测有效！",avatar:"健",avatarBg:"linear-gradient(135deg,#4facfe,#00f2fe)",likes:1234,retweets:456,replies:234,views:"9.2万",liked:false,retweeted:false,bookmarked:false},
@@ -41,7 +41,7 @@ const DB = {
     {id:27,name:"投资顾问",handle:"@invest_advisor",verified:true,time:"6天前",text:"2026年投资建议：配置30%股票、30%债券、20%黄金、20%现金。不要把鸡蛋放在一个篮子里，分散风险才是王道。",avatar:"投",avatarBg:"linear-gradient(135deg,#4facfe,#00f2fe)",likes:3456,retweets:890,replies:345,views:"26.4万",liked:false,retweeted:false,bookmarked:false},
     {id:28,name:"摄影技巧",handle:"@photo_tips",verified:false,time:"7天前",text:"学会这三招，手机也能拍大片：1️⃣ 利用光线 2️⃣ 三分构图 3️⃣ 后期调色。收藏起来慢慢练！",avatar:"摄",avatarBg:"linear-gradient(135deg,#fa709a,#fee140)",likes:5678,retweets:2345,replies:678,views:"42.3万",liked:false,retweeted:false,bookmarked:false},
     {id:29,name:"程序员小明",handle:"@coder_xiaoming",verified:false,time:"7天前",text:"为什么程序员喜欢用命令行？因为GUI是给用户用的，我们是来控制电脑的，不是被电脑控制的。",avatar:"程",avatarBg:"linear-gradient(135deg,#667eea,#764ba2)",likes:3456,retweets:1234,replies:456,views:"25.1万",liked:false,retweeted:false,bookmarked:false},
-    {id:30,name:"生活小妙招",handle:"@life_hacks",verified:false,time:"1周前",text:"把过期牛奶用来浇花，花会长得特别好！还有用香蕉皮擦皮鞋，鞋子又亮又干净。这些生活小妙招你都知道吗？",avatar:"生",avatarBg:"linear-gradient(135deg:#43e97b,#38f9d7)",likes:4567,retweets:1678,replies:456,views:"35.6万",liked:false,retweeted:false,bookmarked:false},
+    {id:30,name:"生活小妙招",handle:"@life_hacks",verified:false,time:"1周前",text:"把过期牛奶用来浇花，花会长得特别好！还有用香蕉皮擦皮鞋，鞋子又亮又干净。这些生活小妙招你都知道吗？",avatar:"生",avatarBg:"linear-gradient(135deg,#43e97b,#38f9d7)",likes:4567,retweets:1678,replies:456,views:"35.6万",liked:false,retweeted:false,bookmarked:false},
     {id:101,name:"王坤",handle:"@wangkun",verified:false,time:"4月9日",text:"26.4、9 天气有点冷 下雨",avatar:"王",avatarBg:"linear-gradient(135deg,#667eea,#764ba2)",likes:3,retweets:0,replies:3,views:"98",liked:false,retweeted:false,bookmarked:false},
     {id:102,name:"王坤",handle:"@wangkun",verified:false,time:"3月27日",text:"又快清明节了",avatar:"王",avatarBg:"linear-gradient(135deg,#667eea,#764ba2)",likes:5,retweets:0,replies:0,views:"108",liked:false,retweeted:false,bookmarked:false}
   ],
@@ -104,3 +104,19 @@ const DB = {
   ]
 
 };
+
+// 为推文自动生成 createdAt 时间戳（基于 time 字段推算）
+(function initTimestamps(){
+  const now = Date.now();
+  DB.tweets.forEach(t => {
+    if(t.createdAt) return; // 已有时间戳则跳过
+    const s = t.time || '';
+    let ms = 0;
+    const hm = s.match(/(\d+)小时/); if(hm) ms = parseInt(hm[1]) * 3600000;
+    const mm = s.match(/(\d+)分钟/); if(mm) ms = parseInt(mm[1]) * 60000;
+    const dm = s.match(/(\d+)天/); if(dm) ms = parseInt(dm[1]) * 86400000;
+    const sm = s.match(/刚刚/); if(sm) ms = 0;
+    if(ms === 0 && !hm && !mm && !dm && !sm) ms = 3600000; // 默认1小时前
+    t.createdAt = now - ms;
+  });
+})();
