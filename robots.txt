@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://coolkun999.github.io/yan/sitemap.xml
+Sitemap: https://yan.kunshagj.com/sitemap.xml
