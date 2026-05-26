@@ -1,3 +1,11 @@
+// ===== 全局错误兜底 =====
+window.addEventListener('error', function(e){
+  console.error('[言] 全局错误:', e.message, e.filename, e.lineno);
+});
+window.addEventListener('unhandledrejection', function(e){
+  console.error('[言] 未处理的 Promise 错误:', e.reason);
+});
+
 // ===== STATE =====
 const state = {
   currentPage: 'home',
@@ -866,8 +874,10 @@ function homePost(){
   DB.tweets.unshift(t);
   u.posts = (u.posts||0) + 1;
   // 持久化更新后的用户数据
-  const allUsers = JSON.parse(localStorage.getItem('yan_auth_users')||'{}');
-  if(allUsers[u.identifier]){ allUsers[u.identifier].posts = u.posts; localStorage.setItem('yan_auth_users', JSON.stringify(allUsers)); }
+  try {
+    const allUsers = JSON.parse(localStorage.getItem('yan_auth_users')||'{}');
+    if(allUsers[u.identifier]){ allUsers[u.identifier].posts = u.posts; localStorage.setItem('yan_auth_users', JSON.stringify(allUsers)); }
+  } catch(e) { console.warn('localStorage 写入失败', e); }
   document.getElementById('homeCompose').value = '';
   document.getElementById('homePostBtn').disabled = true;
   clearComposeMedia();
@@ -2779,7 +2789,7 @@ function saveFollowState(handle, following){
   let states = {};
   try { states = JSON.parse(localStorage.getItem(key)) || {}; } catch(e) {}
   states[handle] = following;
-  localStorage.setItem(key, JSON.stringify(states));
+  try { localStorage.setItem(key, JSON.stringify(states)); } catch(e) { console.warn('localStorage 写入失败', e); }
 }
 function loadFollowStates(){
   const key = 'yan_follow_state';
@@ -3215,8 +3225,10 @@ function submitPost(){
     DB.tweets.unshift(t);
     u.posts = (u.posts||0) + 1;
     // 持久化更新后的用户数据
-    const allUsers = JSON.parse(localStorage.getItem('yan_auth_users')||'{}');
-    if(allUsers[u.identifier]){ allUsers[u.identifier].posts = u.posts; localStorage.setItem('yan_auth_users', JSON.stringify(allUsers)); }
+    try {
+      const allUsers = JSON.parse(localStorage.getItem('yan_auth_users')||'{}');
+      if(allUsers[u.identifier]){ allUsers[u.identifier].posts = u.posts; localStorage.setItem('yan_auth_users', JSON.stringify(allUsers)); }
+    } catch(e) { console.warn('localStorage 写入失败', e); }
     LS.save();
   }
   closePostModal();

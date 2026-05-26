@@ -4,6 +4,28 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>言 - 社交平台</title>
+<meta name="description" content="言，中文社交平台。分享你的想法，关注感兴趣的人，探索热门话题。">
+<meta name="keywords" content="言,社交,帖子,话题,关注,中文社区">
+<meta name="theme-color" content="#000000">
+<!-- Open Graph -->
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="言">
+<meta property="og:title" content="言 - 社交平台">
+<meta property="og:description" content="分享你的想法，关注感兴趣的人，探索热门话题。">
+<meta property="og:url" content="https://coolkun999.github.io/yan/">
+<meta property="og:image" content="https://coolkun999.github.io/yan/og-image.png">
+<!-- Twitter Card -->
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:site" content="@wangkun">
+<meta name="twitter:title" content="言 - 社交平台">
+<meta name="twitter:description" content="分享你的想法，关注感兴趣的人，探索热门话题。">
+<meta name="twitter:image" content="https://coolkun999.github.io/yan/og-image.png">
+<!-- Favicon -->
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
+<link rel="icon" type="image/x-icon" href="favicon.ico">
+<!-- Preload critical resources -->
+<link rel="preload" href="css/style.css" as="style">
+<link rel="preload" href="js/app.js" as="script">
 <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
@@ -50,8 +72,8 @@
         <span class="nav-label">更多</span>
       </a>
     </nav>
-    <button class="post-btn" onclick="openPostModal()">发帖</button>
-    <div class="user-menu" id="userMenu" onclick="toggleUserDropdown(event)">
+    <button class="post-btn" onclick="openPostModal()" aria-label="发帖">发帖</button>
+    <div class="user-menu" id="userMenu" onclick="toggleUserDropdown(event)" role="button" aria-label="用户菜单">
       <div class="av">王</div>
       <div class="user-menu-text">
         <div class="un">王坤</div>
@@ -177,7 +199,7 @@
 </div>
 
 <!-- FLOATING POST BUTTON -->
-<button class="float-post-btn" onclick="openPostModal()">
+<button class="float-post-btn" onclick="openPostModal()" aria-label="发帖">
   <svg viewBox="0 0 24 24"><path d="M23 3c-6.62-.1-10.38 2.42-13.05 6.64C7.14 13.18 6 18.03 6 18.03V21h2.97c3.96 0 7.14-1.14 9.39-3.95 2.84-3.54 4.41-8.14 4.64-14.05zM12 14a2 2 0 110-4 2 2 0 010 4z"/></svg>
 </button>
 
@@ -185,7 +207,7 @@
 <div class="modal-overlay" id="postModal">
   <div class="modal">
     <div class="modal-header">
-      <button class="modal-close" onclick="closePostModal()">
+      <button class="modal-close" onclick="closePostModal()" aria-label="关闭">
         <svg viewBox="0 0 24 24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
       </button>
       <button class="modal-btn primary" id="modalPostBtn" onclick="submitPost()" disabled style="border-radius:9999px;padding:8px 20px;font-size:14px">发帖</button>
@@ -221,7 +243,7 @@
 <div class="modal-overlay" id="shareModal">
   <div class="modal">
     <div class="modal-header">
-      <button class="modal-close" onclick="closeShareModal()">
+      <button class="modal-close" onclick="closeShareModal()" aria-label="关闭">
         <svg viewBox="0 0 24 24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
       </button>
     </div>
@@ -242,7 +264,7 @@
 <div class="modal-overlay" id="quoteModal">
   <div class="modal" style="max-width:500px" onclick="event.stopPropagation()">
     <div class="modal-header">
-      <button class="modal-close" onclick="closeQuoteModal()">
+      <button class="modal-close" onclick="closeQuoteModal()" aria-label="关闭">
         <svg viewBox="0 0 24 24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
       </button>
       <button class="modal-btn primary" id="quotePostBtn" onclick="submitQuoteRetweet()" disabled style="border-radius:9999px;padding:8px 20px;font-size:14px">引用转推</button>
@@ -462,9 +484,9 @@
   </div>
 </div>
 
-<script src="data/db.js"></script>
-<script src="js/auth.js"></script>
-<script src="js/app.js"></script>
+<script src="data/db.js" defer></script>
+<script src="js/auth.js" defer></script>
+<script src="js/app.js" defer></script>
   <input type="file" id="mediaFileInput" accept="image/*" multiple style="display:none" onchange="handleMediaPick(event)">
 
 <!-- 移动端底部导航栏 -->

@@ -10,13 +10,13 @@ function getUsers() {
   try { return JSON.parse(localStorage.getItem(AUTH_KEY)) || {}; } catch(e) { return {}; }
 }
 function saveUsers(users) {
-  localStorage.setItem(AUTH_KEY, JSON.stringify(users));
+  try { localStorage.setItem(AUTH_KEY, JSON.stringify(users)); } catch(e) { console.warn('[言] 用户数据写入失败', e); }
 }
 function getSession() {
   try { return JSON.parse(localStorage.getItem(SESSION_KEY)); } catch(e) { return null; }
 }
 function setSession(user) {
-  localStorage.setItem(SESSION_KEY, JSON.stringify(user));
+  try { localStorage.setItem(SESSION_KEY, JSON.stringify(user)); } catch(e) { console.warn('[言] 会话写入失败', e); }
 }
 function clearSession() {
   localStorage.removeItem(SESSION_KEY);
@@ -42,7 +42,7 @@ function getCodes() {
   try { return JSON.parse(localStorage.getItem(CODE_KEY)) || {}; } catch(e) { return {}; }
 }
 function saveCodes(codes) {
-  localStorage.setItem(CODE_KEY, JSON.stringify(codes));
+  try { localStorage.setItem(CODE_KEY, JSON.stringify(codes)); } catch(e) { console.warn('[言] 验证码写入失败', e); }
 }
 function sendVerifyCode(phoneOrEmail) {
   const code = genCode();
