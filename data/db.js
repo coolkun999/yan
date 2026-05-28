@@ -116,7 +116,22 @@ const DB = {
     const mm = s.match(/(\d+)分钟/); if(mm) ms = parseInt(mm[1]) * 60000;
     const dm = s.match(/(\d+)天/); if(dm) ms = parseInt(dm[1]) * 86400000;
     const sm = s.match(/刚刚/); if(sm) ms = 0;
-    if(ms === 0 && !hm && !mm && !dm && !sm) ms = 3600000; // 默认1小时前
+    // 支持「X月X日」格式，按距今天数推算
+    const mdm = s.match(/(\d+)月(\d+)日/);
+    if(mdm && !hm && !mm && !dm && !sm){
+      const m = parseInt(mdm[1]) - 1;
+      const d = parseInt(mdm[2]);
+      const target = new Date();
+      target.setMonth(m, d);
+      target.setHours(12, 0, 0, 0);
+      ms = now - target.getTime();
+    }
+    // 支持「X周前」格式
+    const wm = s.match(/(\d+)周/);
+    if(wm && !hm && !mm && !dm && !sm && !mdm){
+      ms = parseInt(wm[1]) * 7 * 86400000;
+    }
+    if(ms === 0 && !hm && !mm && !dm && !sm && !mdm && !wm) ms = 3600000; // 默认1小时前
     t.createdAt = now - ms;
   });
 })();

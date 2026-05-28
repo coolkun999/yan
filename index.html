@@ -13,17 +13,16 @@
 <meta property="og:site_name" content="言">
 <meta property="og:title" content="言 - 社交平台">
 <meta property="og:description" content="分享你的想法，关注感兴趣的人，探索热门话题。">
-<meta property="og:url" content="https://yan.kunshagj.com/">
-<meta property="og:image" content="https://yan.kunshagj.com/og-image.png">
+<meta property="og:url" content="https://www.kunshagj.com/yan/">
+<meta property="og:image" content="https://www.kunshagj.com/yan/og-image.png">
 <!-- Twitter Card -->
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:site" content="@wangkun">
 <meta name="twitter:title" content="言 - 社交平台">
 <meta name="twitter:description" content="分享你的想法，关注感兴趣的人，探索热门话题。">
-<meta name="twitter:image" content="https://yan.kunshagj.com/og-image.png">
+<meta name="twitter:image" content="https://www.kunshagj.com/yan/og-image.png">
 <!-- Favicon -->
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
-<link rel="icon" type="image/x-icon" href="favicon.ico">
 <!-- Preload critical resources -->
 <link rel="preload" href="css/style.css" as="style">
 <link rel="preload" href="js/app.js" as="script">
@@ -45,13 +44,13 @@
         <span class="nav-label">探索</span>
       </a>
       <a class="nav-item" id="nav-notif" onclick="navigate('notifications')">
-        <span class="nav-badge" id="notif-badge"><span class="b">3</span>
+        <span class="nav-badge" id="notif-badge"><span class="b" style="display:none"></span>
           <svg viewBox="0 0 24 24"><path d="M19.993 9.042C19.48 5.017 16.054 2 11.996 2s-7.49 3.021-7.999 7.051L2.866 18H7.1c.463 2.282 2.481 4 4.9 4s4.437-1.718 4.9-4h4.236l-1.143-8.958z"/></svg>
         </span>
         <span class="nav-label">通知</span>
       </a>
       <a class="nav-item" id="nav-messages" onclick="navigate('messages')">
-        <span class="nav-badge" id="msg-badge"><span class="b">0</span>
+        <span class="nav-badge" id="msg-badge"><span class="b" style="display:none"></span>
           <svg viewBox="0 0 24 24"><path d="M1.998 5.5c0-1.381 1.119-2.5 2.5-2.5h15c1.381 0 2.5 1.119 2.5 2.5v10.5c0 1.381-1.119 2.5-2.5 2.5h-15c-1.381 0-2.5-1.119-2.5-2.5v-10.5zM5.5 7c-.276 0-.5.224-.5.5v2.764l8 3.638 8-3.638V7.5c0-.276-.224-.5-.5-.5h-15z"/></svg>
         </span>
         <span class="nav-label">消息</span>
@@ -250,7 +249,7 @@
     </div>
     <div class="modal-body">
       <h3 style="font-size:20px;font-weight:800;margin-bottom:4px">分享这条帖子</h3>
-      <div class="share-url" id="shareUrl"><span id="shareUrlText">https://yanyan.com/post/1</span><button class="copy-btn" onclick="copyShareUrl()">复制链接</button></div>
+      <div class="share-url" id="shareUrl"><span id="shareUrlText">https://www.kunshagj.com/yan/post/1</span><button class="copy-btn" onclick="copyShareUrl()">复制链接</button></div>
       <div style="margin-top:16px;display:flex;flex-direction:column;gap:4px">
         <div class="d-item" onclick="closeShareModal()"><svg viewBox="0 0 24 24"><path d="M4 4.5C4 3.12 5.119 2 6.5 2h11C18.881 2 20 3.12 20 4.5v18.44l-8-5.71-8 5.71V4.5z"/></svg> 添加到书签</div>
         <div class="d-item" onclick="closeShareModal()"><svg viewBox="0 0 24 24"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg> 复制链接</div>

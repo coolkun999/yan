@@ -139,6 +139,25 @@ function authLogin(identifier, credential, type) {
   return { ok: true, user: sessionUser };
 }
 
+// ===== 登录（按任意标识：用户名/邮箱/手机号）=====
+function authLoginByAny(input, password) {
+  const users = getUsers();
+  // 1. 先按 identifier（邮箱或手机号）查找
+  let user = users[input];
+  if (!user) {
+    // 2. 按 handle 查找（去掉开头的 @）
+    const cleanHandle = input.startsWith('@') ? input : '@' + input;
+    user = Object.values(users).find(u => u.handle === cleanHandle);
+  }
+  if (!user) return { ok: false, msg: '账号不存在，请先注册' };
+  if (user.password !== password) return { ok: false, msg: '密码错误' };
+  // 返回脱敏用户对象（不含密码）
+  const sessionUser = { ...user };
+  delete sessionUser.password;
+  setSession(sessionUser);
+  return { ok: true, user: sessionUser };
+}
+
 // ===== 登出 =====
 function authLogout() {
   clearSession();

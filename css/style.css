@@ -41,7 +41,7 @@ textarea,input{font-family:inherit;outline:none;border:none;background:transpare
 /* ===== MAIN ===== */
 .main{flex:1;border-right:1px solid var(--border);max-width:600px;min-width:0;min-height:100vh}
 .main-header{position:sticky;top:0;background:rgba(var(--bg-rgb,0,0,0),.9);backdrop-filter:blur(12px);z-index:10;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:20px;padding:12px 16px}
-.back-btn{display:none;width:36px;height:36px;border-radius:50%;background:transparent;border:none;cursor:pointer;color:var(--text);display:flex;align-items:center;justify-content:center;transition:background .2s}
+.back-btn{width:36px;height:36px;border-radius:50%;background:transparent;border:none;cursor:pointer;color:var(--text);display:flex;align-items:center;justify-content:center;transition:background .2s}
 .back-btn:hover{background:rgba(231,233,234,.1)}
 .back-btn svg{width:20px;height:20px;fill:var(--text)}
 .page-title{font-size:20px;font-weight:800}
@@ -213,12 +213,6 @@ textarea,input{font-family:inherit;outline:none;border:none;background:transpare
 .auth-title{font-size:28px;font-weight:800;margin-bottom:8px}
 .auth-sub{color:var(--text2);font-size:15px;margin-bottom:32px}
 .auth-inputs{display:flex;flex-direction:column;gap:16px}
-.ail{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:16px;font-size:15px;transition:border-color .2s}
-.ail:focus-within{border-color:var(--accent)}
-.ail label{display:block;font-size:13px;color:var(--text2);margin-bottom:4px;font-weight:600}
-.ail input{width:100%;background:transparent;border:none;outline:none;color:var(--text);font-size:15px;font-family:inherit;padding:4px 0}
-.abtn{background:var(--text);color:var(--bg);border-radius:var(--r);padding:14px;width:100%;font-size:17px;font-weight:700;cursor:pointer;margin-top:8px;transition:opacity .2s}
-.abtn:hover{opacity:.85}
 .auth-divider{display:flex;align-items:center;gap:12px;margin:24px 0;color:var(--text2);font-size:14px}
 .auth-divider::before,.auth-divider::after{content:'';flex:1;height:1px;background:var(--border)}
 .auth-switch{text-align:center;color:var(--accent);font-size:15px;cursor:pointer;margin-top:16px}

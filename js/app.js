@@ -452,9 +452,9 @@ function formatTime(createdAt){
   const now = Date.now();
   const diff = now - createdAt;
   if(diff < 60000) return '刚刚';
-  if(diff < 3600000) return Math.floor(diff/60000) + '分钟';
-  if(diff < 86400000) return Math.floor(diff/3600000) + '小时';
-  if(diff < 604800000) return Math.floor(diff/86400000) + '天';
+  if(diff < 3600000) return Math.floor(diff/60000) + '分钟前';
+  if(diff < 86400000) return Math.floor(diff/3600000) + '小时前';
+  if(diff < 604800000) return Math.floor(diff/86400000) + '天前';
   const d = new Date(createdAt);
   return (d.getMonth()+1) + '月' + d.getDate() + '日';
 }
@@ -782,8 +782,8 @@ function renderFollowingFeed(){
     FOLLOWING_DATA.filter(u => u.following).map(u => u.handle) :
     ['@linxiaoyu', '@techdaily']; // 兜底
   // 也包含当前用户自己的帖子
-  const myHandle = isLoggedIn() ? currentUser().handle : '@wangkun';
-  const followingTweets = DB.tweets.filter(t => followingHandles.includes(t.handle) || t.handle === myHandle);
+  const myHandle = isLoggedIn() ? currentUser().handle : '';
+  const followingTweets = DB.tweets.filter(t => followingHandles.includes(t.handle) || (myHandle && t.handle === myHandle));
   if(followingTweets.length === 0){
     return `<div class="empty-state"><svg viewBox="0 0 24 24"><path d="M5.651 19h12.698c-.337-1.8-1.023-3.21-1.945-4.19C15.318 13.65 13.838 13 12 13s-3.317.65-4.404 1.81c-.922.98-1.608 2.39-1.945 4.19z"/></svg><h3>还没有内容</h3><p>关注更多用户，在这里看到他们的帖子</p></div>`;
   }
@@ -1719,7 +1719,7 @@ function editAd(id){
   body.innerHTML=`
     <div style="padding:16px">
       <div style="font-size:18px;font-weight:700;margin-bottom:16px">编辑广告</div>
-      <div style="margin-bottom:12px"><label style="font-size:13px;color:var(--text2)">广告名称</label><input id="editAdName" type="text" value="${a.name}" style="width:100%;padding:10px;background:var(--bg);border:1px solid var(--border);border-radius:8px;color:var(--text);margin-top:4px"></div>
+      <div style="margin-bottom:12px"><label style="font-size:13px;color:var(--text2)">广告名称</label><input id="editAdName" type="text" value="${a.title}" style="width:100%;padding:10px;background:var(--bg);border:1px solid var(--border);border-radius:8px;color:var(--text);margin-top:4px"></div>
       <div style="margin-bottom:12px"><label style="font-size:13px;color:var(--text2)">预算</label><input id="editAdBudget" type="text" value="${a.budget}" style="width:100%;padding:10px;background:var(--bg);border:1px solid var(--border);border-radius:8px;color:var(--text);margin-top:4px"></div>
       <div style="display:flex;gap:8px;margin-top:16px">
         <button class="fbtn" onclick="saveAdEdit(${a.id})" style="flex:1;background:var(--accent);color:#fff;border:none;justify-content:center">保存</button>
@@ -1733,7 +1733,7 @@ function saveAdEdit(id){
   if(a){
     const nameEl=document.getElementById('editAdName');
     const budgetEl=document.getElementById('editAdBudget');
-    if(nameEl)a.name=nameEl.value.trim()||a.name;
+    if(nameEl)a.title=nameEl.value.trim()||a.title;
     if(budgetEl)a.budget=budgetEl.value.trim()||a.budget;
   }
   closeMoreMenu();
@@ -1868,7 +1868,7 @@ function toggleUserDropdown(event){
       <div class="av" style="width:40px;height:40px;font-size:16px;background:${u.avatarBg||'linear-gradient(135deg,#667eea,#764ba2)'}">${(u.name||'王').slice(0,1)}</div>
       <div class="user-menu-header-info">
         <div class="user-menu-header-name">${u.name||'王坤'}</div>
-        <div class="user-menu-header-handle">${u.handle||'@wangkun'}</div>
+        <div class="user-menu-header-handle">${u.handle||''}</div>
       </div>
     </div>
     <div class="user-menu-switch" onclick="toggleAccount()">
@@ -1933,6 +1933,7 @@ function toggleAccount(){
 
 // ===== PROFILE =====
 function renderProfile(){
+  if(!isLoggedIn()){ requireLogin(); return; }
   const u = currentUser() || state.user;
   const tab = state.profileTab;
   const main = document.getElementById('mainContent');
@@ -1942,8 +1943,8 @@ function renderProfile(){
     {key:'media',label:'媒体'},
     {key:'likes',label:'喜欢'}
   ];
-  const myHandle = isLoggedIn() ? currentUser().handle : '@wangkun';
-  const userTweets = DB.tweets.filter(t=>t.handle===myHandle || t.handle==='@wangkun');
+  const myHandle = isLoggedIn() ? currentUser().handle : '';
+  const userTweets = DB.tweets.filter(t=>t.handle===myHandle);
   let content = '';
 
   if(tab==='posts'){
@@ -2936,20 +2937,20 @@ function handleAuth(){
     const p = document.getElementById('loginPass').value;
     if(!u||!p){err.style.display='block';err.textContent='请填写所有字段';return}
     err.style.display='none';
-    // 使用 auth.js 的登录逻辑
-    // auth 页面目前只有密码字段，统一走密码验证（type='email'）
-    // 手机号注册时也存储了密码，所以密码校验对两种账号都适用
-    const result = authLogin(u, p, 'email');
+    // 支持用户名、邮箱、手机号登录
+    const result = authLoginByAny(u, p);
     if(!result.ok){err.style.display='block';err.textContent=result.msg;return}
     // 登录成功，恢复侧边栏
     restoreAuthUI(result.user);
     navigate('home');
+    showToast('欢迎回来，' + (result.user.name || ''));
   } else {
     const name = document.getElementById('regName').value.trim();
     const handle = document.getElementById('regHandle').value.trim();
     const email = document.getElementById('regEmail').value.trim();
     const pass = document.getElementById('regPass').value;
     if(!name||!handle||!email||!pass){err.style.display='block';err.textContent='请填写所有字段';return}
+    if(!isValidEmail(email)){err.style.display='block';err.textContent='请输入有效的邮箱地址';return}
     if(pass.length<8){err.style.display='block';err.textContent='密码至少8位';return}
     err.style.display='none';
     // 使用 auth.js 的注册逻辑
@@ -2964,6 +2965,7 @@ function handleAuth(){
     // 注册成功，恢复侧边栏
     restoreAuthUI(result.user);
     navigate('home');
+    showToast('欢迎加入「言」，' + (result.user.name || ''));
   }
 }
 function restoreAuthUI(user){
@@ -3224,10 +3226,15 @@ function submitPost(){
     }
     DB.tweets.unshift(t);
     u.posts = (u.posts||0) + 1;
-    // 持久化更新后的用户数据
+    // 持久化更新后的用户数据（users 表 + session）
     try {
       const allUsers = JSON.parse(localStorage.getItem('yan_auth_users')||'{}');
-      if(allUsers[u.identifier]){ allUsers[u.identifier].posts = u.posts; localStorage.setItem('yan_auth_users', JSON.stringify(allUsers)); }
+      if(allUsers[u.identifier]){
+        allUsers[u.identifier].posts = u.posts;
+        localStorage.setItem('yan_auth_users', JSON.stringify(allUsers));
+      }
+      // 同步更新 session
+      setSession(u);
     } catch(e) { console.warn('localStorage 写入失败', e); }
     LS.save();
   }
@@ -3237,7 +3244,7 @@ function submitPost(){
 }
 function openShareModal(id){
   document.getElementById('shareModal').classList.add('active');
-  document.getElementById('shareUrlText').textContent='https://yanyan.com/post/'+id;
+  document.getElementById('shareUrlText').textContent='https://www.kunshagj.com/yan/post/'+id;
 }
 function closeShareModal(){document.getElementById('shareModal').classList.remove('active')}
 function copyShareUrl(){
@@ -3251,7 +3258,7 @@ function openMoreMenu(id,event){
   const body=document.getElementById('moreModalBody');
   const t=DB.tweets.find(x=>x.id===id);
   const myHandle = isLoggedIn() ? currentUser().handle : '';
-  const isMine = t && (t.handle === myHandle || t.handle === '@wangkun');
+  const isMine = t && (myHandle && t.handle === myHandle);
   body.innerHTML=`
     <div class="d-item" onclick="toggleBookmarkFromMore(${id});closeMoreMenu()"><svg viewBox="0 0 24 24"><path d="M17 3H7c-1.1 0-1.99.9-1.99 2L5 21l7-3 7 3V5c0-1.1-.9-2-2-2z"/></svg> ${t&&t.bookmarked?'从书签中移除':'添加到书签'}</div>
     ${isMine ? `
@@ -4111,7 +4118,7 @@ function createNewAd(btn){
   const name = inputs[0]?.value?.trim()||'新广告活动';
   const budget = inputs[1]?.value?.trim()||'¥100';
   const maxId = ADS_DATA.length>0?Math.max(...ADS_DATA.map(a=>a.id))+1:1;
-  ADS_DATA.push({id:maxId,name,budget,status:'active',impressions:0,clicks:0,spend:'¥0'});
+  ADS_DATA.push({id:maxId,title:name,budget,status:'active',impressions:0,clicks:0,spend:'¥0'});
   closeMoreMenu();
   renderAds();
   showToast('广告创建成功！');
@@ -4235,12 +4242,11 @@ function handleLogout(){
 }
 function confirmLogout(){
   state.currentUser = null;
-  localStorage.removeItem('yan_current_user');
+  authLogout();
   const lg = document.getElementById('logoutConfirm');
   if(lg) lg.remove();
-  // 重新渲染侧边栏
+  // 重新渲染侧边栏（不隐藏右侧栏，游客也能看到）
   renderGuestSidebar();
-  document.getElementById('sidebarRight').style.display='none';
   navigate('home');
   showToast('已退出登录');
 }
