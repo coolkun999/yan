@@ -175,10 +175,8 @@ function authPhoneNext(){
   // 检查是否已注册
   const users = getUsers();
   const isRegistered = !!users[phone];
-  // 发送验证码（模拟）
+  // 发送验证码（验证码会显示在页面顶部蓝色横幅中）
   const code = sendVerifyCode(phone);
-  // 开发模式：把验证码显示在页面上方便测试
-  console.log('[言 验证码] 手机号 ' + phone + ' 的验证码是：' + code);
   // 显示 step2
   document.getElementById('authPhoneStep1').style.display = 'none';
   document.getElementById('authPhoneStep2').style.display = '';
@@ -215,7 +213,6 @@ function startCountdown(seconds){
 function authResendCode(){
   const phone = document.getElementById('authPhoneInput').value.trim();
   const code = sendVerifyCode(phone);
-  console.log('[言 验证码] 重新发送，验证码：' + code);
   startCountdown(60);
   document.getElementById('authCodeError').style.display = 'none';
 }
@@ -767,11 +764,16 @@ function renderPromoCard(){
 function renderForYouFeed(){
   const promoted = renderPromoCard();
 
+  // 过滤掉被静音/屏蔽用户的帖子
+  const muted = DB.mutedUsers || [];
+  const blocked = DB.blockedUsers || [];
+  const visibleTweets = DB.tweets.filter(t => !muted.includes(t.handle) && !blocked.includes(t.handle));
+
   // 分页加载：获取当前页的数据
   const start = 0;
   const end = (state.homePage + 1) * state.homePageSize;
-  const pageTweets = DB.tweets.slice(start, end);
-  state.homeHasMore = end < DB.tweets.length;
+  const pageTweets = visibleTweets.slice(start, end);
+  state.homeHasMore = end < visibleTweets.length;
 
   return promoted + pageTweets.map(t=>renderTweet(t)).join('') + renderLoadMoreBtn('home');
 }
@@ -783,7 +785,13 @@ function renderFollowingFeed(){
     ['@linxiaoyu', '@techdaily']; // 兜底
   // 也包含当前用户自己的帖子
   const myHandle = isLoggedIn() ? currentUser().handle : '';
-  const followingTweets = DB.tweets.filter(t => followingHandles.includes(t.handle) || (myHandle && t.handle === myHandle));
+  // 过滤静音/屏蔽
+  const muted = DB.mutedUsers || [];
+  const blocked = DB.blockedUsers || [];
+  const followingTweets = DB.tweets.filter(t =>
+    (followingHandles.includes(t.handle) || (myHandle && t.handle === myHandle)) &&
+    !muted.includes(t.handle) && !blocked.includes(t.handle)
+  );
   if(followingTweets.length === 0){
     return `<div class="empty-state"><svg viewBox="0 0 24 24"><path d="M5.651 19h12.698c-.337-1.8-1.023-3.21-1.945-4.19C15.318 13.65 13.838 13 12 13s-3.317.65-4.404 1.81c-.922.98-1.608 2.39-1.945 4.19z"/></svg><h3>还没有内容</h3><p>关注更多用户，在这里看到他们的帖子</p></div>`;
   }
@@ -901,6 +909,8 @@ const LS = {
       followers: DB.followers,
       notifications: DB.notifications,
       messages: DB.messages,
+      mutedUsers: DB.mutedUsers,
+      blockedUsers: DB.blockedUsers,
       // 用户发的新帖（id > 1000000 说明是运行时创建的）
       userTweets: DB.tweets.filter(t=>t.id>1000000)
     };
@@ -955,6 +965,8 @@ const LS = {
     if(saved.followers) DB.followers = saved.followers;
     if(saved.notifications) DB.notifications = saved.notifications;
     if(saved.messages) DB.messages = saved.messages;
+    if(saved.mutedUsers) DB.mutedUsers = saved.mutedUsers;
+    if(saved.blockedUsers) DB.blockedUsers = saved.blockedUsers;
     console.log('[言] v2 数据加载完成');
   }
 })();
@@ -1339,6 +1351,14 @@ function renderChatMessages(messages){
     const showDate = i===0 || getDateKey(messages[i-1].time) !== getDateKey(m.time);
     const dateHtml = showDate ? `<div class="chat-date">${getDateLabel(m.time)}</div>` : '';
     const seenClass = m.seen ? ' seen' : '';
+    // 图片消息渲染
+    if(m.isImage && m.imageData){
+      return `${dateHtml}
+        <div style="display:flex;flex-direction:column;align-items:${m.sent?'flex-end':'flex-start'}">
+          <img src="${m.imageData}" style="max-width:200px;max-height:200px;border-radius:16px;object-fit:cover;cursor:pointer" onclick="this.style.maxWidth=this.style.maxWidth==='100%'?'200px':'100%'" />
+          <div class="chat-time${seenClass}">${m.time}${m.seen&&!m.sent?' · 已读':''}</div>
+        </div>`;
+    }
     return `${dateHtml}
       <div style="display:flex;flex-direction:column;align-items:${m.sent?'flex-end':'flex-start'}">
         <div class="chat-bubble ${m.sent?'sent':'received'}">${m.text}</div>
@@ -1366,12 +1386,6 @@ function getDateLabel(timeStr){
 }
 function toggleEmojiPicker(){
   document.getElementById('emojiPicker').classList.toggle('show');
-}
-function insertEmoji(emoji){
-  const input = document.getElementById('chatInput');
-  input.value += emoji;
-  input.focus();
-  toggleSendBtn();
 }
 function toggleSendBtn(){
   const input = document.getElementById('chatInput');
@@ -3007,20 +3021,23 @@ function restoreAuthUI(user){
   });
 }
 function handleGoogleAuth(){
-  // 模拟 Google OAuth：直接通过 session 机制登录
-  // 每次生成唯一的 Google 模拟账号
-  const googleId = 'google_' + Date.now() + '@yan.com';
-  const result = authRegister(googleId, 'google_oauth_' + Date.now(), 'email', 'Google 用户');
+  // 模拟 Google OAuth：使用固定的模拟账号，保证每次登录是同一个用户
+  // 真实环境需替换为真实 OAuth 流程（Google Sign-In SDK）
+  const GOOGLE_MOCK_EMAIL = 'google_user@yan.com';
+  const GOOGLE_MOCK_PWD   = 'google_oauth_fixed_token';
+  const GOOGLE_DISPLAY    = 'Google 用户';
+
+  // 先尝试登录（账号已存在）
+  let result = authLogin(GOOGLE_MOCK_EMAIL, GOOGLE_MOCK_PWD, 'email');
+  if(!result.ok){
+    // 账号不存在则注册
+    result = authRegister(GOOGLE_MOCK_EMAIL, GOOGLE_MOCK_PWD, 'email', GOOGLE_DISPLAY);
+  }
   if(result.ok){
     restoreAuthUI(result.user);
     navigate('home');
   } else {
-    // 如果注册失败（不太可能，因为 ID 带 timestamp），尝试登录管理员账号
-    const fallback = authLogin('admin@yan.com', 'admin888', 'email');
-    if(fallback.ok){
-      restoreAuthUI(fallback.user);
-      navigate('home');
-    }
+    showToast('Google 登录失败，请稍后再试');
   }
 }
 
@@ -3301,11 +3318,33 @@ function editTweet(id){
   updateModalPostBtn();
 }
 function muteUser(handle){
-  showToast('已静音 @'+handle);
+  if(!DB.mutedUsers) DB.mutedUsers = [];
+  const h = handle.startsWith('@') ? handle : '@'+handle;
+  if(DB.mutedUsers.includes(h)){
+    DB.mutedUsers = DB.mutedUsers.filter(x=>x!==h);
+    showToast('已取消静音 '+h);
+  } else {
+    DB.mutedUsers.push(h);
+    showToast('已静音 '+h+'，其帖子将不再显示在你的时间线');
+    // 如果在 home 页面，立即刷新以隐藏被静音用户的帖子
+    if(state.currentPage==='home') renderHome();
+  }
+  LS.save();
   closeMoreMenu();
 }
 function blockUser(handle){
-  showToast('已屏蔽 @'+handle);
+  if(!DB.blockedUsers) DB.blockedUsers = [];
+  const h = handle.startsWith('@') ? handle : '@'+handle;
+  if(DB.blockedUsers.includes(h)){
+    DB.blockedUsers = DB.blockedUsers.filter(x=>x!==h);
+    showToast('已取消屏蔽 '+h);
+  } else {
+    DB.blockedUsers.push(h);
+    showToast('已屏蔽 '+h+'，你们将无法互相看到对方内容');
+    if(state.currentPage==='home') renderHome();
+    else if(state.currentPage==='profile') navigate('home');
+  }
+  LS.save();
   closeMoreMenu();
 }
 function changeWhoCanReply(id){
@@ -3388,7 +3427,7 @@ function toggleEmoji(ctx){
   }
 }
 function insertEmoji(e){
-  let ta=_lastFocusedInput||document.querySelector('.cin:focus,.ri-textarea:focus,#modalText:focus');
+  let ta=_lastFocusedInput||document.querySelector('.cin:focus,.ri-textarea:focus,#modalText:focus,#chatInput:focus');
   if(ta){
     const s=ta.selectionStart||ta.value.length;
     ta.value=ta.value.slice(0,s)+e+ta.value.slice(ta.selectionEnd||s);
@@ -3396,6 +3435,7 @@ function insertEmoji(e){
     ta.focus();
     if(ta.id==='modalText')updateModalPostBtn();
     if(ta.classList.contains('cin'))updateComposeBtn();
+    if(ta.id==='chatInput')toggleSendBtn();
   }
   document.querySelectorAll('.emoji-picker.active').forEach(p=>p.classList.remove('active'));
 }
@@ -3466,7 +3506,7 @@ function filterGifs(query,gridId){
 function pickGif(id,ctx){
   const gif=GIF_DATA.find(g=>g.id===id);
   if(!gif)return;
-  let ta=_lastFocusedInput||document.querySelector('.cin:focus,.ri-textarea:focus,#modalText:focus');
+  let ta=_lastFocusedInput||document.querySelector('.cin:focus,.ri-textarea:focus,#modalText:focus,#chatInput:focus');
   if(ta){
     const s=ta.selectionStart||ta.value.length;
     const text=gif.label;
@@ -3475,6 +3515,7 @@ function pickGif(id,ctx){
     ta.focus();
     if(ta.id==='modalText')updateModalPostBtn();
     if(ta.classList.contains('cin'))updateComposeBtn();
+    if(ta.id==='chatInput')toggleSendBtn();
   }
   document.querySelectorAll('.gif-picker.active').forEach(p=>p.classList.remove('active'));
 }
@@ -3790,11 +3831,11 @@ function openEditProfileModal(){
         <button class="modal-btn primary" onclick="saveProfile()" style="border-radius:9999px;padding:8px 20px;font-size:14px">保存</button>
       </div>
       <div class="modal-body">
-        <div class="profile-cover" style="height:160px;border-radius:0;background:linear-gradient(135deg,#1a1a2e,#16213e);cursor:pointer;display:flex;align-items:center;justify-content:center" onclick="changeProfileCover(this)">
+        <div class="profile-cover" id="editCoverEl" style="height:160px;border-radius:0;background:${u.coverImg ? '' : (u.coverBg||'linear-gradient(135deg,#1a1a2e,#16213e)')};background-image:${u.coverImg ? `url('${u.coverImg}')` : ''};background-size:cover;background-position:center;cursor:pointer;display:flex;align-items:center;justify-content:center" onclick="changeProfileCover(this)">
           <svg viewBox="0 0 24 24" fill="var(--text2)" style="width:32px;height:32px"><path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"/></svg>
         </div>
         <div style="margin-top:-48px;margin-left:16px;margin-bottom:24px">
-          <div class="av" style="width:80px;height:80px;font-size:32px;background:linear-gradient(135deg,#667eea,#764ba2);border:4px solid var(--bg);cursor:pointer" onclick="changeProfileAvatar(this)">${u.name.slice(0,1)}</div>
+          <div id="editAvatarEl" class="av" style="width:80px;height:80px;font-size:32px;${u.avatarImg ? `background-image:url('${u.avatarImg}');background-size:cover;background-position:center;` : `background:${u.avatarBg||'linear-gradient(135deg,#667eea,#764ba2)'};`}border:4px solid var(--bg);cursor:pointer" onclick="changeProfileAvatar(this)">${u.avatarImg ? '' : u.name.slice(0,1)}</div>
         </div>
         <div style="display:flex;flex-direction:column;gap:16px">
           <div>
@@ -3830,13 +3871,36 @@ function saveProfile(){
   const bio = document.getElementById('editBio').value.trim();
   const location = document.getElementById('editLocation').value.trim();
   if(!name) return;
+  // 读取头像图片（用户上传的 dataUrl）
+  const avatarEl = document.getElementById('editAvatarEl');
+  const coverEl = document.getElementById('editCoverEl');
+  const avatarImgData = avatarEl && avatarEl.dataset.imgData;
+  const coverImgData = coverEl && coverEl.dataset.imgData;
+  const avatarBg = avatarEl ? (avatarEl.style.backgroundImage && avatarEl.dataset.imgData ? '' : avatarEl.style.background) : null;
+
   // 更新 state.user（兜底）
   state.user.name = name;
   state.user.bio = bio;
   state.user.location = location;
+  if(avatarImgData){
+    state.user.avatarImg = avatarImgData;
+    state.user.avatarBg = '';
+  } else if(avatarBg) {
+    state.user.avatarBg = avatarBg;
+  }
+  if(coverImgData){
+    state.user.coverImg = coverImgData;
+    state.user.coverBg = '';
+  } else if(coverEl) {
+    state.user.coverBg = coverEl.style.background;
+  }
   // 同步更新 auth.js 中的当前用户
   if(isLoggedIn() && typeof updateCurrentUser === 'function'){
-    updateCurrentUser({ name, bio, location });
+    const updates = { name, bio, location };
+    if(avatarImgData) updates.avatarImg = avatarImgData;
+    else if(avatarBg) updates.avatarBg = avatarBg;
+    if(coverImgData) updates.coverImg = coverImgData;
+    updateCurrentUser(updates);
   }
   LS.save();
   closeEditProfileModal();
@@ -3845,25 +3909,43 @@ function saveProfile(){
 
 // ===== SEND IMAGE MESSAGE =====
 function sendImageMsg(){
-  const now = new Date();
-  const timeStr = now.getHours().toString().padStart(2,'0')+':'+now.getMinutes().toString().padStart(2,'0');
-  if(!activeChat) return;
-  const colors = ['linear-gradient(135deg,#667eea,#764ba2)','linear-gradient(135deg,#f093fb,#f5576c)','linear-gradient(135deg,#4facfe,#00f2fe)','linear-gradient(135deg,#43e97b,#38f9d7)','linear-gradient(135deg,#fa709a,#fee140)','linear-gradient(135deg,#a18cd1,#fbc2eb)'];
-  const bg = colors[Math.floor(Math.random()*colors.length)];
-  activeChat.messages.push({sent:true,text:'📷 图片消息',time:timeStr,seen:true,isImage:true,imageBg:bg});
-  const cb = document.getElementById('chatBody');
-  if(cb){
-    const wrapper=document.createElement('div');
-    wrapper.style.cssText='display:flex;flex-direction:column;align-items:flex-end;margin-bottom:12px';
-    wrapper.innerHTML = `
-      <div style="width:200px;height:150px;border-radius:16px;${bg};display:flex;align-items:center;justify-content:center;font-size:48px;overflow:hidden">
-        <div style="text-align:center">🖼️</div>
-      </div>
-      <div class="chat-time seen" style="margin-top:4px">${timeStr} · 已读</div>
-    `;
-    cb.appendChild(wrapper);
-    cb.scrollTop=cb.scrollHeight;
+  // 用隐藏的 file input 触发文件选择
+  let fileInput = document.getElementById('_chatImgInput');
+  if(!fileInput){
+    fileInput = document.createElement('input');
+    fileInput.type = 'file';
+    fileInput.id = '_chatImgInput';
+    fileInput.accept = 'image/*';
+    fileInput.style.display = 'none';
+    document.body.appendChild(fileInput);
+    fileInput.addEventListener('change', function(){
+      const file = this.files && this.files[0];
+      if(!file || !activeChat) { this.value=''; return; }
+      const reader = new FileReader();
+      reader.onload = function(e){
+        const dataUrl = e.target.result;
+        const now = new Date();
+        const timeStr = now.getHours().toString().padStart(2,'0')+':'+now.getMinutes().toString().padStart(2,'0');
+        // 存入消息记录（存 dataUrl，下次打开仍可显示）
+        activeChat.messages.push({sent:true,text:'[图片]',time:timeStr,seen:true,isImage:true,imageData:dataUrl});
+        LS.save();
+        const cb = document.getElementById('chatBody');
+        if(cb){
+          const wrapper = document.createElement('div');
+          wrapper.style.cssText = 'display:flex;flex-direction:column;align-items:flex-end;margin-bottom:12px';
+          wrapper.innerHTML = `
+            <img src="${dataUrl}" style="max-width:200px;max-height:200px;border-radius:16px;object-fit:cover;cursor:pointer" onclick="this.style.maxWidth=this.style.maxWidth==='100%'?'200px':'100%'" />
+            <div class="chat-time seen" style="margin-top:4px">${timeStr} · 已读</div>
+          `;
+          cb.appendChild(wrapper);
+          cb.scrollTop = cb.scrollHeight;
+        }
+      };
+      reader.readAsDataURL(file);
+      this.value = '';
+    });
   }
+  fileInput.click();
 }
 
 // ===== POLL CREATOR =====
@@ -3928,8 +4010,8 @@ function confirmPoll(){
   }
   closePollModal();
   // 在输入框中插入投票标记
-  let ta = _lastFocusedInput || document.querySelector('.cin:focus,.ri-textarea:focus,#modalText:focus');
-  if(!ta) ta = document.querySelector('.cin') || document.getElementById('modalText');
+  let ta = _lastFocusedInput || document.querySelector('.cin:focus,.ri-textarea:focus,#modalText:focus,#chatInput:focus');
+  if(!ta) ta = document.querySelector('.cin') || document.getElementById('modalText') || document.getElementById('chatInput');
   if(ta){
     const pollMark = `\n📊 投票：${options.join(' | ')}（${_pollDuration>=24?(_pollDuration/24)+'天':_pollDuration+'小时'}）`;
     const s = ta.selectionStart || ta.value.length;
@@ -3938,6 +4020,7 @@ function confirmPoll(){
     ta.focus();
     if(ta.id==='modalText')updateModalPostBtn();
     if(ta.classList.contains('cin'))updateComposeBtn();
+    if(ta.id==='chatInput')toggleSendBtn();
   }
   showToast('投票已添加');
 }
@@ -4176,16 +4259,68 @@ const COVER_GRADIENTS = [
   'linear-gradient(135deg,#0f0c29,#302b63,#24243e)'
 ];
 function changeProfileAvatar(el){
-  const cur = AVATAR_GRADIENTS.indexOf(el.style.background.replace(/;.*/,'').trim())||0;
-  const next = (cur+1)%AVATAR_GRADIENTS.length;
-  el.style.background = AVATAR_GRADIENTS[next];
-  showToast('头像颜色已更换');
+  // 优先让用户上传真实图片；取消时才 fallback 到渐变色切换
+  let fileInput = document.getElementById('_avatarImgInput');
+  if(!fileInput){
+    fileInput = document.createElement('input');
+    fileInput.type = 'file';
+    fileInput.id = '_avatarImgInput';
+    fileInput.accept = 'image/*';
+    fileInput.style.display = 'none';
+    document.body.appendChild(fileInput);
+    fileInput.addEventListener('change', function(){
+      const file = this.files && this.files[0];
+      if(!file){ this.value=''; return; }
+      const reader = new FileReader();
+      reader.onload = function(e){
+        const dataUrl = e.target.result;
+        const avatarEl = document.getElementById('editAvatarEl');
+        if(avatarEl){
+          avatarEl.style.background = '';
+          avatarEl.style.backgroundImage = `url('${dataUrl}')`;
+          avatarEl.style.backgroundSize = 'cover';
+          avatarEl.style.backgroundPosition = 'center';
+          avatarEl.textContent = '';
+          avatarEl.dataset.imgData = dataUrl;
+        }
+        showToast('头像已选择，点击保存生效');
+      };
+      reader.readAsDataURL(file);
+      this.value='';
+    });
+  }
+  fileInput.click();
 }
 function changeProfileCover(el){
-  const cur = COVER_GRADIENTS.findIndex(g=>el.style.background===g);
-  const next = (cur+1)%COVER_GRADIENTS.length;
-  el.style.background = COVER_GRADIENTS[next];
-  showToast('封面已更换，点击保存生效');
+  let fileInput = document.getElementById('_coverImgInput');
+  if(!fileInput){
+    fileInput = document.createElement('input');
+    fileInput.type = 'file';
+    fileInput.id = '_coverImgInput';
+    fileInput.accept = 'image/*';
+    fileInput.style.display = 'none';
+    document.body.appendChild(fileInput);
+    fileInput.addEventListener('change', function(){
+      const file = this.files && this.files[0];
+      if(!file){ this.value=''; return; }
+      const reader = new FileReader();
+      reader.onload = function(e){
+        const dataUrl = e.target.result;
+        const coverEl = document.getElementById('editCoverEl');
+        if(coverEl){
+          coverEl.style.background = '';
+          coverEl.style.backgroundImage = `url('${dataUrl}')`;
+          coverEl.style.backgroundSize = 'cover';
+          coverEl.style.backgroundPosition = 'center';
+          coverEl.dataset.imgData = dataUrl;
+        }
+        showToast('封面已选择，点击保存生效');
+      };
+      reader.readAsDataURL(file);
+      this.value='';
+    });
+  }
+  fileInput.click();
 }
 
 // ===== CREATE SPACE =====
@@ -4787,7 +4922,7 @@ function renderCookies(){
 // 跟踪最后聚焦的输入框，供表情/GIF插入使用
 document.addEventListener('focusin',function(e){
   const el=e.target;
-  if(el&&(el.tagName==='TEXTAREA'||el.tagName==='INPUT')&&(el.classList.contains('cin')||el.classList.contains('ri-textarea')||el.id==='modalText')){
+  if(el&&(el.tagName==='TEXTAREA'||el.tagName==='INPUT')&&(el.classList.contains('cin')||el.classList.contains('ri-textarea')||el.id==='modalText'||el.id==='chatInput')){
     _lastFocusedInput=el;
   }
 });

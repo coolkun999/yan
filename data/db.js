@@ -94,6 +94,8 @@ const DB = {
     ]
   },
   bookmarks: [1, 5, 8, 12, 19, 24],
+  mutedUsers: [],    // 静音用户 handle 列表，如 ['@handle1', '@handle2']
+  blockedUsers: [],  // 屏蔽用户 handle 列表
   searchResults: [],
   likersList: [
     {name:'林小雨',handle:'@linxiaoyu',avatar:'林',avatarBg:'linear-gradient(135deg,#667eea,#764ba2)',verified:true,following:true},

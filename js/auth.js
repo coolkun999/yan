@@ -54,18 +54,19 @@ function sendVerifyCode(phoneOrEmail) {
   return code;
 }
 
-// 在页面顶部显示验证码（开发测试用）
+// 在页面顶部显示验证码（模拟短信/邮件，正式环境应替换为真实发送服务）
 function showVerifyCode(identifier, code) {
   // 移除旧提示
   const old = document.getElementById('devCodeTip');
   if (old) old.remove();
   const tip = document.createElement('div');
   tip.id = 'devCodeTip';
-  tip.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:99999;background:#1d9bf0;color:#fff;text-align:center;padding:8px 16px;font-size:14px;font-weight:600;letter-spacing:1px';
-  tip.innerHTML = '📱 测试验证码：<b style="font-size:18px;margin:0 4px">' + code + '</b> （发送给 ' + identifier + '）— 正式环境此处为发送短信/邮件';
+  tip.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:99999;background:#1d9bf0;color:#fff;text-align:center;padding:10px 48px 10px 16px;font-size:14px;font-weight:600;letter-spacing:1px;box-shadow:0 2px 8px rgba(0,0,0,0.2)';
+  tip.innerHTML = '📱 验证码已发送：<b style="font-size:20px;margin:0 8px;letter-spacing:4px">' + code + '</b><span style="font-size:13px;opacity:0.85">（模拟发送给 ' + identifier + '，正式环境为真实短信）</span>'
+    + '<button onclick="document.getElementById(\'devCodeTip\').remove()" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);background:rgba(255,255,255,0.3);border:none;color:#fff;width:24px;height:24px;border-radius:50%;cursor:pointer;font-size:16px;line-height:1;display:flex;align-items:center;justify-content:center">×</button>';
   document.body.appendChild(tip);
-  // 30秒后自动消失
-  setTimeout(function(){ if(tip.parentNode) tip.remove(); }, 30000);
+  // 60秒后自动消失（与验证码有效期一致）
+  setTimeout(function(){ if(tip.parentNode) tip.remove(); }, 60000);
 }
 function verifyCode(phoneOrEmail, inputCode) {
   const codes = getCodes();
