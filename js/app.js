@@ -886,6 +886,7 @@ function homePost(){
     const allUsers = JSON.parse(localStorage.getItem('yan_auth_users')||'{}');
     if(allUsers[u.identifier]){ allUsers[u.identifier].posts = u.posts; localStorage.setItem('yan_auth_users', JSON.stringify(allUsers)); }
   } catch(e) { console.warn('localStorage 写入失败', e); }
+  LS.save();
   document.getElementById('homeCompose').value = '';
   document.getElementById('homePostBtn').disabled = true;
   clearComposeMedia();
