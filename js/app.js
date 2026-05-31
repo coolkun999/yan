@@ -898,33 +898,81 @@ function homePost(){
 
 // ===== LOCALSTORAGE 持久化 =====
 const LS = {
-  KEY: 'yan_data_v2',  // 版本升级，自动丢弃旧缓存
+  KEY: 'yan_data_v2',
   save(){
-    const data = {
-      _v: 2,
-      // 只保存用户互动状态，不存完整帖子数据（避免覆盖 db.js 的新字段）
-      tweetStates: DB.tweets.map(t=>({id:t.id,liked:t.liked,retweeted:t.retweeted,bookmarked:t.bookmarked,retweets:t.retweets,likes:t.likes,replies:t.replies,pinned:t.pinned,poll:t.poll})),
-      bookmarks: DB.bookmarks,
-      replies: DB.replies,
-      following: DB.following,
-      followers: DB.followers,
-      notifications: DB.notifications,
-      messages: DB.messages,
-      mutedUsers: DB.mutedUsers,
-      blockedUsers: DB.blockedUsers,
-      // 用户发的新帖（id > 1000000 说明是运行时创建的）
-      userTweets: DB.tweets.filter(t=>t.id>1000000)
-    };
-    try{ localStorage.setItem(LS.KEY, JSON.stringify(data)); }catch(e){}
+    try {
+      // 构建要持久化的数据
+      // userTweets：只保存用户新发的帖子，去掉 media（data URL 太大，localStorage 存不下）
+      const safeTweets = DB.tweets.filter(t => t.id > 1e10).map(t => {
+        const copy = {...t};
+        // 去掉 media（图片 data URL 太大），保留一个标记
+        if(copy.media && copy.media.length > 0){
+          copy._hadMedia = true;
+          delete copy.media;
+        }
+        return copy;
+      });
+
+      const data = {
+        _v: 2,
+        tweetStates: DB.tweets.map(t=>({
+          id:t.id,
+          liked:t.liked,
+          retweeted:t.retweeted,
+          bookmarked:t.bookmarked,
+          retweets:t.retweets,
+          likes:t.likes,
+          replies:t.replies,
+          pinned:t.pinned,
+          poll:t.poll
+        })),
+        bookmarks: DB.bookmarks,
+        replies: DB.replies,
+        following: DB.following,
+        followers: DB.followers,
+        notifications: DB.notifications,
+        messages: DB.messages,
+        mutedUsers: DB.mutedUsers,
+        blockedUsers: DB.blockedUsers,
+        userTweets: safeTweets
+      };
+      const json = JSON.stringify(data);
+      localStorage.setItem(LS.KEY, json);
+      console.log('[言] LS.save() 成功，数据大小:', (json.length / 1024).toFixed(1) + 'KB');
+    } catch(e) {
+      console.error('[言] LS.save() 失败:', e.message, e.name);
+      // 如果是配额超限，尝试只保存核心数据（不含 media）
+      if(e.name === 'QuotaExceededError' || e.code === 22){
+        try {
+          const minimal = {
+            _v: 2,
+            userTweets: DB.tweets.filter(t => t.id > 1e10).map(t => ({
+              id: t.id, name: t.name, handle: t.handle, text: t.text,
+              time: t.time, createdAt: t.createdAt,
+              likes: t.likes, retweets: t.retweets, replies: t.replies,
+              views: t.views, liked: t.liked, bookmarked: t.bookmarked
+            }))
+          };
+          localStorage.setItem(LS.KEY, JSON.stringify(minimal));
+          console.warn('[言] LS.save() 配额超限，已用精简模式保存');
+        } catch(e2) {
+          console.error('[言] LS.save() 精简保存也失败:', e2.message);
+        }
+      }
+    }
   },
   load(){
     try{
       const raw = localStorage.getItem(LS.KEY);
       if(!raw) return null;
       const d = JSON.parse(raw);
-      if(!d._v || d._v < 2) return null; // 旧版本数据直接丢弃
+      if(!d._v || d._v < 2) return null;
+      console.log('[言] LS.load() 成功，userTweets 数量:', d.userTweets?.length || 0);
       return d;
-    }catch(e){ return null; }
+    }catch(e){
+      console.error('[言] LS.load() 失败:', e.message);
+      return null;
+    }
   },
   clear(){ try{ localStorage.removeItem(LS.KEY); localStorage.removeItem('yan_data_v1'); }catch(e){} }
 };
@@ -936,11 +984,20 @@ const LS = {
 
   const saved = LS.load();
   if(saved){
-    // 把用户互动状态合并回 db.js 的帖子（不替换整个帖子）
+    // 【先】把用户自己发的新帖追加进去（必须先于 tweetStates 合并）
+    if(saved.userTweets && saved.userTweets.length > 0){
+      saved.userTweets.forEach(ut=>{
+        if(!DB.tweets.find(x=>x.id===ut.id)) DB.tweets.unshift(ut);
+      });
+      console.log('[言] 已恢复 '+saved.userTweets.length+' 条用户帖子');
+    }
+    // 【后】把用户互动状态合并回 db.js 的帖子（现在 DB.tweets 已包含用户新帖）
     if(saved.tweetStates){
+      let matched = 0, unmatched = 0;
       saved.tweetStates.forEach(s=>{
         const t = DB.tweets.find(x=>x.id===s.id);
         if(t){
+          matched++;
           t.liked = s.liked;
           t.retweeted = s.retweeted;
           t.bookmarked = s.bookmarked;
@@ -948,17 +1005,12 @@ const LS = {
           t.likes = s.likes;
           t.replies = s.replies;
           if(s.pinned) t.pinned = s.pinned;
-          // 合并投票状态
-          if(s.poll && t.poll) t.poll.voted = s.poll.voted;
-          if(s.poll && t.poll) t.poll.options = s.poll.options;
+          if(s.poll && t.poll){ t.poll.voted = s.poll.voted; t.poll.options = s.poll.options; }
+        } else {
+          unmatched++;
         }
       });
-    }
-    // 把用户自己发的新帖（运行时创建）追加进去
-    if(saved.userTweets && saved.userTweets.length > 0){
-      saved.userTweets.forEach(ut=>{
-        if(!DB.tweets.find(x=>x.id===ut.id)) DB.tweets.unshift(ut);
-      });
+      console.log('[言] tweetStates 合并完成，匹配:'+matched+', 未匹配:'+unmatched);
     }
     if(saved.bookmarks) DB.bookmarks = saved.bookmarks;
     if(saved.replies) DB.replies = saved.replies;
