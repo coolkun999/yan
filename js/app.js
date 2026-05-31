@@ -529,11 +529,32 @@ function renderTweet(t, showReply=false){
   </div>`;
 }
 
+// HTML 转义（防止 XSS）
+function escapeHtml(str){
+  if(!str) return '';
+  return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+
 // 格式化推文文本
 function formatTweetText(text){
-  return text.replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n/g,'<br>')
-    .replace(/#(\S+)/g,'<a href="#" onclick="event.preventDefault();event.stopPropagation();navigate(\'topic\',\'$1\')" style="color:var(--accent)">#$1</a>')
-    .replace(/@(\S+)/g,'<a href="#" onclick="event.preventDefault();event.stopPropagation();navigate(\'user\',\'@$1\')" style="color:var(--accent)">@$1</a>');
+  if(!text) return '';
+  // 第一步：转义 HTML 特殊字符（防止 XSS）
+  const escaped = escapeHtml(text);
+  // 第二步：处理换行
+  const withBreaks = escaped.replace(/\n/g,'<br>');
+  // 第三步：话题高亮
+  // displayText 用原始 tag（未转义）转义后插入，显示自然安全
+  // onclick 参数用 encodeURIComponent 防止 JS 注入
+  const withTopics = withBreaks.replace(/#(\S+)/g, function(_, tag){
+    // tag 是 text 经 HTML 转义后的片段，其中 < > & " ' 已被转为 &lt; &gt; &amp; &quot; &#39;
+    // 用于显示：直接对 tag 做 HTML 转义（已转义的内容再转一次会变 &amp;lt;，所以用原始 tag）
+    // 用于 onclick：encodeURIComponent 对已 HTML 转义的 tag 编码（如 &lt; -> %26lt%3B）
+    return '<a href="#" onclick="event.preventDefault();event.stopPropagation();navigate(\'topic\',\'' + encodeURIComponent(tag) + '\')" style="color:var(--accent)">#' + tag + '</a>';
+  });
+  // 第四步：@提及高亮，同上
+  return withTopics.replace(/@(\S+)/g, function(_, mention){
+    return '<a href="#" onclick="event.preventDefault();event.stopPropagation();navigate(\'user\',\'' + encodeURIComponent(mention) + '\')" style="color:var(--accent)">@' + mention + '</a>';
+  });
 }
 
 // ===== MEDIA RENDER =====
@@ -542,11 +563,11 @@ function renderMedia(t){
   const imgs = t.media;
   const count = imgs.length;
   const renderImg = (m, style) => {
-    if(m.url) return `<div style="${style}overflow:hidden;border-radius:0"><img src="${m.url}" style="width:100%;height:100%;object-fit:cover" alt=""></div>`;
+    if(m.url) return `<div style="${style}overflow:hidden;border-radius:0"><img src="${m.url}" style="width:100%;height:100%;object-fit:cover" alt="" loading="lazy"></div>`;
     return `<div style="${style}">${m.icon||'📷'}</div>`;
   };
   if(count === 1){
-    if(imgs[0].url) return `<div class="tmedia"><div class="media-single" style="width:100%;border-radius:16px;overflow:hidden"><img src="${imgs[0].url}" style="width:100%;max-height:400px;object-fit:cover;display:block" alt=""></div></div>`;
+    if(imgs[0].url) return `<div class="tmedia"><div class="media-single" style="width:100%;border-radius:16px;overflow:hidden"><img src="${imgs[0].url}" style="width:100%;max-height:400px;object-fit:cover;display:block" alt="" loading="lazy"></div></div>`;
     return `<div class="tmedia"><div class="media-single" style="width:100%;height:280px;background:${imgs[0].bg};border-radius:16px;display:flex;align-items:center;justify-content:center;overflow:hidden">
       <div style="font-size:64px">${imgs[0].icon||'📷'}</div>
     </div></div>`;
@@ -580,7 +601,7 @@ function renderQuoteTweet(quoteId){
         <span style="color:var(--text2);font-size:13px">${qt.handle}</span>
         <span style="color:var(--text2);font-size:13px">· ${formatTime(qt.createdAt)}</span>
       </div>
-      <div style="font-size:14px;color:var(--text);line-height:1.5">${qt.text.length>120?qt.text.slice(0,120)+'...':qt.text}</div>
+      <div style="font-size:14px;color:var(--text);line-height:1.5">${escapeHtml(qt.text.length>120?qt.text.slice(0,120)+'...':qt.text)}</div>
     </div>
   `;
 }
@@ -670,6 +691,7 @@ function navigate(page, param){
 // ===== HOME PAGE =====
 function renderHome(){
   const main = document.getElementById('mainContent');
+  if(!main) return;
   const u = currentUser() || state.user;
   const forYouActive = state.homeTab !== 'following';
   main.innerHTML = `
@@ -870,7 +892,10 @@ function updateCharCount(textareaId, countId){
 }
 function homePost(){
   if(!requireLogin()) return;
-  const v = document.getElementById('homeCompose').value.trim();
+  const ta = document.getElementById('homeCompose');
+  const btn = document.getElementById('homePostBtn');
+  if(!ta || !btn) return;
+  const v = ta.value.trim();
   const hasMedia = state.composeMedia && state.composeMedia.length > 0;
   if(!v && !hasMedia) return;
   const viewsOptions=['15','28','47','89','124','203'];
@@ -881,84 +906,128 @@ function homePost(){
   }
   DB.tweets.unshift(t);
   u.posts = (u.posts||0) + 1;
-  // 持久化更新后的用户数据
+  // 持久化更新后的用户数据（同步 users 表 + session）
   try {
     const allUsers = JSON.parse(localStorage.getItem('yan_auth_users')||'{}');
     if(allUsers[u.identifier]){ allUsers[u.identifier].posts = u.posts; localStorage.setItem('yan_auth_users', JSON.stringify(allUsers)); }
+    setSession(u);
   } catch(e) { console.warn('localStorage 写入失败', e); }
   LS.save();
-  document.getElementById('homeCompose').value = '';
-  document.getElementById('homePostBtn').disabled = true;
+  ta.value = '';
+  btn.disabled = true;
   clearComposeMedia();
   // 重置分页状态
   state.homePage = 0;
   state.homeHasMore = true;
-  renderHome();
+  // 只插入新帖到 feed 顶部，不全量刷新页面
+  prependTweetToFeed(t);
+}
+
+// 将新帖插入 feed 顶部（增量更新，避免全量 renderHome）
+function prependTweetToFeed(tweet){
+  const feed = document.getElementById('homeFeed');
+  if(!feed) return;
+  // 移除"已加载全部内容"提示（如果有）
+  const endMarker = feed.querySelector('.load-more-container');
+  // 插入新帖
+  const tweetHtml = renderTweet(tweet);
+  if(endMarker){
+    endMarker.insertAdjacentHTML('beforebegin', tweetHtml);
+  } else {
+    feed.insertAdjacentHTML('afterbegin', tweetHtml);
+  }
+  // 重新初始化 emoji picker
+  initEmojiPicker();
+  // 滚动到顶部看新帖
+  window.scrollTo(0, 0);
 }
 
 // ===== LOCALSTORAGE 持久化 =====
 const LS = {
   KEY: 'yan_data_v2',
   save(){
+    const safeTweets = this._buildSafeTweets();
+    const tweetStates = this._buildTweetStates();
+    const data = {
+      _v: 2,
+      tweetStates,
+      bookmarks: DB.bookmarks,
+      replies: DB.replies,
+      following: DB.following,
+      followers: DB.followers,
+      notifications: (DB.notifications || []).slice(0, 30),
+      messages: this._buildSafeMessages(),
+      mutedUsers: DB.mutedUsers,
+      blockedUsers: DB.blockedUsers,
+      userTweets: safeTweets
+    };
+    this._saveWithFallbacks(data, safeTweets, tweetStates);
+  },
+  _buildSafeTweets(){
+    return DB.tweets.filter(t => t.id > 1e10).map(t => {
+      const copy = {...t};
+      if(copy.media && copy.media.length > 0){ copy._hadMedia = true; delete copy.media; }
+      return copy;
+    });
+  },
+  _buildTweetStates(){
+    return DB.tweets
+      .filter(t => t.liked || t.retweeted || t.bookmarked || t.pinned ||
+                   t.retweets > 0 || t.likes > 0 || t.replies > 0 ||
+                   (t.poll && t.poll.voted !== undefined && t.poll.voted !== null))
+      .map(t => ({
+        id: t.id, liked: t.liked, retweeted: t.retweeted, bookmarked: t.bookmarked,
+        retweets: t.retweets, likes: t.likes, replies: t.replies, pinned: t.pinned,
+        poll: t.poll ? { voted: t.poll.voted, options: t.poll.options } : undefined
+      }));
+  },
+  _buildSafeMessages(){
+    return (DB.messages || []).map(m => {
+      const copy = {...m};
+      if(copy.messages && copy.messages.length > 50) copy.messages = copy.messages.slice(-50);
+      return copy;
+    });
+  },
+  _saveWithFallbacks(data, safeTweets, tweetStates){
     try {
-      // 构建要持久化的数据
-      // userTweets：只保存用户新发的帖子，去掉 media（data URL 太大，localStorage 存不下）
-      const safeTweets = DB.tweets.filter(t => t.id > 1e10).map(t => {
-        const copy = {...t};
-        // 去掉 media（图片 data URL 太大），保留一个标记
-        if(copy.media && copy.media.length > 0){
-          copy._hadMedia = true;
-          delete copy.media;
-        }
-        return copy;
-      });
-
-      const data = {
-        _v: 2,
-        tweetStates: DB.tweets.map(t=>({
-          id:t.id,
-          liked:t.liked,
-          retweeted:t.retweeted,
-          bookmarked:t.bookmarked,
-          retweets:t.retweets,
-          likes:t.likes,
-          replies:t.replies,
-          pinned:t.pinned,
-          poll:t.poll
-        })),
-        bookmarks: DB.bookmarks,
-        replies: DB.replies,
-        following: DB.following,
-        followers: DB.followers,
-        notifications: DB.notifications,
-        messages: DB.messages,
-        mutedUsers: DB.mutedUsers,
-        blockedUsers: DB.blockedUsers,
-        userTweets: safeTweets
-      };
       const json = JSON.stringify(data);
       localStorage.setItem(LS.KEY, json);
       console.log('[言] LS.save() 成功，数据大小:', (json.length / 1024).toFixed(1) + 'KB');
     } catch(e) {
-      console.error('[言] LS.save() 失败:', e.message, e.name);
-      // 如果是配额超限，尝试只保存核心数据（不含 media）
-      if(e.name === 'QuotaExceededError' || e.code === 22){
-        try {
-          const minimal = {
-            _v: 2,
-            userTweets: DB.tweets.filter(t => t.id > 1e10).map(t => ({
-              id: t.id, name: t.name, handle: t.handle, text: t.text,
-              time: t.time, createdAt: t.createdAt,
-              likes: t.likes, retweets: t.retweets, replies: t.replies,
-              views: t.views, liked: t.liked, bookmarked: t.bookmarked
-            }))
-          };
-          localStorage.setItem(LS.KEY, JSON.stringify(minimal));
-          console.warn('[言] LS.save() 配额超限，已用精简模式保存');
-        } catch(e2) {
-          console.error('[言] LS.save() 精简保存也失败:', e2.message);
-        }
-      }
+      LS._handleSaveError(e, safeTweets, tweetStates);
+    }
+  },
+  _handleSaveError(e, safeTweets, tweetStates){
+    console.error('[言] LS.save() 失败:', e.message, e.name);
+    if(e.name === 'QuotaExceededError' || e.code === 22){
+      LS._tryMinimalSave(safeTweets, tweetStates);
+    }
+  },
+  _tryMinimalSave(safeTweets, tweetStates){
+    try {
+      const minimal = { _v:2, tweetStates, bookmarks: DB.bookmarks, userTweets: safeTweets };
+      localStorage.setItem(LS.KEY, JSON.stringify(minimal));
+      console.warn('[言] LS.save() 配额超限，已用精简模式保存');
+    } catch(e2) {
+      LS._tryUltraMinimalSave(safeTweets);
+    }
+  },
+  _tryUltraMinimalSave(safeTweets){
+    try {
+      const ultraMin = {
+        _v: 2,
+        userTweets: safeTweets.map(t => ({
+          id: t.id, name: t.name, handle: t.handle, verified: t.verified,
+          text: t.text, time: t.time, createdAt: t.createdAt,
+          avatar: t.avatar, avatarBg: t.avatarBg,
+          likes: t.likes, retweets: t.retweets, replies: t.replies,
+          views: t.views, liked: t.liked, bookmarked: t.bookmarked
+        }))
+      };
+      localStorage.setItem(LS.KEY, JSON.stringify(ultraMin));
+      console.warn('[言] LS.save() 极限精简模式，仅保留用户帖子文本');
+    } catch(e3) {
+      console.error('[言] LS.save() 全部失败，localStorage 可能已满');
     }
   },
   load(){
@@ -967,7 +1036,7 @@ const LS = {
       if(!raw) return null;
       const d = JSON.parse(raw);
       if(!d._v || d._v < 2) return null;
-      console.log('[言] LS.load() 成功，userTweets 数量:', d.userTweets?.length || 0);
+      console.log('[言] LS.load() 成功，userTweets:', (d.userTweets?.length||0) + '条，tweetStates:', (d.tweetStates?.length||0) + '条');
       return d;
     }catch(e){
       console.error('[言] LS.load() 失败:', e.message);
@@ -985,11 +1054,14 @@ const LS = {
   const saved = LS.load();
   if(saved){
     // 【先】把用户自己发的新帖追加进去（必须先于 tweetStates 合并）
+    // 注意：userTweets 已按发帖顺序降序排列（最新在前），需要反向 unshift 保持正确顺序
     if(saved.userTweets && saved.userTweets.length > 0){
-      saved.userTweets.forEach(ut=>{
-        if(!DB.tweets.find(x=>x.id===ut.id)) DB.tweets.unshift(ut);
-      });
-      console.log('[言] 已恢复 '+saved.userTweets.length+' 条用户帖子');
+      const toInsert = saved.userTweets.filter(ut => !DB.tweets.find(x=>x.id===ut.id));
+      // 从旧到新依次 unshift，确保最新帖子在最前面
+      for(let i = toInsert.length - 1; i >= 0; i--){
+        DB.tweets.unshift(toInsert[i]);
+      }
+      console.log('[言] 已恢复 '+toInsert.length+' 条用户帖子');
     }
     // 【后】把用户互动状态合并回 db.js 的帖子（现在 DB.tweets 已包含用户新帖）
     if(saved.tweetStates){
@@ -1231,11 +1303,14 @@ function renderNotifications(){
   if(tab==='mentions') n = n.filter(x=>x.type==='mention'||x.type==='reply');
   const allActive = tab==='all'?'active':'';
   const menActive = tab==='mentions'?'active':'';
+  const hasUnread = n.some(x=>x.unread);
   main.innerHTML = `
     <div class="ct">
       <div class="main-header" style="justify-content:space-between">
         <div class="page-title">通知</div>
-        <button class="back-btn" style="display:flex" onclick="openNotifSettings()" title="设置">
+        <div style="display:flex;align-items:center;gap:8px">
+          ${hasUnread ? '<button class="back-btn" style="display:flex;width:auto;padding:0 12px;border-radius:9999px;font-size:13px;font-weight:600;color:var(--accent);border:1px solid var(--border)" onclick="markAllNotificationsRead()">全部已读</button>' : ''}
+          <button class="back-btn" style="display:flex" onclick="openNotifSettings()" title="设置">
           <svg viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.31.06-.63.06-.94 0-.31-.02-.63-.06-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.04.31-.06.63-.06.94s.02.63.06.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58z"/></svg>
         </button>
       </div>
@@ -1306,6 +1381,11 @@ function renderNotifItem(notif){
 }
 function switchNotifTab(tab){
   state.notifTab = tab;
+  renderNotifications();
+}
+function markAllNotificationsRead(){
+  DB.notifications.forEach(n=>{ n.unread = false; });
+  LS.save();
   renderNotifications();
 }
 function openNotifMore(e){}

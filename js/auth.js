@@ -1,6 +1,14 @@
-// ===== AUTH SYSTEM: 账号系统 =====
-// 支持：手机+验证码登录/注册、邮箱+密码登录/注册、游客模式
-// 数据存储在 localStorage，模拟后端
+/**
+ * ===== AUTH SYSTEM: 账号系统 =====
+ * 支持：手机+验证码登录/注册、邮箱+密码登录/注册、游客模式
+ * 数据存储在 localStorage，模拟后端
+ *
+ * !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+ * !!!!!  安全警告：本文件仅用于演示，不可用于生产环境            !!!!!!
+ * !!!!!  密码以明文形式存储在 localStorage，任何能访问浏览器   !!!!!!
+ * !!!!!  的人都可以看到用户密码。请使用真实后端服务替代。       !!!!!!
+ * !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+ */
 
 const AUTH_KEY = 'yan_auth_users';
 const SESSION_KEY = 'yan_current_user';
@@ -80,6 +88,7 @@ function verifyCode(phoneOrEmail, inputCode) {
 }
 
 // ===== 注册 =====
+// !WARNING: 密码以明文存储，仅演示用。生产环境必须使用哈希 + 后端服务。
 function authRegister(identifier, password, type, displayName) {
   // identifier: 手机号或邮箱, type: 'phone'|'email', displayName: 可选昵称
   const users = getUsers();
@@ -123,6 +132,7 @@ function authRegister(identifier, password, type, displayName) {
 }
 
 // ===== 登录 =====
+// !WARNING: 密码比对为明文比较，仅演示用。生产环境应使用哈希 + 后端服务。
 function authLogin(identifier, credential, type) {
   // type: 'phone'（验证码）| 'email'（密码）
   const users = getUsers();
