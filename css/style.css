@@ -472,6 +472,19 @@ textarea,input{font-family:inherit;outline:none;border:none;background:transpare
 @keyframes spin{to{transform:rotate(360deg)}}
 .loading-more{padding:16px;text-align:center;color:var(--text2);font-size:14px;display:flex;align-items:center;justify-content:center;gap:8px}
 
+/* ===== MAP VIEW ===== */
+.map-container{width:100%;height:500px;border-radius:8px;overflow:hidden}
+.tweet-location{transition:background .2s}
+.tweet-location:hover{background:rgba(29,155,240,.1);border-radius:9999px;padding:2px 8px;margin-left:-8px}
+/* Leaflet popup 深色主题适配 */
+.leaflet-popup-content-wrapper{background:var(--bg)!important;color:var(--text)!important;border:1px solid var(--border)}
+.leaflet-popup-tip{background:var(--bg)!important}
+.leaflet-popup-close-button{color:var(--text)!important}
+/* Leaflet 控件 */
+.leaflet-control-zoom a{background:var(--bg)!important;color:var(--text)!important;border-color:var(--border)!important}
+/* 暗色主题专用 */
+body.dark .leaflet-tile-pane{filter:brightness(0.6) invert(1) grayscale(0.2) hue-rotate(180deg)}
+
 /* ===== FLOATING POST BUTTON (mobile) ===== */
 .float-post-btn{position:fixed;bottom:20px;right:20px;width:56px;height:56px;border-radius:50%;background:var(--accent);color:#fff;border:none;cursor:pointer;display:none;align-items:center;justify-content:center;box-shadow:0 4px 16px rgba(29,155,240,.4);z-index:100;transition:background .2s}
 .float-post-btn:hover{background:var(--ah)}
@@ -494,7 +507,7 @@ textarea,input{font-family:inherit;outline:none;border:none;background:transpare
   .profile-info{padding-top:56px}
   .msg-layout{flex-direction:column}
   .msg-list{min-width:100%;border-right:none;border-bottom:1px solid var(--border);max-height:40vh}
-  .msg-chat{flex:1}
+  .msg-chat{flex:1;min-height:0;overflow:hidden}
   .explore-grid{grid-template-columns:1fr}
   .explore-grid-item:first-child{grid-column:1}
   .ei-img{aspect-ratio:4/3 !important}

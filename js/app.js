@@ -31,7 +31,8 @@ const state = {
   explorePage: 0,
   explorePageSize: 15,
   exploreHasMore: true,
-  listTab: 'joined'
+  listTab: 'joined',
+  selectedLocation: null // 当前选中的发帖位置
 };
 
 
@@ -332,17 +333,7 @@ function onAuthSuccess(user){
 }
 
 // 顶部 Toast 提示（1.5秒后消失）
-function showToast(msg){
-  const old = document.getElementById('appToast');
-  if(old) old.remove();
-  const el = document.createElement('div');
-  el.id = 'appToast';
-  el.style.cssText = 'position:fixed;top:16px;left:50%;transform:translateX(-50%);z-index:99999;background:var(--accent);color:#fff;padding:10px 24px;border-radius:999px;font-size:14px;font-weight:600;box-shadow:0 4px 16px rgba(0,0,0,.3);pointer-events:none;animation:toastIn .2s ease';
-  el.textContent = msg;
-  document.body.appendChild(el);
-  setTimeout(function(){ el.style.opacity='0'; el.style.transition='opacity .3s'; setTimeout(function(){ if(el.parentNode) el.remove(); }, 300); }, 1500);
-}
-
+// ===== SHOW TOAST (defined at bottom of file) =====
 // ===== 邮箱登录/注册 =====
 // 切换邮箱子面板：login | register
 function switchEmailSub(sub){
@@ -515,6 +506,7 @@ function renderTweet(t, showReply=false){
         <button class="more-btn" onclick="event.stopPropagation();openMoreMenu(${t.id},event)" style="position:relative"><svg viewBox="0 0 24 24"><path d="M3 12c0-1.1.9-2 2-2s2 .9 2 2-.9 2-2 2-2-.9-2-2zm9 2c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm7 0c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2z"/></svg></button>
       </div>
       <div class="ttxt">${formatTweetText(t.text)}</div>
+      ${t.location ? `<div class="tweet-location" style="display:inline-flex;align-items:center;gap:4px;font-size:13px;color:var(--accent);margin-top:4px;cursor:pointer" onclick="event.stopPropagation();navigate('map')"><svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5S10.62 6.5 12 6.5s2.5 1.12 2.5 2.5S13.38 11.5 12 11.5z"/></svg> ${t.location}</div>`:''}
       ${media}
       ${poll}
       ${quoteHtml}
@@ -650,7 +642,7 @@ function navigate(page, param){
   const ap = document.getElementById('authPage');
   if(ap){ ap.classList.remove('active'); ap.innerHTML = ''; }
   document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
-  const navMap = {home:'nav-home',explore:'nav-explore',notifications:'nav-notif',messages:'nav-messages',bookmarks:'nav-bookmarks',profile:'nav-profile',settings:'nav-settings'};
+  const navMap = {home:'nav-home',explore:'nav-explore',notifications:'nav-notif',messages:'nav-messages',bookmarks:'nav-bookmarks',profile:'nav-profile',settings:'nav-settings',map:'nav-map'};
   if(navMap[page]) document.getElementById(navMap[page])?.classList.add('active');
   window.scrollTo(0,0);
 
@@ -683,6 +675,7 @@ function navigate(page, param){
     case 'privacy': renderPrivacy(); break;
     case 'cookies': renderCookies(); break;
     case 'listDetail': renderListDetail(param); break;
+    case 'map': renderMap(); break;
     default: renderHome();
   }
   closeAllDropdowns();
@@ -791,6 +784,9 @@ function renderForYouFeed(){
   const blocked = DB.blockedUsers || [];
   const visibleTweets = DB.tweets.filter(t => !muted.includes(t.handle) && !blocked.includes(t.handle));
 
+  // 按时间排序（最新在前），确保用户帖子与静态帖子混合时顺序正确
+  visibleTweets.sort((a,b)=> (b.createdAt||0) - (a.createdAt||0));
+
   // 分页加载：获取当前页的数据
   const start = 0;
   const end = (state.homePage + 1) * state.homePageSize;
@@ -813,7 +809,7 @@ function renderFollowingFeed(){
   const followingTweets = DB.tweets.filter(t =>
     (followingHandles.includes(t.handle) || (myHandle && t.handle === myHandle)) &&
     !muted.includes(t.handle) && !blocked.includes(t.handle)
-  );
+  ).sort((a,b)=> (b.createdAt||0) - (a.createdAt||0));
   if(followingTweets.length === 0){
     return `<div class="empty-state"><svg viewBox="0 0 24 24"><path d="M5.651 19h12.698c-.337-1.8-1.023-3.21-1.945-4.19C15.318 13.65 13.838 13 12 13s-3.317.65-4.404 1.81c-.922.98-1.608 2.39-1.945 4.19z"/></svg><h3>还没有内容</h3><p>关注更多用户，在这里看到他们的帖子</p></div>`;
   }
@@ -904,6 +900,9 @@ function homePost(){
   if(state.composeMedia && state.composeMedia.length > 0){
     t.media = state.composeMedia.map(m=>({url:m.url}));
   }
+  if(state.selectedLocation){
+    t.location = state.selectedLocation;
+  }
   DB.tweets.unshift(t);
   u.posts = (u.posts||0) + 1;
   // 持久化更新后的用户数据（同步 users 表 + session）
@@ -916,6 +915,8 @@ function homePost(){
   ta.value = '';
   btn.disabled = true;
   clearComposeMedia();
+  state.selectedLocation = null;
+  const locTag = document.getElementById('selectedLocationTag'); if(locTag) locTag.remove();
   // 重置分页状态
   state.homePage = 0;
   state.homeHasMore = true;
@@ -943,6 +944,46 @@ function prependTweetToFeed(tweet){
 }
 
 // ===== LOCALSTORAGE 持久化 =====
+// 为静态示例帖子计算 createdAt 时间戳（仅首次，不覆盖已有时间戳）
+function fixStaticTweetTimes(){
+  const now = Date.now();
+  const timeMap = {
+    '2小时': now - 2*3600000,
+    '4小时': now - 4*3600000,
+    '6小时': now - 6*3600000,
+    '8小时': now - 8*3600000,
+    '10小时': now - 10*3600000,
+    '12小时': now - 12*3600000,
+    '14小时': now - 14*3600000,
+    '16小时': now - 16*3600000,
+    '18小时': now - 18*3600000,
+    '20小时': now - 20*3600000,
+    '22小时': now - 22*3600000,
+    '1天前': now - 24*3600000,
+    '2天前': now - 48*3600000,
+    '3天前': now - 72*3600000,
+    '4天前': now - 96*3600000,
+    '5天前': now - 120*3600000,
+    '6天前': now - 144*3600000,
+    '7天前': now - 168*3600000,
+    '1周前': now - 7*86400000
+  };
+  // 处理月份格式
+  const monthMap = {};
+  for(let m=1;m<=6;m++){
+    const d = new Date(now);
+    d.setMonth(d.getMonth()-m);
+    monthMap[(d.getMonth()+1)+'月'+(d.getDate())+'日'] = d.getTime();
+  }
+  Object.assign(timeMap, monthMap);
+  
+  DB.tweets.forEach(t => {
+    if(!t.createdAt && t.time && timeMap[t.time]){
+      t.createdAt = timeMap[t.time];
+    }
+  });
+}
+
 const LS = {
   KEY: 'yan_data_v2',
   save(){
@@ -959,14 +1000,29 @@ const LS = {
       messages: this._buildSafeMessages(),
       mutedUsers: DB.mutedUsers,
       blockedUsers: DB.blockedUsers,
-      userTweets: safeTweets
+      communities: (COMMUNITIES_DATA || []).map(c => ({id:c.id, joined:c.joined})),
+      adsData: ADS_DATA,
+      spacesData: SPACES_DATA,
+      userTweets: safeTweets,
+      searchHistory: (state.searchHistory || []).slice(0, 10)
     };
+    // 直写备份 key：确保用户帖子绝不会因主 key 损坏而丢失
+    try {
+      localStorage.setItem('yan_utweets_bak', JSON.stringify(safeTweets));
+    } catch(e) { /* 备份失败不阻塞主流程 */ }
     this._saveWithFallbacks(data, safeTweets, tweetStates);
   },
   _buildSafeTweets(){
     return DB.tweets.filter(t => t.id > 1e10).map(t => {
       const copy = {...t};
-      if(copy.media && copy.media.length > 0){ copy._hadMedia = true; delete copy.media; }
+      if(copy.media && copy.media.length > 0){
+        // 保留媒体记录，但将 base64 dataUrl 替换为标记（防止撑爆存储）
+        copy.media = copy.media.map(m => {
+          if(m.url && m.url.startsWith('data:')) return { _isLocalImg: true };
+          return m;
+        });
+        copy._hadMedia = true;
+      }
       return copy;
     });
   },
@@ -992,22 +1048,23 @@ const LS = {
     try {
       const json = JSON.stringify(data);
       localStorage.setItem(LS.KEY, json);
-      console.log('[言] LS.save() 成功，数据大小:', (json.length / 1024).toFixed(1) + 'KB');
+      console.log('[言] LS.save() 成功，数据大小:', (json.length / 1024).toFixed(1) + 'KB, userTweets:', safeTweets.length, '条');
     } catch(e) {
       LS._handleSaveError(e, safeTweets, tweetStates);
     }
   },
   _handleSaveError(e, safeTweets, tweetStates){
     console.error('[言] LS.save() 失败:', e.message, e.name);
-    if(e.name === 'QuotaExceededError' || e.code === 22){
-      LS._tryMinimalSave(safeTweets, tweetStates);
-    }
+    // 任何错误都尝试降级保存，不限于 QuotaExceededError
+    // 例如 TypeError (JSON.stringify 循环引用) 也会导致主保存失败
+    LS._tryMinimalSave(safeTweets, tweetStates);
   },
   _tryMinimalSave(safeTweets, tweetStates){
     try {
       const minimal = { _v:2, tweetStates, bookmarks: DB.bookmarks, userTweets: safeTweets };
       localStorage.setItem(LS.KEY, JSON.stringify(minimal));
       console.warn('[言] LS.save() 配额超限，已用精简模式保存');
+      showToast('存储空间紧张，已开启精简模式', 3000);
     } catch(e2) {
       LS._tryUltraMinimalSave(safeTweets);
     }
@@ -1021,13 +1078,16 @@ const LS = {
           text: t.text, time: t.time, createdAt: t.createdAt,
           avatar: t.avatar, avatarBg: t.avatarBg,
           likes: t.likes, retweets: t.retweets, replies: t.replies,
-          views: t.views, liked: t.liked, bookmarked: t.bookmarked
+          views: t.views, liked: t.liked, bookmarked: t.bookmarked,
+          location: t.location
         }))
       };
       localStorage.setItem(LS.KEY, JSON.stringify(ultraMin));
       console.warn('[言] LS.save() 极限精简模式，仅保留用户帖子文本');
+      showToast('存储空间紧张，仅保存了核心数据', 3000);
     } catch(e3) {
       console.error('[言] LS.save() 全部失败，localStorage 可能已满');
+      showToast('存储空间不足，部分数据可能无法保存', 4000);
     }
   },
   load(){
@@ -1043,11 +1103,14 @@ const LS = {
       return null;
     }
   },
-  clear(){ try{ localStorage.removeItem(LS.KEY); localStorage.removeItem('yan_data_v1'); }catch(e){} }
+  clear(){ try{ localStorage.removeItem(LS.KEY); localStorage.removeItem('yan_data_v1'); localStorage.removeItem('yan_utweets_bak'); }catch(e){} }
 };
 
 // 启动时加载持久化数据
 (function loadPersistedData(){
+  // 为静态帖子补充动态时间戳
+  fixStaticTweetTimes();
+  
   // 清除旧版本缓存
   try{ localStorage.removeItem('yan_data_v1'); }catch(e){}
 
@@ -1055,8 +1118,16 @@ const LS = {
   if(saved){
     // 【先】把用户自己发的新帖追加进去（必须先于 tweetStates 合并）
     // 注意：userTweets 已按发帖顺序降序排列（最新在前），需要反向 unshift 保持正确顺序
-    if(saved.userTweets && saved.userTweets.length > 0){
-      const toInsert = saved.userTweets.filter(ut => !DB.tweets.find(x=>x.id===ut.id));
+    let utweets = saved.userTweets;
+    // 主 key 没有 userTweets？尝试备份 key 恢复
+    if(!utweets || utweets.length === 0){
+      try {
+        const bak = localStorage.getItem('yan_utweets_bak');
+        if(bak){ utweets = JSON.parse(bak); console.log('[言] 从备份恢复了 '+utweets.length+' 条用户帖子'); }
+      } catch(e){}
+    }
+    if(utweets && utweets.length > 0){
+      const toInsert = utweets.filter(ut => !DB.tweets.find(x=>x.id===ut.id));
       // 从旧到新依次 unshift，确保最新帖子在最前面
       for(let i = toInsert.length - 1; i >= 0; i--){
         DB.tweets.unshift(toInsert[i]);
@@ -1092,6 +1163,20 @@ const LS = {
     if(saved.messages) DB.messages = saved.messages;
     if(saved.mutedUsers) DB.mutedUsers = saved.mutedUsers;
     if(saved.blockedUsers) DB.blockedUsers = saved.blockedUsers;
+    if(saved.searchHistory) state.searchHistory = saved.searchHistory;
+    else {
+      // 兼容旧版单独存储
+      try {
+        const sh = localStorage.getItem('yan_search_history');
+        if(sh) state.searchHistory = JSON.parse(sh);
+      } catch(e){}
+    }
+    if(saved.communities) saved.communities.forEach(sc => {
+      const c = COMMUNITIES_DATA.find(x => x.id === sc.id);
+      if(c) c.joined = sc.joined;
+    });
+    if(saved.adsData) { ADS_DATA.length = 0; ADS_DATA.push(...saved.adsData); }
+    if(saved.spacesData) { SPACES_DATA.length = 0; SPACES_DATA.push(...saved.spacesData); }
     console.log('[言] v2 数据加载完成');
   }
 })();
@@ -1324,8 +1409,7 @@ function renderNotifications(){
     ${n.map(notif=>renderNotifItem(notif)).join('')}
   `;
 }
-function openNotifSettings(){
-  const body = document.getElementById('moreModalBody');
+function showNotifFilterMenu(){
   body.innerHTML='<div class="d-item" onclick="closeMoreMenu()"><svg viewBox="0 0 24 24"><path d="M19.993 9.042C19.48 5.017 16.054 2 11.996 2s-7.49 3.021-7.999 7.051L2.866 18H7.1c.463 2.282 2.481 4 4.9 4s4.437-1.718 4.9-4h4.236l-1.143-8.958z"/></svg> 所有通知</div><div class="d-item" onclick="closeMoreMenu()"><svg viewBox="0 0 24 24"><path d="M5.651 19h12.698c-.337-1.8-1.023-3.21-1.945-4.19C15.318 13.65 13.838 13 12 13s-3.317.65-4.404 1.81c-.922.98-1.608 2.39-1.945 4.19z"/></svg> 新粉丝</div><div class="d-item" onclick="closeMoreMenu()"><svg viewBox="0 0 24 24"><path d="M16.697 5.5c-1.222-.06-2.679.51-3.89 2.16l-.805 1.09-.806-1.09C9.984 6.01 8.526 5.44 7.304 5.5c-1.243.07-2.349.78-2.91 1.91-.552 1.12-.633 2.78.479 4.82 1.074 1.97 3.257 4.27 7.129 6.61 3.87-2.34 6.052-4.64 7.126-6.61 1.111-2.04 1.03-3.7.477-4.82-.561-1.13-1.666-1.84-2.908-1.91z"/></svg> 喜欢</div><div class="d-item" onclick="closeMoreMenu()"><svg viewBox="0 0 24 24"><path d="M4.5 3.88l4.432 4.14-1.364 1.46L5.5 7.55V16c0 1.1.896 2 2 2H13v2H7.5c-2.209 0-4-1.79-4-4V7.55L1.432 9.48.068 8.02 4.5 3.88z"/></svg> 转帖</div><div class="d-item" onclick="closeMoreMenu()"><svg viewBox="0 0 24 24"><path d="M1.751 10c0-4.42 3.584-8 8.005-8h4.366c4.49 0 7.501 3.858 7.501 7.501 0 3.808-2.851 7.091-6.056 7.765 .005.099.01.197.01.297 0 1.68-1.072 2.96-2.584 3.063C11.51 21.954 11.013 22 10.5 22c-4.394 0-8.75-3.519-8.75-8.5 0-1.085.225-2.107.625-3.025-.001-.075-.014-.155-.014-.237C2.361 10 2.056 10 1.75 10z"/></svg> 回复和提及</div><div class="d-divider"></div><div class="d-item" onclick="openNotifSettings()"><svg viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.31.06-.63.06-.94 0-.31-.02-.63-.06-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.04.31-.06.63-.06.94s.02.63.06.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg> 通知设置</div>';
   document.getElementById('moreModal').classList.add('active');
 }
@@ -1388,10 +1472,42 @@ function markAllNotificationsRead(){
   LS.save();
   renderNotifications();
 }
-function openNotifMore(e){}
+function openNotifMore(e){
+  e.stopPropagation();
+  // 移除已有的菜单
+  document.querySelectorAll('.notif-context-menu').forEach(m=>m.remove());
+  const btn = e.currentTarget;
+  const notifEl = btn.closest('.notif');
+  if(!notifEl) return;
+  // 从 onclick 属性中提取通知 id
+  const onclickAttr = notifEl.getAttribute('onclick')||'';
+  const idMatch = onclickAttr.match(/handleNotif\((\d+)/);
+  const notifId = idMatch ? parseInt(idMatch[1]) : null;
+  const menu = document.createElement('div');
+  menu.className = 'notif-context-menu';
+  menu.style.cssText = 'position:absolute;right:0;top:100%;background:var(--bg3);border:1px solid var(--border);border-radius:12px;overflow:hidden;z-index:300;min-width:160px;box-shadow:0 4px 12px rgba(0,0,0,.4)';
+  menu.innerHTML = `
+    <div class="d-item" onclick="deleteNotification(${notifId});this.parentElement.remove()" style="color:#f4212e">删除此通知</div>
+  `;
+  btn.style.position = 'relative';
+  btn.appendChild(menu);
+  setTimeout(()=>{
+    document.addEventListener('click',function rm(ev){
+      if(!menu.contains(ev.target)){
+        menu.remove();
+        document.removeEventListener('click',rm);
+      }
+    });
+  },10);
+}
+function deleteNotification(id){
+  DB.notifications = DB.notifications.filter(n=>n.id!==id);
+  LS.save();
+  renderNotifications();
+}
 function handleNotif(id,type){
   const n = DB.notifications.find(x=>x.id===id);
-  if(n) n.unread = false;
+  if(n && n.unread){ n.unread = false; LS.save(); updateSidebarBadges(); }
   if(type==='follow') navigate('user', n.handle);
   else if(type==='like'||type==='retweet'||type==='reply'||type==='mention'){
     // 跳转到对应帖子（通知里有 tweetId 的话）
@@ -1552,6 +1668,7 @@ function sendMsg(){
     const unread = msgItem.querySelector('.msg-unread');
     if(unread) unread.remove();
   }
+  LS.save();
   
   // 显示"正在输入..."
   const typingDiv = document.createElement('div');
@@ -1594,6 +1711,7 @@ function sendMsg(){
       msgItem2.querySelector('.msg-preview').innerHTML = `<span style="color:var(--text);font-weight:700">${reply}</span>`;
       msgItem2.querySelector('.msg-time').textContent = replyTime;
     }
+    LS.save();
   }, 1500 + Math.random()*1500);
 }
 
@@ -1725,7 +1843,7 @@ function switchCommTab(el, filter){
 }
 function toggleCommunityJoin(id,btn){
   const c = COMMUNITIES_DATA.find(x=>x.id===id);
-  if(c){c.joined=!c.joined;btn.textContent=c.joined?'已加入':'加入';btn.classList.toggle('following',c.joined);}
+  if(c){c.joined=!c.joined;btn.textContent=c.joined?'已加入':'加入';btn.classList.toggle('following',c.joined);LS.save();}
 }
 function openCommunityDetail(id){
   const c = COMMUNITIES_DATA.find(x=>x.id===id);
@@ -1883,6 +2001,7 @@ function saveAdEdit(id){
     if(nameEl)a.title=nameEl.value.trim()||a.title;
     if(budgetEl)a.budget=budgetEl.value.trim()||a.budget;
   }
+  LS.save();
   closeMoreMenu();
   renderAds();
 }
@@ -2215,10 +2334,10 @@ function renderVerifyBanner(){
 // ===== USER PROFILE =====
 function renderUserProfile(handle){
   const users = {
-    '@linxiaoyu':{name:'林小雨',handle:'@linxiaoyu',bio:'产品经理 / AI爱好者 / 生活记录者',followers:12834,following:432,posts:892,avatar:'林',avatarBg:'linear-gradient(135deg,#667eea,#764ba2)',verified:true},
-    '@techdaily':{name:'科技日报',handle:'@techdaily',bio:'第一时间报道科技前沿资讯',followers:892341,following:12,posts:3421,avatar:'科',avatarBg:'linear-gradient(135deg,#f093fb,#f5576c)',verified:true},
-    '@zhangwei':{name:'张伟',handle:'@zhangwei',bio:'产品经理 / AI创业者',followers:5623,following:891,posts:234,avatar:'张',avatarBg:'linear-gradient(135deg,#4facfe,#00f2fe)',verified:true},
-    '@lina_tech':{name:'李娜',handle:'@lina_tech',bio:'全栈工程师 / 开源贡献者',followers:8934,following:567,posts:1567,avatar:'李',avatarBg:'linear-gradient(135deg,#43e97b,#38f9d7)',verified:false}
+    '@linxiaoyu':{name:'林小雨',handle:'@linxiaoyu',bio:'产品经理 / AI爱好者 / 生活记录者',followers:12834,following:432,posts:892,avatar:'林',avatarBg:'linear-gradient(135deg,#667eea,#764ba2)',coverBg:'linear-gradient(135deg,#1a1a2e,#16213e)',verified:true},
+    '@techdaily':{name:'科技日报',handle:'@techdaily',bio:'第一时间报道科技前沿资讯',followers:892341,following:12,posts:3421,avatar:'科',avatarBg:'linear-gradient(135deg,#f093fb,#f5576c)',coverBg:'linear-gradient(135deg,#0f2027,#203a43,#2c5364)',verified:true},
+    '@zhangwei':{name:'张伟',handle:'@zhangwei',bio:'产品经理 / AI创业者',followers:5623,following:891,posts:234,avatar:'张',avatarBg:'linear-gradient(135deg,#4facfe,#00f2fe)',coverBg:'linear-gradient(135deg,#200122,#6f0000)',verified:true},
+    '@lina_tech':{name:'李娜',handle:'@lina_tech',bio:'全栈工程师 / 开源贡献者',followers:8934,following:567,posts:1567,avatar:'李',avatarBg:'linear-gradient(135deg,#43e97b,#38f9d7)',coverBg:'linear-gradient(135deg,#093028,#237a57)',verified:false}
   };
   const u = users[handle]||{name:handle.replace('@',''),handle,bio:'',followers:0,following:0,posts:0,avatar:handle[1]?.toUpperCase()||'?',avatarBg:'linear-gradient(135deg,#667eea,#764ba2)',verified:false};
   const userTweets = DB.tweets.filter(t=>t.handle===handle);
@@ -2239,7 +2358,7 @@ function renderUserProfile(handle){
       </div>
     </div>
     <div class="profile-header">
-      <div class="profile-cover"></div>
+      <div class="profile-cover" style="background:${u.coverBg||'linear-gradient(135deg,#1a1a2e,#16213e)'}"></div>
       <div class="profile-avatar-wrap">
         <div class="profile-avatar" style="background:${u.avatarBg}">${u.avatar}</div>
       </div>
@@ -2290,8 +2409,14 @@ function switchUserProfileTab(el, tab, handle){
     const all = replyIds.flatMap(id=>(DB.replies[id]||[]).map(r=>({...r,tweetId:id,parentTweet:DB.tweets.find(tw=>tw.id===id)})));
     html = all.length>0?all.map(r=>renderProfileReply(r)).join(''):'<div class="empty-state"><h3>还没有回复</h3></div>';
   } else if(tab==='likes'){
-    const liked = DB.tweets.filter(t=>t.liked&&t.handle===handle);
-    html = liked.length>0?liked.map(t=>renderTweet(t)).join(''):'<div class="empty-state"><h3>还没有喜欢的内容</h3></div>';
+    // likes tab: 展示当前登录用户点赞过的该用户的帖子（仅对登录用户有效）
+    const isOwnProfile = isLoggedIn() && (currentUser()||{}).handle === handle;
+    if(isOwnProfile){
+      const liked = DB.tweets.filter(t=>t.liked);
+      html = liked.length>0?liked.map(t=>renderTweet(t)).join(''):'<div class="empty-state"><h3>还没有喜欢的内容</h3><p>浏览帖子时点击❤️即可收藏</p></div>';
+    } else {
+      html = '<div class="empty-state"><h3>此功能仅对自己可见</h3><p>登录后查看你喜欢的内容</p></div>';
+    }
   }
   cont.innerHTML = html;
 }
@@ -2329,11 +2454,15 @@ function renderPostDetail(id){
       </div>
     </div>
     ${renderTweet(t)}
+    ${isLoggedIn() ? `
     <div class="reply-input">
       <div class="av" style="background:${(currentUser()&&currentUser().avatarBg)||'linear-gradient(135deg,#667eea,#764ba2)'}">${(currentUser()&&currentUser().name&&currentUser().name.slice(0,1))||state.user.name.slice(0,1)}</div>
       <textarea class="ri-textarea" placeholder="发一条回复..." id="replyTextMain" onkeydown="if(event.key==='Enter'&&!event.shiftKey&&event.ctrlKey){submitMainReply(${id})}"></textarea>
       <button class="pb" onclick="submitMainReply(${id})" style="align-self:flex-end">回复</button>
-    </div>
+    </div>` : `
+    <div class="reply-input" style="display:flex;align-items:center;justify-content:center;padding:20px">
+      <span style="color:var(--text2);font-size:14px">💬 <a href="javascript:navigate('auth')" style="color:var(--accent);text-decoration:none">登录</a>后参与讨论</span>
+    </div>`}
     <div id="repliesArea">
       ${replies.map(r=>`
         <div class="reply-item">
@@ -2356,6 +2485,7 @@ function renderPostDetail(id){
   state.modalTweet = t;
 }
 function submitMainReply(id){
+  if(!requireLogin()) return;
   const text = document.getElementById('replyTextMain').value.trim();
   if(!text) return;
   if(!DB.replies[id]) DB.replies[id]=[];
@@ -2490,8 +2620,15 @@ let _searchTab = 'all';
 function renderSearch(q=''){
   const main = document.getElementById('mainContent');
   const tweetResults = q ? DB.tweets.filter(t=>t.text.includes(q)||t.name.includes(q)||t.handle.includes(q)) : [];
-  // 增强搜索：同时搜索用户和话题
+  // 增强搜索：同时搜索用户（含注册用户）和话题
   const allUserData = [...(typeof FOLLOWING_DATA!=='undefined'?FOLLOWING_DATA:[]), ...(typeof FOLLOWERS_DATA!=='undefined'?FOLLOWERS_DATA:[]), ...DB.likersList];
+  // 加入注册用户（yan_auth_users）
+  try {
+    const regUsers = JSON.parse(localStorage.getItem('yan_auth_users')||'{}');
+    Object.values(regUsers).forEach(ru => {
+      allUserData.push({name:ru.name,handle:ru.handle,avatar:(ru.name||'用').slice(0,1),avatarBg:ru.avatarBg||'linear-gradient(135deg,#667eea,#764ba2)',verified:ru.verified||false,bio:ru.bio||''});
+    });
+  } catch(e){}
   // 去重
   const seenHandles = new Set();
   const uniqueUsers = [];
@@ -2578,6 +2715,8 @@ function doSearch(q){
     state.searchHistory = state.searchHistory.filter(h=>h!==q);
     state.searchHistory.unshift(q);
     state.searchHistory = state.searchHistory.slice(0,10);
+    // 持久化搜索历史
+    try { localStorage.setItem('yan_search_history', JSON.stringify(state.searchHistory)); } catch(e){}
     navigate('search', q);
   }, 300);
 }
@@ -3330,6 +3469,8 @@ function closePostModal(){
   state.editingTweetId=null;
   replyScope='everyone';
   clearComposeMedia();
+  state.selectedLocation = null;
+  const locTag = document.getElementById('selectedLocationTag'); if(locTag) locTag.remove();
   const span = document.querySelector('.reply-scope-btn span');
   if(span) span.textContent='所有人可以回复';
 }
@@ -3374,6 +3515,9 @@ function submitPost(){
     if(state.composeMedia && state.composeMedia.length > 0){
       t.media = state.composeMedia.map(m=>({url:m.url}));
     }
+    if(state.selectedLocation){
+      t.location = state.selectedLocation;
+    }
     DB.tweets.unshift(t);
     u.posts = (u.posts||0) + 1;
     // 持久化更新后的用户数据（users 表 + session）
@@ -3389,12 +3533,15 @@ function submitPost(){
     LS.save();
   }
   closePostModal();
+  state.selectedLocation = null;
+  const locTag = document.getElementById('selectedLocationTag'); if(locTag) locTag.remove();
   if(state.currentPage==='home'){renderHome();}
   else if(state.currentPage==='profile'){renderProfile();}
 }
 function openShareModal(id){
   document.getElementById('shareModal').classList.add('active');
-  document.getElementById('shareUrlText').textContent='https://www.kunshagj.com/yan/post/'+id;
+  const base = window.location.hostname === 'localhost' ? window.location.origin : 'https://yan.kunshagj.com';
+  document.getElementById('shareUrlText').textContent= base + '/post/' + id;
 }
 function closeShareModal(){document.getElementById('shareModal').classList.remove('active')}
 function copyShareUrl(){
@@ -4011,33 +4158,77 @@ function saveProfile(){
   const coverImgData = coverEl && coverEl.dataset.imgData;
   const avatarBg = avatarEl ? (avatarEl.style.backgroundImage && avatarEl.dataset.imgData ? '' : avatarEl.style.background) : null;
 
-  // 更新 state.user（兜底）
-  state.user.name = name;
-  state.user.bio = bio;
-  state.user.location = location;
-  if(avatarImgData){
-    state.user.avatarImg = avatarImgData;
-    state.user.avatarBg = '';
-  } else if(avatarBg) {
-    state.user.avatarBg = avatarBg;
+  // 压缩图片 dataUrl，超过 100KB 则等比压缩
+  function compressDataUrl(dataUrl, maxKB){
+    if(!dataUrl || !dataUrl.startsWith('data:image')) return dataUrl;
+    if(dataUrl.length < maxKB * 1024) return dataUrl;
+    return new Promise(function(resolve){
+      const img = new Image();
+      img.onload = function(){
+        const canvas = document.createElement('canvas');
+        const scale = Math.sqrt((maxKB * 1024 * 0.75) / dataUrl.length);
+        canvas.width = Math.round(img.width * scale);
+        canvas.height = Math.round(img.height * scale);
+        canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
+        resolve(canvas.toDataURL('image/jpeg', 0.75));
+      };
+      img.onerror = function(){ resolve(dataUrl); };
+      img.src = dataUrl;
+    });
   }
-  if(coverImgData){
-    state.user.coverImg = coverImgData;
-    state.user.coverBg = '';
-  } else if(coverEl) {
-    state.user.coverBg = coverEl.style.background;
+
+  // 获取当前用户 handle（用于同步已发帖子的昵称）
+  const oldHandle = isLoggedIn() ? currentUser().handle : state.user.handle;
+
+  function applyProfileSave(finalAvatarImg, finalCoverImg){
+    // 更新 state.user（兜底）
+    state.user.name = name;
+    state.user.bio = bio;
+    state.user.location = location;
+    if(finalAvatarImg){
+      state.user.avatarImg = finalAvatarImg;
+      state.user.avatarBg = '';
+    } else if(avatarBg) {
+      state.user.avatarBg = avatarBg;
+    }
+    if(finalCoverImg){
+      state.user.coverImg = finalCoverImg;
+      state.user.coverBg = '';
+    } else if(coverEl) {
+      state.user.coverBg = coverEl.style.background;
+    }
+    // 同步更新 auth.js 中的当前用户
+    if(isLoggedIn() && typeof updateCurrentUser === 'function'){
+      const updates = { name, bio, location };
+      if(finalAvatarImg) updates.avatarImg = finalAvatarImg;
+      else if(avatarBg) updates.avatarBg = avatarBg;
+      if(finalCoverImg) updates.coverImg = finalCoverImg;
+      updateCurrentUser(updates);
+    }
+    // 同步已发帖子的昵称和头像
+    if(oldHandle){
+      const newAvatarBg = finalAvatarImg ? '' : (avatarBg || state.user.avatarBg);
+      DB.tweets.forEach(t => {
+        if(t.handle === oldHandle){
+          t.name = name;
+          t.avatar = name.slice(0, 1);
+          if(newAvatarBg) t.avatarBg = newAvatarBg;
+        }
+      });
+    }
+    LS.save();
+    closeEditProfileModal();
+    renderProfile();
+    showToast('个人资料已保存');
   }
-  // 同步更新 auth.js 中的当前用户
-  if(isLoggedIn() && typeof updateCurrentUser === 'function'){
-    const updates = { name, bio, location };
-    if(avatarImgData) updates.avatarImg = avatarImgData;
-    else if(avatarBg) updates.avatarBg = avatarBg;
-    if(coverImgData) updates.coverImg = coverImgData;
-    updateCurrentUser(updates);
-  }
-  LS.save();
-  closeEditProfileModal();
-  renderProfile();
+
+  // 异步压缩再保存
+  Promise.all([
+    avatarImgData ? compressDataUrl(avatarImgData, 100) : Promise.resolve(null),
+    coverImgData ? compressDataUrl(coverImgData, 150) : Promise.resolve(null)
+  ]).then(function(results){
+    applyProfileSave(results[0], results[1]);
+  });
 }
 
 // ===== SEND IMAGE MESSAGE =====
@@ -4223,7 +4414,31 @@ const LOCATIONS_DATA = [
   {name:'成都',emoji:'🎋'},
   {name:'重庆',emoji:'⛰️'},
   {name:'西安',emoji:'🏛️'},
-  {name:'南京',emoji:'🌸'}
+  {name:'南京',emoji:'🌸'},
+  {name:'天津',emoji:'🏟️'},
+  {name:'苏州',emoji:'🏯'},
+  {name:'长沙',emoji:'🌶️'},
+  {name:'郑州',emoji:'🏗️'},
+  {name:'济南',emoji:'⛲'},
+  {name:'青岛',emoji:'🍺'},
+  {name:'大连',emoji:'🏖️'},
+  {name:'厦门',emoji:'🏝️'},
+  {name:'昆明',emoji:'🌺'},
+  {name:'哈尔滨',emoji:'❄️'},
+  {name:'沈阳',emoji:'🏭'},
+  {name:'福州',emoji:'🍵'},
+  {name:'合肥',emoji:'🏫'},
+  {name:'南昌',emoji:'🏯'},
+  {name:'贵阳',emoji:'🏔️'},
+  {name:'兰州',emoji:'🍜'},
+  {name:'乌鲁木齐',emoji:'🐫'},
+  {name:'拉萨',emoji:'🏔️'},
+  {name:'南宁',emoji:'🌴'},
+  {name:'海口',emoji:'🌊'},
+  {name:'香港',emoji:'🏙️'},
+  {name:'澳门',emoji:'🎰'},
+  {name:'台北',emoji:'🏯'},
+  {name:'其他位置',emoji:'📍'}
 ];
 function openLocationModal(){
   const overlay = document.createElement('div');
@@ -4245,14 +4460,11 @@ function openLocationModal(){
             <input class="sin" id="locationSearch" placeholder="搜索位置" oninput="filterLocations(this.value)" style="flex:1">
           </div>
         </div>
-        <div id="locationList">
-          ${LOCATIONS_DATA.map(l=>`
-            <div class="fi" style="padding:14px 16px;cursor:pointer" onclick="selectLocation('${l.name}')">
-              <div style="font-size:20px;margin-right:12px">${l.emoji}</div>
-              <div style="font-size:15px">${l.name}</div>
-            </div>
-          `).join('')}
-        </div>
+        <div id="geoBtnRow" style="padding:8px 16px">
+          <button onclick="useCurrentLocation()" style="display:flex;align-items:center;gap:8px;width:100%;padding:12px 16px;border:2px dashed var(--border);border-radius:12px;background:transparent;color:var(--accent);cursor:pointer;font-size:14px;font-weight:600">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5S10.62 6.5 12 6.5s2.5 1.12 2.5 2.5S13.38 11.5 12 11.5z"/></svg> 📍 使用我的当前位置
+          </button>
+        </div>${renderLocationList()}
       </div>
     </div>
   `;
@@ -4274,27 +4486,72 @@ function filterLocations(q){
     </div>
   `).join(''):'<div style="text-align:center;padding:24px;color:var(--text2)">没有找到相关位置</div>';
 }
+
+// 渲染位置列表（抽取为独立函数以便复用）
+function renderLocationList(){
+  return `<div id="locationList">
+    ${LOCATIONS_DATA.map(l=>`
+      <div class="fi" style="padding:14px 16px;cursor:pointer" onclick="selectLocation('${l.name}')">
+        <div style="font-size:20px;margin-right:12px">${l.emoji}</div>
+        <div style="font-size:15px">${l.name}</div>
+      </div>
+    `).join('')}
+  </div>`;
+}
+
+// 使用浏览器定位获取当前位置（需要 HTTPS 或 localhost）
+function useCurrentLocation(){
+  const geoBtn = document.getElementById('geoBtnRow');
+  if(!navigator.geolocation){
+    if(geoBtn) geoBtn.innerHTML = '<div style="color:var(--text2);font-size:13px;padding:4px 0">⚠️ 浏览器不支持定位功能</div>';
+    return;
+  }
+  if(geoBtn) geoBtn.innerHTML = '<div style="color:var(--text2);font-size:13px;padding:4px 0">📍 正在获取位置...</div>';
+  navigator.geolocation.getCurrentPosition(
+    function(pos){
+      const { latitude, longitude } = pos.coords;
+      const locName = `${latitude.toFixed(4)}, ${longitude.toFixed(4)}`;
+      if(geoBtn) geoBtn.innerHTML = `<div style="display:flex;align-items:center;gap:8px;padding:4px 0">
+        <span style="color:var(--green);font-size:13px">✅ 已定位: ${locName}</span>
+        <button onclick="selectLocation('${locName}')" style="padding:6px 12px;border-radius:16px;border:none;background:var(--accent);color:#fff;cursor:pointer;font-size:12px;font-weight:600">使用此位置</button>
+      </div>`;
+    },
+    function(err){
+      let msg = '定位失败';
+      if(err.code === 1) msg = '定位被拒绝，请在浏览器设置中允许位置权限';
+      else if(err.code === 2) msg = '无法获取位置信息';
+      else if(err.code === 3) msg = '定位超时，请重试';
+      if(geoBtn) geoBtn.innerHTML = `<div style="color:#f4212e;font-size:13px;padding:4px 0">⚠️ ${msg}<button onclick="useCurrentLocation()" style="margin-left:8px;padding:4px 8px;border-radius:12px;border:1px solid var(--border);background:transparent;color:var(--text);cursor:pointer;font-size:12px">重试</button></div>`;
+    },
+    { enableHighAccuracy: false, timeout: 10000, maximumAge: 300000 }
+  );
+}
 function selectLocation(loc){
   closeLocationModal();
-  const ta = document.getElementById('postTextarea')||document.querySelector('.compose-box textarea');
-  if(loc){
-    // 在工具栏下方显示位置标签
+  state.selectedLocation = loc;
+  // 同时更新 compose 区域的位置标签（主页发帖框和弹窗发帖框）
+  ['homeCompose', 'modalText'].forEach(textareaId => {
+    const ta = document.getElementById(textareaId);
+    if(!ta) return;
     let locationTag = document.getElementById('selectedLocationTag');
-    if(!locationTag&&ta){
-      locationTag = document.createElement('div');
-      locationTag.id = 'selectedLocationTag';
-      locationTag.style.cssText = 'display:inline-flex;align-items:center;gap:4px;background:rgba(29,155,240,.15);color:var(--accent);border-radius:9999px;padding:4px 10px;font-size:13px;margin-bottom:8px;cursor:pointer';
-      locationTag.onclick = ()=>selectLocation(null);
-      ta.parentElement.insertBefore(locationTag,ta.nextSibling);
-    }
-    if(locationTag){
+    if(loc){
+      if(!locationTag){
+        locationTag = document.createElement('div');
+        locationTag.id = 'selectedLocationTag';
+        locationTag.style.cssText = 'display:inline-flex;align-items:center;gap:4px;background:rgba(29,155,240,.15);color:var(--accent);border-radius:9999px;padding:4px 10px;font-size:13px;margin-bottom:8px;cursor:pointer';
+        locationTag.onclick = ()=>{ state.selectedLocation = null; selectLocation(null); };
+        const ctb = ta.closest('.ca');
+        if(ctb){
+          const ctools = ctb.querySelector('.ctools');
+          if(ctools) ctools.parentNode.insertBefore(locationTag, ctools);
+          else ctb.insertBefore(locationTag, ctb.firstChild);
+        }
+      }
       locationTag.innerHTML = `<svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5S10.62 6.5 12 6.5s2.5 1.12 2.5 2.5S13.38 11.5 12 11.5z"/></svg> ${loc} ×`;
+    } else {
+      if(locationTag) locationTag.remove();
     }
-    showToast(`已添加位置：${loc}`);
-  } else {
-    const tag = document.getElementById('selectedLocationTag');
-    if(tag)tag.remove();
-  }
+  });
 }
 
 // ===== SPACE INTERACTIONS =====
@@ -4335,6 +4592,7 @@ function createNewAd(btn){
   const budget = inputs[1]?.value?.trim()||'¥100';
   const maxId = ADS_DATA.length>0?Math.max(...ADS_DATA.map(a=>a.id))+1:1;
   ADS_DATA.push({id:maxId,title:name,budget,status:'active',impressions:0,clicks:0,spend:'¥0'});
+  LS.save();
   closeMoreMenu();
   renderAds();
   showToast('广告创建成功！');
@@ -4463,6 +4721,7 @@ function createSpace(btn){
   const title = inputs[0]?.value?.trim()||'我的直播空间';
   const maxId = SPACES_DATA.length>0?Math.max(...SPACES_DATA.map(s=>s.id))+1:1;
   SPACES_DATA.unshift({id:maxId,title,host:(currentUser()||state.user).name,listeners:0,live:true,duration:'00:00',speakers:[(currentUser()||state.user).name]});
+  LS.save();
   closeMoreMenu();
   showToast(`「${title}」已开始直播！`);
   navigate('spaces');
@@ -4526,7 +4785,7 @@ function handleExploreLiveSearch(q){
   if(!q.trim()){return;}
   _exploreSearchTimer = setTimeout(()=>{
     navigate('search', q.trim());
-  }, 500);
+  }, 400);
 }
 
 // ===== FAQ 展开/收起 =====
@@ -4756,7 +5015,7 @@ function updateSidebarBadges(){
   // 通知徽章
   const notifBadge = document.getElementById('notif-badge');
   if(notifBadge){
-    const unreadCount = (DB.notifications||[]).filter(n=>!n.read).length;
+    const unreadCount = (DB.notifications||[]).filter(n=>n.unread).length;
     const b = notifBadge.querySelector('.b');
     if(unreadCount > 0){
       b.textContent = unreadCount > 99 ? '99+' : unreadCount;
@@ -5059,3 +5318,161 @@ document.addEventListener('focusin',function(e){
     _lastFocusedInput=el;
   }
 });
+
+// ===== DEBUG 诊断工具 =====
+window.debugYan = function(){
+  console.log('=== YAN DEBUG ===');
+  const raw = localStorage.getItem('yan_data_v2');
+  console.log('localStorage key yan_data_v2 存在:', !!raw);
+  if(raw){
+    try{
+      const d = JSON.parse(raw);
+      console.log('版本 _v:', d._v);
+      console.log('userTweets 数量:', (d.userTweets||[]).length);
+      console.log('tweetStates 数量:', (d.tweetStates||[]).length);
+      console.log('bookmarks 数量:', (d.bookmarks||[]).length);
+      console.log('replies 数量:', (d.replies||[]).length);
+      console.log('messages 数量:', (d.messages||[]).length);
+      console.log('notifications 数量:', (d.notifications||[]).length);
+      console.log('following 数量:', (d.following||[]).length);
+      console.log('--- userTweets ---');
+      (d.userTweets||[]).forEach((t,i)=>{
+        console.log(`  [${i}] id=${t.id}, handle=${t.handle}, text=${(t.text||'').substring(0,30)}...`);
+      });
+    }catch(e){
+      console.error('解析失败:', e.message);
+    }
+  } else {
+    console.log('yan_data_v2 不存在！localStorage 为空或已被清除');
+  }
+  console.log('DB.tweets 总数:', DB.tweets.length);
+  console.log('DB.tweets 中用户帖子(id>1e10):', DB.tweets.filter(t=>t.id>1e10).length);
+  console.log('当前登录用户:', currentUser());
+  console.log('=================');
+};
+// ===== MAP VIEW (Leaflet + OpenStreetMap - 完全免费) =====
+// 中国主要城市经纬度坐标映射
+const CITY_COORDS = {
+  '北京':[39.9042,116.4074],'上海':[31.2304,121.4737],'广州':[23.1291,113.2644],
+  '深圳':[22.5431,114.0579],'武汉':[30.5928,114.3055],'杭州':[30.2741,120.1551],
+  '成都':[30.5728,104.0668],'重庆':[29.4316,106.9123],'西安':[34.3416,108.9398],
+  '南京':[32.0603,118.7969],'天津':[39.0842,117.2009],'苏州':[31.2990,120.5853],
+  '长沙':[28.2282,112.9388],'郑州':[34.7466,113.6253],'济南':[36.6512,116.9946],
+  '青岛':[36.0671,120.3826],'大连':[38.9140,121.6147],'厦门':[24.4798,118.0894],
+  '昆明':[25.0389,102.7183],'哈尔滨':[45.8038,126.5350],'沈阳':[41.8057,123.4315],
+  '福州':[26.0745,119.2965],'合肥':[31.8206,117.2272],'南昌':[28.6820,115.8580],
+  '贵阳':[26.6470,106.6302],'兰州':[36.0611,103.8343],'乌鲁木齐':[43.8256,87.6168],
+  '拉萨':[29.6500,91.1000],'南宁':[22.8170,108.3665],'海口':[20.0440,110.1999],
+  '香港':[22.3193,114.1694],'澳门':[22.1987,113.5439],'台北':[25.0330,121.5654]
+};
+
+function renderMap(){
+  const main = document.getElementById('mainContent');
+  if(!main) return;
+  // 收集所有带位置的推文
+  const tweetsWithLocation = DB.tweets.filter(t => t.location);
+  main.innerHTML = `
+    <div class="ct">
+      <div class="main-header" style="padding:0 16px">
+        <div style="display:flex;align-items:center;gap:12px;padding:12px 0">
+          <button class="back-btn-circle" onclick="navigate('home')" style="width:36px;height:36px;border-radius:50%;border:none;background:transparent;color:var(--text);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:20px">←</button>
+          <div class="page-title" style="font-size:20px;font-weight:800">位置地图</div>
+        </div>
+      </div>
+      <div id="mapContainer" style="width:100%;height:calc(100vh - 120px);position:relative">
+        ${tweetsWithLocation.length === 0 ? `
+        <div class="empty-state" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);z-index:1000;background:var(--bg);padding:32px;border-radius:16px;box-shadow:0 4px 24px rgba(0,0,0,.15);text-align:center">
+          <div style="font-size:48px;margin-bottom:12px">🗺️</div>
+          <h3 style="margin:0 0 8px">还没有带位置的帖子</h3>
+          <p style="color:var(--text2);font-size:14px;margin:0 0 16px">发帖时添加位置，它们就会出现在这里</p>
+          <button class="abtn" onclick="openPostModal()" style="padding:10px 24px">发布带位置的帖子</button>
+        </div>` : ''}
+      </div>
+      ${tweetsWithLocation.length > 0 ? `
+      <div id="mapTweetList" style="border-top:1px solid var(--border);max-height:200px;overflow-y:auto">
+        ${tweetsWithLocation.map(t => `
+          <div style="display:flex;align-items:center;gap:12px;padding:12px 16px;border-bottom:1px solid var(--border);cursor:pointer" onclick="navigate('post',${t.id})">
+            <div class="av" style="background:${t.avatarBg};flex-shrink:0;font-size:14px">${t.avatar}</div>
+            <div style="flex:1;min-width:0">
+              <div style="font-size:14px"><span style="font-weight:700">${t.name}</span> <span style="color:var(--text2)">${t.handle}</span></div>
+              <div style="font-size:13px;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${escapeHtml(t.text).slice(0,60)}</div>
+            </div>
+            <div style="font-size:12px;color:var(--accent);flex-shrink:0;display:flex;align-items:center;gap:2px">
+              <svg viewBox="0 0 24 24" width="12" height="12" fill="currentColor"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5S10.62 6.5 12 6.5s2.5 1.12 2.5 2.5S13.38 11.5 12 11.5z"/></svg>
+              ${t.location}
+            </div>
+          </div>
+        `).join('')}
+      </div>` : ''}
+    </div>
+  `;
+
+  // 初始化 Leaflet 地图（只有当有位置数据时）
+  if(tweetsWithLocation.length > 0 && typeof L !== 'undefined'){
+    setTimeout(() => {
+      const mapEl = document.getElementById('mapContainer');
+      if(!mapEl) return;
+      // 给容器一个确切高度
+      mapEl.style.height = 'calc(100vh - 320px)';
+
+      const map = L.map('mapContainer').setView([35.8617, 104.1954], 4); // 中国中心
+
+      // OpenStreetMap 瓦片（免费，无需 API Key）
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+        maxZoom: 18
+      }).addTo(map);
+
+      // 为每个带位置的推文添加标记
+      const markers = [];
+      tweetsWithLocation.forEach(t => {
+        let coords = CITY_COORDS[t.location];
+        if(!coords){
+          // 尝试匹配地理位置格式 "纬度, 经度"
+          const geoMatch = t.location.match(/([-\d.]+),\s*([-\d.]+)/);
+          if(geoMatch) coords = [parseFloat(geoMatch[1]), parseFloat(geoMatch[2])];
+        }
+        if(coords){
+          const marker = L.marker(coords).addTo(map);
+          marker.bindPopup(`
+            <div style="min-width:200px;max-width:300px">
+              <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+                <div style="width:32px;height:32px;border-radius:50%;background:${t.avatarBg};display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:14px">${t.avatar}</div>
+                <div><b>${t.name}</b><br><span style="font-size:12px;color:#888">${t.handle}</span></div>
+              </div>
+              <div style="font-size:13px;margin-bottom:8px;line-height:1.5">${escapeHtml(t.text).slice(0,100)}${t.text.length>100?'...':''}</div>
+              <div style="font-size:11px;color:#888">📍 ${t.location} · ${formatTime(t.createdAt)}</div>
+              <a href="#" onclick="window._yanMapNav=${t.id};return false" style="display:inline-block;margin-top:6px;color:#1d9bf0;font-size:12px">查看详情 →</a>
+            </div>
+          `);
+          marker.on('popupopen', function(){
+            // popup 中的链接点击后导航
+            setTimeout(() => {
+              const links = document.querySelectorAll('.leaflet-popup-content a');
+              links.forEach(link => {
+                link.onclick = function(e){
+                  e.preventDefault();
+                  const id = window._yanMapNav;
+                  if(id) navigate('post', id);
+                };
+              });
+            }, 50);
+          });
+          markers.push(coords);
+        }
+      });
+
+      // 自适应视图到所有标记
+      if(markers.length > 0){
+        const bounds = L.latLngBounds(markers);
+        map.fitBounds(bounds, {padding:[30,30]});
+      }
+
+      // 延迟触发 resize 确保地图正常渲染
+      setTimeout(() => map.invalidateSize(), 300);
+    }, 200);
+  }
+}
+
+// 页面加载完成后自动打印一次诊断信息
+setTimeout(()=>{ if(typeof debugYan==='function') debugYan(); }, 2000);

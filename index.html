@@ -13,8 +13,8 @@
 <meta property="og:site_name" content="言">
 <meta property="og:title" content="言 - 社交平台">
 <meta property="og:description" content="分享你的想法，关注感兴趣的人，探索热门话题。">
-<meta property="og:url" content="https://www.kunshagj.com/yan/">
-<meta property="og:image" content="https://www.kunshagj.com/yan/og-image.png">
+<meta property="og:url" content="https://yan.kunshagj.com/">
+  <meta property="og:image" content="https://yan.kunshagj.com/og-image.png">
 <!-- Twitter Card -->
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:site" content="@wangkun">
@@ -27,6 +27,9 @@
 <link rel="preload" href="css/style.css" as="style">
 <link rel="preload" href="js/app.js" as="script">
 <link rel="stylesheet" href="css/style.css">
+<!-- Leaflet 免费地图（OpenStreetMap 瓦片，无需 API Key）-->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="">
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
 </head>
 <body>
 <div class="layout" id="app">
@@ -66,6 +69,10 @@
       <a class="nav-item" onclick="navigate('lists')">
         <svg viewBox="0 0 24 24"><path d="M3 13h2v-2H3v2zm0 4h2v-2H3v2zm0-8h2V7H3v2zm4 4h14v-2H7v2zm0 4h14v-2H7v2zM7 7v2h14V7H7z"/></svg>
         <span class="nav-label">列表</span>
+      </a>
+      <a class="nav-item" id="nav-map" onclick="navigate('map')">
+        <svg viewBox="0 0 24 24"><path d="M20.5 3l-.16.03L15 5.1 9 3 3.36 4.9c-.21.07-.36.25-.36.48V20.5c0 .28.22.5.5.5l.16-.03L9 18.9l6 2.1 5.64-1.9c.21-.07.36-.25.36-.48V3.5c0-.28-.22-.5-.5-.5zM15 19l-6-2.11V5l6 2.11V19z"/></svg>
+        <span class="nav-label">地图</span>
       </a>
       <a class="nav-item" onclick="toggleDropdown('more-menu')">
         <svg viewBox="0 0 24 24"><path d="M3.75 12c0-.966.783-1.75 1.75-1.75s1.75.784 1.75 1.75-.783 1.75-1.75 1.75S3.75 12.966 3.75 12zm8.25 0c0-.966.783-1.75 1.75-1.75s1.75.784 1.75 1.75-.783 1.75-1.75 1.75-1.75-.784-1.75-1.75zm8.25 0c0-.966.783-1.75 1.75-1.75s1.75.784 1.75 1.75-.783 1.75-1.75 1.75-1.75-.784-1.75-1.75z"/></svg>
@@ -249,7 +256,7 @@
     </div>
     <div class="modal-body">
       <h3 style="font-size:20px;font-weight:800;margin-bottom:4px">分享这条帖子</h3>
-      <div class="share-url" id="shareUrl"><span id="shareUrlText">https://www.kunshagj.com/yan/post/1</span><button class="copy-btn" onclick="copyShareUrl()">复制链接</button></div>
+      <div class="share-url" id="shareUrl"><span id="shareUrlText">https://yan.kunshagj.com/post/1</span><button class="copy-btn" onclick="copyShareUrl()">复制链接</button></div>
       <div style="margin-top:16px;display:flex;flex-direction:column;gap:4px">
         <div class="d-item" onclick="closeShareModal()"><svg viewBox="0 0 24 24"><path d="M4 4.5C4 3.12 5.119 2 6.5 2h11C18.881 2 20 3.12 20 4.5v18.44l-8-5.71-8 5.71V4.5z"/></svg> 添加到书签</div>
         <div class="d-item" onclick="closeShareModal()"><svg viewBox="0 0 24 24"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg> 复制链接</div>
@@ -484,9 +491,9 @@
   </div>
 </div>
 
-<script src="data/db.js" defer></script>
-<script src="js/auth.js" defer></script>
-<script src="js/app.js" defer></script>
+<script src="data/db.js?v=3" defer></script>
+<script src="js/auth.js?v=3" defer></script>
+<script src="js/app.js?v=3" defer></script>
   <input type="file" id="mediaFileInput" accept="image/*" multiple style="display:none" onchange="handleMediaPick(event)">
 
 <!-- 移动端底部导航栏 -->
