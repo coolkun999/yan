@@ -398,13 +398,13 @@ function togglePwVisibility(inputId, btn){
 }
 
 // 邮箱登录
-function authEmailAction(action){
+async function authEmailAction(action){
   const email = document.getElementById('authEmailInput').value.trim();
   const pw = document.getElementById('authPasswordInput').value;
   const errEl = document.getElementById('authEmailError');
   if(!isValidEmail(email)){ errEl.textContent='请输入有效的邮箱'; errEl.style.display=''; return; }
   if(!pw){ errEl.textContent='请输入密码'; errEl.style.display=''; return; }
-  const loginResult = authLogin(email, pw, 'email');
+  const loginResult = await authLogin(email, pw, 'email');
   if(!loginResult.ok){
     errEl.textContent = loginResult.msg; errEl.style.display=''; return;
   }
@@ -412,7 +412,7 @@ function authEmailAction(action){
 }
 
 // 邮箱注册（新版：含昵称和确认密码）
-function authDoRegister(){
+async function authDoRegister(){
   const name = document.getElementById('authRegNameInput').value.trim();
   const email = document.getElementById('authRegEmailInput').value.trim();
   const pw = document.getElementById('authRegPwInput').value;
@@ -420,9 +420,9 @@ function authDoRegister(){
   const errEl = document.getElementById('authRegError');
   if(!name){ errEl.textContent='请输入昵称'; errEl.style.display=''; return; }
   if(!isValidEmail(email)){ errEl.textContent='请输入有效的邮箱'; errEl.style.display=''; return; }
-  if(!isValidPassword(pw)){ errEl.textContent='密码至少8位'; errEl.style.display=''; return; }
+  if(!isValidPassword(pw)){ errEl.textContent='密码至少6位'; errEl.style.display=''; return; }
   if(pw !== pw2){ errEl.textContent='两次密码不一致'; errEl.style.display=''; return; }
-  const regResult = authRegister(email, pw, 'email', name);
+  const regResult = await authRegister(email, pw, 'email', name);
   if(!regResult.ok){
     errEl.textContent = regResult.msg; errEl.style.display=''; return;
   }
@@ -530,23 +530,29 @@ function escapeHtml(str){
 // 格式化推文文本
 function formatTweetText(text){
   if(!text) return '';
+  // 提取 GIF 标记（在 escapeHtml 之前处理，避免被转义）
+  let gifHtml = '';
+  text = text.replace(/\[GIF:([^\]]+)\]/g, function(_, id){
+    const gif = GIF_DATA.find(g=>g.id===id);
+    if(gif){
+      gifHtml += `<div style="margin-top:8px"><img src="${gif.gif}" alt="${gif.label}" style="max-width:256px;border-radius:12px;display:block" loading="lazy"></div>`;
+    }
+    return ''; // 从文本中移除标记
+  });
+  text = text.trim();
   // 第一步：转义 HTML 特殊字符（防止 XSS）
   const escaped = escapeHtml(text);
   // 第二步：处理换行
   const withBreaks = escaped.replace(/\n/g,'<br>');
   // 第三步：话题高亮
-  // displayText 用原始 tag（未转义）转义后插入，显示自然安全
-  // onclick 参数用 encodeURIComponent 防止 JS 注入
   const withTopics = withBreaks.replace(/#(\S+)/g, function(_, tag){
-    // tag 是 text 经 HTML 转义后的片段，其中 < > & " ' 已被转为 &lt; &gt; &amp; &quot; &#39;
-    // 用于显示：直接对 tag 做 HTML 转义（已转义的内容再转一次会变 &amp;lt;，所以用原始 tag）
-    // 用于 onclick：encodeURIComponent 对已 HTML 转义的 tag 编码（如 &lt; -> %26lt%3B）
     return '<a href="#" onclick="event.preventDefault();event.stopPropagation();navigate(\'topic\',\'' + encodeURIComponent(tag) + '\')" style="color:var(--accent)">#' + tag + '</a>';
   });
-  // 第四步：@提及高亮，同上
-  return withTopics.replace(/@(\S+)/g, function(_, mention){
+  // 第四步：@提及高亮
+  const withMentions = withTopics.replace(/@(\S+)/g, function(_, mention){
     return '<a href="#" onclick="event.preventDefault();event.stopPropagation();navigate(\'user\',\'' + encodeURIComponent(mention) + '\')" style="color:var(--accent)">@' + mention + '</a>';
   });
+  return withMentions + gifHtml;
 }
 
 // ===== MEDIA RENDER =====
@@ -779,21 +785,66 @@ function renderPromoCard(){
 function renderForYouFeed(){
   const promoted = renderPromoCard();
 
-  // 过滤掉被静音/屏蔽用户的帖子
+  // 如果 API 可用，异步加载
+  if(typeof PostsAPI !== 'undefined'){
+    loadForYouFromAPI();
+    return promoted + '<div id="apiLoading" style="text-align:center;padding:40px;color:var(--text2)">加载中...</div>';
+  }
+
+  // 回退：使用本地 DB 数据
   const muted = DB.mutedUsers || [];
   const blocked = DB.blockedUsers || [];
   const visibleTweets = DB.tweets.filter(t => !muted.includes(t.handle) && !blocked.includes(t.handle));
-
-  // 按时间排序（最新在前），确保用户帖子与静态帖子混合时顺序正确
   visibleTweets.sort((a,b)=> (b.createdAt||0) - (a.createdAt||0));
-
-  // 分页加载：获取当前页的数据
   const start = 0;
   const end = (state.homePage + 1) * state.homePageSize;
   const pageTweets = visibleTweets.slice(start, end);
   state.homeHasMore = end < visibleTweets.length;
-
   return promoted + pageTweets.map(t=>renderTweet(t)).join('') + renderLoadMoreBtn('home');
+}
+
+// 从 API 加载帖子
+async function loadForYouFromAPI(){
+  try {
+    const data = await PostsAPI.list(state.homePage, state.homePageSize);
+    const feed = document.getElementById('homeFeed');
+    if(!feed) return;
+    const promoted = renderPromoCard();
+    // 转换 API 数据为前端格式
+    const tweets = data.posts.map(p => ({
+      id: p.id,
+      name: p.name,
+      handle: p.handle,
+      verified: !!p.verified,
+      time: formatTime(new Date(p.created_at).getTime()),
+      createdAt: new Date(p.created_at).getTime(),
+      text: p.content,
+      avatar: (p.name||'用').slice(0,1),
+      avatarBg: p.avatar_bg || 'linear-gradient(135deg,#667eea,#764ba2)',
+      likes: p.likes_count || 0,
+      retweets: p.retweets_count || 0,
+      replies: p.replies_count || 0,
+      views: p.views_count ? String(p.views_count) : '0',
+      liked: !!p.liked,
+      retweeted: false,
+      bookmarked: false,
+    }));
+    state.homeHasMore = data.hasMore;
+    feed.innerHTML = promoted + tweets.map(t=>renderTweet(t)).join('') + (data.hasMore ? renderLoadMoreBtn('home') : '');
+    initEmojiPicker();
+    initHomeEmojiPicker();
+  } catch(err) {
+    console.warn('[言] API 加载失败，使用本地数据:', err.message);
+    // 回退到本地数据
+    const feed = document.getElementById('homeFeed');
+    if(feed) {
+      const muted = DB.mutedUsers || [];
+      const blocked = DB.blockedUsers || [];
+      const visibleTweets = DB.tweets.filter(t => !muted.includes(t.handle) && !blocked.includes(t.handle));
+      visibleTweets.sort((a,b)=> (b.createdAt||0) - (a.createdAt||0));
+      feed.innerHTML = visibleTweets.map(t=>renderTweet(t)).join('') + renderLoadMoreBtn('home');
+    }
+  }
 }
 
 function renderFollowingFeed(){
@@ -830,17 +881,53 @@ function renderLoadMoreBtn(type){
 }
 
 // 加载更多首页内容
-function loadMoreHome(){
+async function loadMoreHome(){
   const container = document.getElementById('homeLoadMore');
   if(container){
     container.innerHTML = '<div class="loading-more"><div class="load-spinner"></div>加载中...</div>';
   }
 
-  // 模拟加载延迟
-  setTimeout(()=>{
-    state.homePage++;
+  state.homePage++;
 
-    // 获取当前要显示的推文数量
+  // API 模式
+  if(typeof PostsAPI !== 'undefined'){
+    try {
+      const data = await PostsAPI.list(state.homePage, state.homePageSize);
+      const newTweets = data.posts.map(p => ({
+        id: p.id, name: p.name, handle: p.handle, verified: !!p.verified,
+        time: formatTime(new Date(p.created_at).getTime()),
+        createdAt: new Date(p.created_at).getTime(),
+        text: p.content,
+        avatar: (p.name||'用').slice(0,1),
+        avatarBg: p.avatar_bg || 'linear-gradient(135deg,#667eea,#764ba2)',
+        likes: p.likes_count||0, retweets: p.retweets_count||0, replies: p.replies_count||0,
+        views: p.views_count?String(p.views_count):'0',
+        liked: !!p.liked, retweeted:false, bookmarked:false
+      }));
+      state.homeHasMore = data.hasMore;
+      const feed = document.getElementById('homeFeed');
+      if(feed){
+        // 追加到现有内容后面
+        const loadMoreContainer = feed.querySelector('.load-more-container');
+        const newHtml = newTweets.map(t=>renderTweet(t)).join('');
+        if(loadMoreContainer){
+          loadMoreContainer.insertAdjacentHTML('beforebegin', newHtml);
+          if(!data.hasMore){
+            loadMoreContainer.innerHTML = '<div style="color:var(--text2);font-size:14px;padding:16px">已加载全部内容</div>';
+          } else {
+            loadMoreContainer.outerHTML = renderLoadMoreBtn('home');
+          }
+        }
+        initEmojiPicker();
+      }
+      return;
+    } catch(err) {
+      console.warn('[言] API 加载更多失败:', err.message);
+    }
+  }
+
+  // 本地回退
+  setTimeout(()=>{
     const itemsPerPage = state.homePageSize;
     const totalToShow = (state.homePage + 1) * itemsPerPage;
     const pageTweets = DB.tweets.slice(0, totalToShow);
@@ -886,7 +973,7 @@ function updateCharCount(textareaId, countId){
     counter.style.display = 'none';
   }
 }
-function homePost(){
+async function homePost(){
   if(!requireLogin()) return;
   const ta = document.getElementById('homeCompose');
   const btn = document.getElementById('homePostBtn');
@@ -894,8 +981,44 @@ function homePost(){
   const v = ta.value.trim();
   const hasMedia = state.composeMedia && state.composeMedia.length > 0;
   if(!v && !hasMedia) return;
-  const viewsOptions=['15','28','47','89','124','203'];
+
+  btn.disabled = true;
+  btn.textContent = '发送中...';
+
   const u = currentUser() || {};
+
+  // 尝试 API 发帖
+  if(typeof PostsAPI !== 'undefined' && u._apiUser){
+    try {
+      const media = (state.composeMedia||[]).map(m=>({url:m.url}));
+      const newPost = await PostsAPI.create(v, media);
+      const t = {
+        id: newPost.id,
+        name: newPost.name || u.name,
+        handle: newPost.handle || u.handle,
+        verified: !!newPost.verified,
+        time: '刚刚',
+        createdAt: Date.now(),
+        text: newPost.content || v,
+        avatar: ((newPost.name||u.name||'用')).slice(0,1),
+        avatarBg: newPost.avatar_bg || u.avatarBg || 'linear-gradient(135deg,#667eea,#764ba2)',
+        likes: 0, retweets: 0, replies: 0, views: '0',
+        liked: false, retweeted: false, bookmarked: false
+      };
+      prependTweetToFeed(t);
+      ta.value = '';
+      btn.textContent = '发帖';
+      clearComposeMedia();
+      state.selectedLocation = null;
+      const locTag = document.getElementById('selectedLocationTag'); if(locTag) locTag.remove();
+      return;
+    } catch(err) {
+      console.warn('[言] API 发帖失败，回退本地:', err.message);
+    }
+  }
+
+  // 本地回退
+  const viewsOptions=['15','28','47','89','124','203'];
   const t = {id:Date.now(),name:u.name||'用户',handle:u.handle||'@user',verified:u.verified||false,time:"刚刚",createdAt:Date.now(),text:v,avatar:(u.name||'用').slice(0,1),avatarBg:u.avatarBg||"linear-gradient(135deg,#667eea,#764ba2)",likes:0,retweets:0,replies:0,views:viewsOptions[Math.floor(Math.random()*viewsOptions.length)],liked:false,retweeted:false,bookmarked:false};
   if(state.composeMedia && state.composeMedia.length > 0){
     t.media = state.composeMedia.map(m=>({url:m.url}));
@@ -905,7 +1028,6 @@ function homePost(){
   }
   DB.tweets.unshift(t);
   u.posts = (u.posts||0) + 1;
-  // 持久化更新后的用户数据（同步 users 表 + session）
   try {
     const allUsers = JSON.parse(localStorage.getItem('yan_auth_users')||'{}');
     if(allUsers[u.identifier]){ allUsers[u.identifier].posts = u.posts; localStorage.setItem('yan_auth_users', JSON.stringify(allUsers)); }
@@ -914,13 +1036,12 @@ function homePost(){
   LS.save();
   ta.value = '';
   btn.disabled = true;
+  btn.textContent = '发帖';
   clearComposeMedia();
   state.selectedLocation = null;
   const locTag = document.getElementById('selectedLocationTag'); if(locTag) locTag.remove();
-  // 重置分页状态
   state.homePage = 0;
   state.homeHasMore = true;
-  // 只插入新帖到 feed 顶部，不全量刷新页面
   prependTweetToFeed(t);
 }
 
@@ -2484,18 +2605,44 @@ function renderPostDetail(id){
   `;
   state.modalTweet = t;
 }
-function submitMainReply(id){
+async function submitMainReply(id){
   if(!requireLogin()) return;
   const text = document.getElementById('replyTextMain').value.trim();
   if(!text) return;
+  const u = currentUser() || {};
+
+  // API 模式
+  if(typeof PostsAPI !== 'undefined' && u._apiUser){
+    try {
+      const reply = await PostsAPI.reply(id, text);
+      const r = {
+        id: reply.id, replyTo: id,
+        name: reply.name || u.name, handle: reply.handle || u.handle,
+        avatar: ((reply.name||u.name||'用')).slice(0,1),
+        avatarBg: reply.avatar_bg || u.avatarBg || 'linear-gradient(135deg,#667eea,#764ba2)',
+        time: '刚刚', createdAt: Date.now(), text: reply.content || text,
+        likes: 0, liked: false
+      };
+      const area = document.getElementById('repliesArea');
+      const div = document.createElement('div');
+      div.className='reply-item';
+      div.innerHTML=`<div class="ta" style="background:${r.avatarBg};width:36px;height:36px;font-size:14px">${r.avatar}</div><div class="tbdy"><div class="th"><span class="tn">${r.name}</span><span class="thandle">${r.handle}</span><span class="tt">· 刚刚</span></div><div class="ttxt">${r.text}</div><div class="tactions"><button class="ab" onclick="doLikeReply(${r.id},${id},this)">${vSvg()}<span class="ac">0</span></button></div></div>`;
+      area.appendChild(div);
+      document.getElementById('replyTextMain').value='';
+      return;
+    } catch(err) {
+      console.warn('[言] API 回复失败，回退本地:', err.message);
+    }
+  }
+
+  // 本地回退
   if(!DB.replies[id]) DB.replies[id]=[];
-  const r = {id:Date.now(),replyTo:id,name:currentUser()?.name||'用户',handle:currentUser()?.handle||'@user',avatar:(currentUser()?.name||'用').slice(0,1),avatarBg:currentUser()?.avatarBg||'linear-gradient(135deg,#667eea,#764ba2)',time:'刚刚',createdAt:Date.now(),text,likes:0,liked:false};
+  const r = {id:Date.now(),replyTo:id,name:u.name||'用户',handle:u.handle||'@user',avatar:(u.name||'用').slice(0,1),avatarBg:u.avatarBg||'linear-gradient(135deg,#667eea,#764ba2)',time:'刚刚',createdAt:Date.now(),text,likes:0,liked:false};
   DB.replies[id].push(r);
   const t = DB.tweets.find(x=>x.id===id);
   if(t) t.replies++;
   LS.save();
-  // 模拟收到回复通知
-  if(t && t.handle !== (currentUser()||{}).handle){
+  if(t && t.handle !== u.handle){
     addNotification('reply','回复了你的帖子：'+(text.length>20?text.slice(0,20)+'...':text),{target:t.text.length>20?t.text.slice(0,20)+'...':t.text,tweetId:t.id});
   }
   const area = document.getElementById('repliesArea');
@@ -3121,37 +3268,79 @@ function closeNewMsgModal(){
   document.getElementById('newMsgModal').classList.remove('active');
   document.getElementById('newMsgRecipient').value='';
   document.getElementById('newMsgText').value='';
+  const sg = document.getElementById('newMsgSuggestions');
+  if(sg){ sg.style.display='none'; sg.innerHTML=''; }
+}
+function searchMsgRecipient(q){
+  const sg = document.getElementById('newMsgSuggestions');
+  if(!sg) return;
+  if(!q || q.length < 1){ sg.style.display='none'; return; }
+  // 从注册用户库搜索
+  let candidates = [];
+  try{
+    const allUsers = JSON.parse(localStorage.getItem('yan_auth_users')||'{}');
+    const me = isLoggedIn() ? currentUser().handle : null;
+    Object.values(allUsers).forEach(u=>{
+      if(me && ('@'+u.handle===me || u.handle===me)) return; // 排除自己
+      const h = (u.handle||'').toLowerCase();
+      const n = (u.name||'').toLowerCase();
+      if(h.includes(q.toLowerCase())||n.includes(q.toLowerCase())){
+        candidates.push({name:u.name||u.handle, handle:u.handle, avatar:(u.name||'用').slice(0,1), avatarBg:u.avatarBg||'linear-gradient(135deg,#667eea,#764ba2)'});
+      }
+    });
+  } catch(e){}
+  // 加入 mock 用户池兜底
+  const mockPool = [...(typeof FOLLOWING_DATA!=='undefined'?FOLLOWING_DATA:[]),...(typeof FOLLOWERS_DATA!=='undefined'?FOLLOWERS_DATA:[])];
+  mockPool.forEach(u=>{
+    const h=(u.handle||'').toLowerCase().replace('@','');
+    const n=(u.name||'').toLowerCase();
+    if((h.includes(q.toLowerCase())||n.includes(q.toLowerCase()))&&!candidates.find(c=>c.handle===u.handle)){
+      candidates.push({name:u.name,handle:u.handle.replace('@',''),avatar:u.avatar,avatarBg:u.avatarBg||'linear-gradient(135deg,#aaa,#666)'});
+    }
+  });
+  candidates = candidates.slice(0,6);
+  if(candidates.length===0){ sg.style.display='none'; return; }
+  sg.innerHTML = candidates.map(u=>`
+    <div onclick="selectMsgRecipient('${u.handle}')" style="display:flex;align-items:center;gap:10px;padding:10px 14px;cursor:pointer;transition:background .15s" onmouseenter="this.style.background='var(--hover)'" onmouseleave="this.style.background=''">
+      <div style="width:36px;height:36px;border-radius:50%;background:${u.avatarBg};display:flex;align-items:center;justify-content:center;font-weight:700;color:#fff;font-size:15px;flex-shrink:0">${u.avatar}</div>
+      <div>
+        <div style="font-weight:700;font-size:14px">${u.name}</div>
+        <div style="font-size:13px;color:var(--text2)">@${u.handle}</div>
+      </div>
+    </div>
+  `).join('');
+  sg.style.display='block';
+}
+function selectMsgRecipient(handle){
+  const input = document.getElementById('newMsgRecipient');
+  if(input) input.value = handle;
+  const sg = document.getElementById('newMsgSuggestions');
+  if(sg){ sg.style.display='none'; }
+  document.getElementById('newMsgText')?.focus();
 }
 function startNewMessage(){
   const recipient = document.getElementById('newMsgRecipient').value.trim();
   const text = document.getElementById('newMsgText').value.trim();
-  if(!recipient){
-    const input = document.getElementById('newMsgRecipient');
-    if(input){input.style.borderColor='var(--danger,#f4212e)';setTimeout(()=>{input.style.borderColor='';},2000);}
-    showToast('请输入用户名');
-    return;
-  }
-  // Create or find conversation
-  const existingMsg = DB.messages.find(m=>m.handle==='@'+recipient);
-  if(existingMsg){
-    closeNewMsgModal();
-    navigate('messages');
-    setTimeout(()=>openChat(existingMsg.id),100);
-    return;
+  if(!recipient){ showToast('请输入用户名'); return; }
+  const cleanHandle = recipient.replace(/^@/,'');
+  // 已有对话 → 直接打开
+  const existingMsg = DB.messages.find(m=>m.handle==='@'+cleanHandle);
+  if(existingMsg){ closeNewMsgModal(); navigate('messages'); setTimeout(()=>openChat(existingMsg.id),100); return; }
+  // 从注册用户库/mock 里找资料
+  let name = cleanHandle, avatar = cleanHandle[0]?.toUpperCase()||'?', avatarBg = 'linear-gradient(135deg,#667eea,#764ba2)';
+  try{
+    const allUsers = JSON.parse(localStorage.getItem('yan_auth_users')||'{}');
+    const found = Object.values(allUsers).find(u=>u.handle===cleanHandle||u.handle==='@'+cleanHandle);
+    if(found){ name=found.name||cleanHandle; avatar=(found.name||cleanHandle).slice(0,1); if(found.avatarBg) avatarBg=found.avatarBg; }
+  } catch(e){}
+  if(name===cleanHandle && typeof FOLLOWING_DATA!=='undefined'){
+    const mu = FOLLOWING_DATA.find(u=>u.handle==='@'+cleanHandle||u.handle===cleanHandle);
+    if(mu){ name=mu.name; avatar=mu.avatar||name.slice(0,1); if(mu.avatarBg) avatarBg=mu.avatarBg; }
   }
   const newId = Date.now();
-  const newMsg = {
-    id:newId,
-    name:recipient,
-    handle:'@'+recipient,
-    avatar:recipient[0]?.toUpperCase()||'?',
-    avatarBg:'linear-gradient(135deg,#667eea,#764ba2)',
-    preview:text||'开始对话...',
-    time:'刚刚',
-    unread:0,
-    messages:text?[{sent:true,text,time:new Date().toLocaleTimeString('zh-CN',{hour:'2-digit',minute:'2-digit'})}]:[]
-  };
+  const newMsg = { id:newId, name, handle:'@'+cleanHandle, avatar, avatarBg, preview:text||'开始对话...', time:'刚刚', unread:0, messages:text?[{sent:true,text,time:new Date().toLocaleTimeString('zh-CN',{hour:'2-digit',minute:'2-digit'}),seen:true}]:[] };
   DB.messages.unshift(newMsg);
+  LS.save();
   closeNewMsgModal();
   navigate('messages');
   if(text) setTimeout(()=>openChat(newId),100);
@@ -3314,8 +3503,24 @@ function handleGoogleAuth(){
 }
 
 // ===== INTERACTIONS =====
-function doLike(id,btn){
+async function doLike(id,btn){
   if(!requireLogin()) return;
+  const u = currentUser() || {};
+
+  // 尝试 API 点赞
+  if(typeof PostsAPI !== 'undefined' && u._apiUser){
+    try {
+      const result = await PostsAPI.like(id);
+      btn.classList.toggle('liked', result.liked);
+      const lk=document.getElementById('lk-'+id);
+      if(lk)lk.textContent=f(result.likes_count);
+      return;
+    } catch(err) {
+      console.warn('[言] API 点赞失败，回退本地:', err.message);
+    }
+  }
+
+  // 本地回退
   const t=DB.tweets.find(x=>x.id===id);
   if(!t)return;
   t.liked=!t.liked;
@@ -3324,8 +3529,7 @@ function doLike(id,btn){
   btn.classList.toggle('liked',t.liked);
   const lk=document.getElementById('lk-'+id);
   if(lk)lk.textContent=f(t.likes);
-  // 模拟收到点赞通知（点赞别人的帖子时，模拟有人也赞了你的帖子）
-  if(t.liked && t.handle !== (currentUser()||{}).handle){
+  if(t.liked && t.handle !== u.handle){
     addNotification('like','赞了你的帖子',{target:t.text.length>20?t.text.slice(0,20)+'...':t.text,tweetId:t.id});
   }
 }
@@ -3721,28 +3925,41 @@ function insertEmoji(e){
 }
 
 // ===== GIF PICKER =====
+// 内置 GIF 数据（国内可访问的 CDN gif 链接 + 分类关键词）
 const GIF_DATA=[
-  {id:'applause',label:'👏 鼓掌',color:'#1a73e8',keywords:'鼓掌 掌声 clap applause'},
-  {id:'fire',label:'🔥 火焰',color:'#e53935',keywords:'火焰 火 fire hot'},
-  {id:'heart',label:'❤️ 爱心',color:'#c62828',keywords:'爱心 爱 heart love'},
-  {id:'laugh',label:'😂 笑哭',color:'#f9a825',keywords:'笑 大笑 哈哈 laugh lol'},
-  {id:'thumbsup',label:'👍 点赞',color:'#2e7d32',keywords:'点赞 赞 good thumbs up'},
-  {id:'celebrate',label:'🎉 庆祝',color:'#6a1b9a',keywords:'庆祝 派对 celebrate party'},
-  {id:'cool',label:'😎 酷',color:'#0277bd',keywords:'酷 cool sunglasses'},
-  {id:'thinking',label:'🤔 思考',color:'#4e342e',keywords:'思考 想 think hmm'},
-  {id:'wave',label:'👋 打招呼',color:'#00838f',keywords:'打招呼 嗨 wave hello hi'},
-  {id:'strong',label:'💪 强',color:'#bf360c',keywords:'强 力量 strong muscle'},
-  {id:'100',label:'💯 满分',color:'#e65100',keywords:'满分 100 perfect'},
-  {id:'sparkles',label:'✨ 闪亮',color:'#7c4dff',keywords:'闪亮 星星 sparkles shine'},
-  {id:'coffee',label:'☕ 咖啡',color:'#4e342e',keywords:'咖啡 茶 coffee tea'},
-  {id:'rocket',label:'🚀 起飞',color:'#1565c0',keywords:'起飞 火箭 rocket launch'},
-  {id:'eyes',label:'👀 关注',color:'#1b5e20',keywords:'关注 看 eyes watch'},
-  {id:'shrug',label:'🤷 无语',color:'#546e7a',keywords:'无语 耸肩 shrug idk'},
-  {id:'facepalm',label:'🤦 尴尬',color:'#6d4c41',keywords:'尴尬 facepalm'},
-  {id:'dance',label:'💃 跳舞',color:'#ad1457',keywords:'跳舞 舞蹈 dance'},
-  {id:'sleep',label:'😴 睡觉',color:'#283593',keywords:'睡觉 困 sleep zzz'},
-  {id:'angry',label:'😡 生气',color:'#b71c1c',keywords:'生气 angry mad'},
+  {id:'applause',label:'👏 鼓掌',gif:'https://media.tenor.com/Y3GJCpqxDW4AAAAM/clapping.gif',color:'#1a73e8',keywords:'鼓掌 掌声 clap applause'},
+  {id:'fire',label:'🔥 火焰',gif:'https://media.tenor.com/LoMaJQkVBfMAAAAM/fire.gif',color:'#e53935',keywords:'火焰 火 fire hot'},
+  {id:'heart',label:'❤️ 爱心',gif:'https://media.tenor.com/OGLEbOESmIgAAAAM/heart.gif',color:'#c62828',keywords:'爱心 爱 heart love'},
+  {id:'laugh',label:'😂 笑哭',gif:'https://media.tenor.com/p4BUjLGl_DIAAAAM/laughing.gif',color:'#f9a825',keywords:'笑 大笑 哈哈 laugh lol'},
+  {id:'thumbsup',label:'👍 点赞',gif:'https://media.tenor.com/GQfPIlJKVGUAAAAM/thumbs-up.gif',color:'#2e7d32',keywords:'点赞 赞 good thumbs up'},
+  {id:'celebrate',label:'🎉 庆祝',gif:'https://media.tenor.com/RPrKhEKYbMEAAAAM/celebrate.gif',color:'#6a1b9a',keywords:'庆祝 派对 celebrate party'},
+  {id:'cool',label:'😎 酷',gif:'https://media.tenor.com/cMMknQjKy0kAAAAM/cool-sunglasses.gif',color:'#0277bd',keywords:'酷 cool sunglasses'},
+  {id:'thinking',label:'🤔 思考',gif:'https://media.tenor.com/pTvQHVkDxisAAAAM/thinking.gif',color:'#4e342e',keywords:'思考 想 think hmm'},
+  {id:'wave',label:'👋 打招呼',gif:'https://media.tenor.com/N33-kIwAFAEAAAAM/hi-wave.gif',color:'#00838f',keywords:'打招呼 嗨 wave hello hi'},
+  {id:'strong',label:'💪 强',gif:'https://media.tenor.com/hLG5WF3x0NQAAAAM/strong.gif',color:'#bf360c',keywords:'强 力量 strong muscle'},
+  {id:'100',label:'💯 满分',gif:'https://media.tenor.com/5fHuDNqfBLsAAAAM/100.gif',color:'#e65100',keywords:'满分 100 perfect'},
+  {id:'rocket',label:'🚀 起飞',gif:'https://media.tenor.com/M7i8HGZfRFcAAAAM/rocket-launch.gif',color:'#1565c0',keywords:'起飞 火箭 rocket launch'},
+  {id:'dance',label:'💃 跳舞',gif:'https://media.tenor.com/8IQs7bAKCkYAAAAM/dance.gif',color:'#ad1457',keywords:'跳舞 舞蹈 dance'},
+  {id:'sleep',label:'😴 睡觉',gif:'https://media.tenor.com/LFX1NliUNEkAAAAM/sleep.gif',color:'#283593',keywords:'睡觉 困 sleep zzz'},
+  {id:'angry',label:'😡 生气',gif:'https://media.tenor.com/DJDJ8VV-A9UAAAAM/angry.gif',color:'#b71c1c',keywords:'生气 angry mad'},
+  {id:'ok',label:'👌 OK',gif:'https://media.tenor.com/2-Qk3PL3TpwAAAAM/okay.gif',color:'#33691e',keywords:'ok 好 okGood 可以'},
+  {id:'bye',label:'👋 再见',gif:'https://media.tenor.com/cEGSvlYBzn4AAAAM/bye.gif',color:'#37474f',keywords:'再见 拜拜 bye goodbye'},
+  {id:'yes',label:'✅ 同意',gif:'https://media.tenor.com/lJ4NWAjwrdsAAAAM/yes.gif',color:'#1b5e20',keywords:'同意 是 yes agree'},
+  {id:'no',label:'❌ 不',gif:'https://media.tenor.com/Yd8Vs7FBX2QAAAAM/no.gif',color:'#b71c1c',keywords:'不 拒绝 no nope'},
+  {id:'wow',label:'😱 哇',gif:'https://media.tenor.com/e6MWaSd_oSMAAAAM/wow.gif',color:'#7c4dff',keywords:'哇 wow 震惊 amazing'},
 ];
+
+// 渲染 GIF 列表
+function renderGifGrid(data, gridEl){
+  if(!gridEl) return;
+  gridEl.innerHTML = data.map(g=>`
+    <div class="gif-item" onclick="pickGif('${g.id}')" data-keywords="${g.keywords}" title="${g.label.split(' ').slice(1).join(' ')}">
+      <img src="${g.gif}" alt="${g.label}" style="width:100%;height:100%;object-fit:cover;border-radius:6px;display:block" loading="lazy" onerror="this.parentElement.innerHTML='<div style=\\'width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:${g.color}22;font-size:28px\\'>${g.label.split(' ')[0]}</div>'">
+      <div class="gif-item-label">${g.label.split(' ').slice(1).join(' ')}</div>
+    </div>
+  `).join('');
+}
+
 function initGifPicker(){
   if(document.getElementById('gifPicker'))return;
   const emojiPicker=document.getElementById('emojiPicker');
@@ -3752,13 +3969,12 @@ function initGifPicker(){
   picker.className='gif-picker';
   picker.id='gifPicker';
   picker.innerHTML=`
-    <input class="gif-search" placeholder="搜索 GIF" oninput="filterGifs(this.value,'gifGrid')">
-    <div class="gif-grid" id="gifGrid">${GIF_DATA.map(g=>`
-      <div class="gif-item" onclick="pickGif('${g.id}','modal')" data-keywords="${g.keywords}">
-        <div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:${g.color}22;font-size:36px">${g.label.split(' ')[0]}</div>
-        <div class="gif-item-label">${g.label.split(' ').slice(1).join(' ')}</div>
-      </div>
-    `).join('')}</div>
+    <input class="gif-search" placeholder="搜索 GIF..." oninput="filterGifs(this.value,'gifGrid')">
+    <div class="gif-grid" id="gifGrid"></div>
+  `;
+  parent.insertBefore(picker,emojiPicker);
+  renderGifGrid(GIF_DATA, picker.querySelector('#gifGrid'));
+}    `).join('')}</div>
   `;
   parent.insertBefore(picker,emojiPicker);
 }
@@ -3767,7 +3983,14 @@ function toggleGif(ctx){
   document.querySelectorAll('.emoji-picker.active').forEach(p=>p.classList.remove('active'));
   if(ctx==='home'){
     const picker=document.getElementById('homeGifPicker');
-    if(picker)picker.classList.toggle('active');
+    if(picker){
+      picker.classList.toggle('active');
+      // 首次打开时渲染真实 GIF 图片
+      const grid = picker.querySelector('.gif-grid');
+      if(grid && picker.classList.contains('active') && !grid.querySelector('img')){
+        renderGifGrid(GIF_DATA, grid);
+      }
+    }
   }else{
     initGifPicker();
     const picker=document.getElementById('gifPicker');
@@ -3778,24 +4001,48 @@ function filterGifs(query,gridId){
   const grid=document.getElementById(gridId||'gifGrid');
   if(!grid)return;
   const q=query.trim().toLowerCase();
-  grid.querySelectorAll('.gif-item').forEach(item=>{
-    const kw=item.dataset.keywords||'';
-    item.style.display=(!q||kw.includes(q))?'':'none';
-  });
+  if(!q){
+    renderGifGrid(GIF_DATA, grid);
+    return;
+  }
+  const filtered = GIF_DATA.filter(g=>g.keywords.includes(q)||g.label.includes(q));
+  if(filtered.length > 0){
+    renderGifGrid(filtered, grid);
+  } else {
+    grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:24px;color:var(--text2);font-size:14px">没有找到相关 GIF</div>`;
+  }
 }
-function pickGif(id,ctx){
+function pickGif(id){
   const gif=GIF_DATA.find(g=>g.id===id);
   if(!gif)return;
+  // 将 GIF 以特殊标记插入，发帖时识别并渲染为图片
   let ta=_lastFocusedInput||document.querySelector('.cin:focus,.ri-textarea:focus,#modalText:focus,#chatInput:focus');
   if(ta){
+    const gifMark = `[GIF:${gif.id}]`;
     const s=ta.selectionStart||ta.value.length;
-    const text=gif.label;
-    ta.value=ta.value.slice(0,s)+text+ta.value.slice(ta.selectionEnd||s);
-    ta.selectionStart=ta.selectionEnd=s+text.length;
+    ta.value=ta.value.slice(0,s)+gifMark+ta.value.slice(ta.selectionEnd||s);
+    ta.selectionStart=ta.selectionEnd=s+gifMark.length;
     ta.focus();
     if(ta.id==='modalText')updateModalPostBtn();
     if(ta.classList.contains('cin'))updateComposeBtn();
     if(ta.id==='chatInput')toggleSendBtn();
+    // 在聊天中直接发送图片消息
+    if(ta.id==='chatInput' && activeChat){
+      ta.value=''; // 清空再用图片消息发送
+      const now=new Date();
+      const timeStr=now.toLocaleTimeString('zh-CN',{hour:'2-digit',minute:'2-digit'});
+      activeChat.messages.push({sent:true,isImage:true,imageData:gif.gif,time:timeStr,seen:true});
+      activeChat.time=timeStr;
+      activeChat.preview='[GIF]';
+      const body=document.getElementById('chatBody');
+      if(body){
+        const div=document.createElement('div');
+        div.innerHTML=renderChatMessages([activeChat.messages[activeChat.messages.length-1]]);
+        body.appendChild(div.lastElementChild||div);
+        body.scrollTop=body.scrollHeight;
+      }
+      LS.save();
+    }
   }
   document.querySelectorAll('.gif-picker.active').forEach(p=>p.classList.remove('active'));
 }
@@ -5058,6 +5305,57 @@ setTimeout(updateSidebarBadges, 300);
 setTimeout(updateMobileNav, 300);
 // 初始加载关注状态
 if(typeof loadFollowStates === 'function') loadFollowStates();
+// 动态更新「你可能会喜欢」 - 加入真实注册用户
+function refreshWhoToFollow(){
+  const widget = document.querySelector('.sidebar-right-inner .widget:nth-child(3)');
+  if(!widget) return;
+  const me = isLoggedIn() ? (currentUser().handle||'') : '';
+  // 收集推荐用户：注册用户 + mock 补充
+  const candidates = [];
+  try{
+    const allUsers = JSON.parse(localStorage.getItem('yan_auth_users')||'{}');
+    Object.values(allUsers).forEach(u=>{
+      const handle = '@'+(u.handle||'');
+      if(handle===me || handle===('@'+me.replace('@',''))) return;
+      candidates.push({name:u.name||u.handle, handle:'@'+(u.handle||''), avatar:(u.name||u.handle||'用').slice(0,1), avatarBg:u.avatarBg||'linear-gradient(135deg,#667eea,#764ba2)', bio:u.bio||'', verified:u.verified||false, isReal:true});
+    });
+  } catch(e){}
+  // 补充 mock 用户（排除已有）
+  if(candidates.length < 3){
+    const mocks = [
+      {name:'stevenmarkryan',handle:'@stevenmarkryan',avatar:'S',avatarBg:'linear-gradient(135deg,#1d9bf0,#0d8ecf)',bio:'',verified:true},
+      {name:'KSI',handle:'@KSI',avatar:'K',avatarBg:'linear-gradient(135deg,#f093fb,#f5576c)',bio:'',verified:true},
+      {name:'AI Hub',handle:'@ai_hub',avatar:'A',avatarBg:'linear-gradient(135deg,#43e97b,#38f9d7)',bio:'',verified:false},
+    ];
+    mocks.forEach(m=>{ if(!candidates.find(c=>c.handle===m.handle)) candidates.push(m); });
+  }
+  // 显示最多 3 位，已关注的排后面
+  const followingH = DB.following||[];
+  candidates.sort((a,b)=>{
+    const af = followingH.includes(a.handle)?1:0;
+    const bf = followingH.includes(b.handle)?1:0;
+    return af-bf;
+  });
+  const toShow = candidates.slice(0,3);
+  const html = toShow.map(u=>{
+    const isFollowing = followingH.includes(u.handle);
+    const followBtn = isFollowing
+      ? `<button class="following" style="background:transparent;color:var(--text);border:1px solid var(--border);border-radius:9999px;padding:7px 18px;font-size:14px;font-weight:700;cursor:pointer" onclick="event.stopPropagation();toggleFollow(this)">正在关注</button>`
+      : `<button class="fbtn" onclick="event.stopPropagation();toggleFollow(this)">关注</button>`;
+    return `<div class="fi" onclick="navigate('user','${u.handle}')">
+      <div class="fa" style="background:${u.avatarBg}">${u.avatar}</div>
+      <div class="fi-info">
+        <div class="fi-name">${escapeHtml(u.name)} ${u.verified?'<span style="color:var(--accent);display:inline-flex"><svg width="14" height="14" viewBox="0 0 24 24"><path fill="var(--accent)" d="M20.396 11c-.018-.646-.215-1.275-.57-1.816-.354-.54-.852-.972-1.438-1.246.223-.607.27-1.264.14-1.897-.131-.634-.437-1.218-.882-1.687-.47-.445-1.053-.75-1.687-.882-.633-.13-1.29-.083-1.897.14-.273-.587-.704-1.086-1.245-1.44S11.647 1.62 11 1.604c-.646.017-1.273.213-1.813.568s-.969.854-1.24 1.441c-.608-.223-1.267-.272-1.902-.14-.635.13-1.22.436-1.69.882-.445.47-.749 1.055-.878 1.688-.13.633-.08 1.29.144 1.896-.587.274-1.087.705-1.443 1.245-.356.54-.555 1.17-.574 1.817.02.647.218 1.276.574 1.817.356.54.856.972 1.443 1.245-.224.606-.274 1.263-.144 1.896.13.634.433 1.218.877 1.688.47.443 1.054.747 1.687.878.633.132 1.29.084 1.897-.136.274.586.705 1.084 1.246 1.439.54.354 1.17.551 1.816.569.647-.016 1.276-.213 1.817-.567s.972-.854 1.245-1.44c.604.239 1.266.296 1.903.164.636-.132 1.22-.447 1.68-.907.46-.46.776-1.044.908-1.681s.075-1.299-.165-1.903c.586-.274 1.084-.705 1.439-1.246.354-.54.551-1.17.569-1.816z"/></svg></span>':''}</div>
+        <div class="fi-handle">${escapeHtml(u.handle)}</div>
+        ${u.bio?`<div class="fi-meta" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:120px">${escapeHtml(u.bio.slice(0,30))}</div>`:''}
+      </div>
+      ${followBtn}
+    </div>`;
+  }).join('');
+  // 替换推荐列表（保留 header 和 show-more）
+  widget.innerHTML = `<div class="wt">你可能会喜欢</div>${html}<a class="show-more" onclick="navigate('explore')">显示更多</a>`;
+}
+setTimeout(refreshWhoToFollow, 500);
 
 // ===== TERMS OF SERVICE =====
 function renderTerms(){
@@ -5476,3 +5774,16 @@ function renderMap(){
 
 // 页面加载完成后自动打印一次诊断信息
 setTimeout(()=>{ if(typeof debugYan==='function') debugYan(); }, 2000);
+
+// API 健康检查
+setTimeout(async()=>{
+  if(typeof checkAPI !== 'function') return;
+  const ok = await checkAPI();
+  console.log('[言] 后端 API 状态:', ok ? '✅ 已连接' : '⚠️ 未连接（使用本地数据模式）');
+  if(ok && typeof PostsAPI !== 'undefined'){
+    try {
+      const data = await PostsAPI.list(0, 3);
+      console.log('[言] API 帖子数:', data.total);
+    } catch(e) { console.warn('[言] API 测试失败:', e.message); }
+  }
+}, 3000);

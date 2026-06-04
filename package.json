@@ -1,10 +1,13 @@
 {
   "name": "yan",
   "version": "1.0.0",
-  "description": "",
+  "description": "言 - 社交平台",
   "main": "index.js",
   "scripts": {
-    "test": "node tests/util.test.js"
+    "test": "node tests/util.test.js",
+    "deploy": "python deploy.py",
+    "server": "cd server && node index.js",
+    "server:dev": "cd server && node --watch index.js"
   },
   "repository": {
     "type": "git",

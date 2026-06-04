@@ -1,19 +1,42 @@
 /**
  * ===== AUTH SYSTEM: 账号系统 =====
- * 支持：手机+验证码登录/注册、邮箱+密码登录/注册、游客模式
- * 数据存储在 localStorage，模拟后端
+ * 支持：邮箱+密码登录/注册，后端 API + localStorage 双模式
  *
- * !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
- * !!!!!  安全警告：本文件仅用于演示，不可用于生产环境            !!!!!!
- * !!!!!  密码以明文形式存储在 localStorage，任何能访问浏览器   !!!!!!
- * !!!!!  的人都可以看到用户密码。请使用真实后端服务替代。       !!!!!!
- * !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+ * 优先使用后端 API，API 不可用时回退到 localStorage
  */
 
 const AUTH_KEY = 'yan_auth_users';
 const SESSION_KEY = 'yan_current_user';
 
-// ===== 本地“数据库”操作 =====
+// ===== API 可用性检测 =====
+let _apiAvailable = null;
+async function isAPIAvailable() {
+  if (_apiAvailable !== null) return _apiAvailable;
+  try {
+    _apiAvailable = await checkAPI();
+  } catch {
+    _apiAvailable = false;
+  }
+  // 显示 API 状态
+  updateAPIStatus(_apiAvailable);
+  return _apiAvailable;
+}
+
+// 更新 API 状态指示器
+function updateAPIStatus(online) {
+  let indicator = document.getElementById('apiStatusIndicator');
+  if (!indicator) {
+    indicator = document.createElement('div');
+    indicator.id = 'apiStatusIndicator';
+    indicator.className = 'api-status';
+    document.body.appendChild(indicator);
+  }
+  indicator.className = `api-status ${online ? 'online' : 'offline'}`;
+  indicator.textContent = online ? '🟢 已连接' : '🔴 离线模式';
+  indicator.title = online ? '已连接到服务器' : '使用本地存储模式';
+}
+
+// ===== 本地"数据库"操作（回退模式）=====
 function getUsers() {
   try { return JSON.parse(localStorage.getItem(AUTH_KEY)) || {}; } catch(e) { return {}; }
 }
@@ -38,13 +61,13 @@ function isValidEmail(email) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 }
 function isValidPassword(pw) {
-  return pw.length >= 8;
+  return pw.length >= 6;
 }
 function genCode() {
   return Math.floor(100000 + Math.random() * 900000).toString();
 }
 
-// 模拟发送验证码（localStorage 暂存，实际显示给用户）
+// 模拟发送验证码
 const CODE_KEY = 'yan_verify_codes';
 function getCodes() {
   try { return JSON.parse(localStorage.getItem(CODE_KEY)) || {}; } catch(e) { return {}; }
@@ -55,16 +78,13 @@ function saveCodes(codes) {
 function sendVerifyCode(phoneOrEmail) {
   const code = genCode();
   const codes = getCodes();
-  codes[phoneOrEmail] = { code: code, expires: Date.now() + 5 * 60 * 1000 }; // 5分钟有效
+  codes[phoneOrEmail] = { code: code, expires: Date.now() + 5 * 60 * 1000 };
   saveCodes(codes);
-  // 模拟：在真实环境这里会发短信/邮件，这里显示在页面顶部方便测试
   showVerifyCode(phoneOrEmail, code);
   return code;
 }
 
-// 在页面顶部显示验证码（模拟短信/邮件，正式环境应替换为真实发送服务）
 function showVerifyCode(identifier, code) {
-  // 移除旧提示
   const old = document.getElementById('devCodeTip');
   if (old) old.remove();
   const tip = document.createElement('div');
@@ -73,7 +93,6 @@ function showVerifyCode(identifier, code) {
   tip.innerHTML = '📱 验证码已发送：<b style="font-size:20px;margin:0 8px;letter-spacing:4px">' + code + '</b><span style="font-size:13px;opacity:0.85">（模拟发送给 ' + identifier + '，正式环境为真实短信）</span>'
     + '<button onclick="document.getElementById(\'devCodeTip\').remove()" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);background:rgba(255,255,255,0.3);border:none;color:#fff;width:24px;height:24px;border-radius:50%;cursor:pointer;font-size:16px;line-height:1;display:flex;align-items:center;justify-content:center">×</button>';
   document.body.appendChild(tip);
-  // 60秒后自动消失（与验证码有效期一致）
   setTimeout(function(){ if(tip.parentNode) tip.remove(); }, 60000);
 }
 function verifyCode(phoneOrEmail, inputCode) {
@@ -87,10 +106,41 @@ function verifyCode(phoneOrEmail, inputCode) {
   return true;
 }
 
-// ===== 注册 =====
-// !WARNING: 密码以明文存储，仅演示用。生产环境必须使用哈希 + 后端服务。
-function authRegister(identifier, password, type, displayName) {
-  // identifier: 手机号或邮箱, type: 'phone'|'email', displayName: 可选昵称
+// ===== 注册（支持 API + 本地回退）=====
+async function authRegister(identifier, password, type, displayName) {
+  // 先尝试 API
+  const apiOk = await isAPIAvailable();
+  if (apiOk) {
+    try {
+      const name = displayName || (type === 'email' ? identifier.split('@')[0] : '用户' + identifier.slice(-4));
+      const user = await AuthAPI.register(name, identifier, password);
+      // 将 API 用户转为本地格式
+      const sessionUser = {
+        identifier: user.email || identifier,
+        type: 'email',
+        handle: user.handle,
+        name: user.name,
+        bio: user.bio || '',
+        location: user.location || '',
+        avatarBg: user.avatar_bg || 'linear-gradient(135deg,#667eea,#764ba2)',
+        verified: !!user.verified,
+        role: 'user',
+        followers: 0,
+        following: 0,
+        posts: 0,
+        liked: 0,
+        joinedDate: user.created_at ? user.created_at.slice(0, 10) : new Date().toISOString().slice(0, 10),
+        createdAt: Date.now(),
+        _apiUser: true,
+      };
+      setSession(sessionUser);
+      return { ok: true, user: sessionUser };
+    } catch (err) {
+      return { ok: false, msg: err.message };
+    }
+  }
+
+  // 本地回退
   const users = getUsers();
   if (users[identifier]) return { ok: false, msg: '该账号已注册，请直接登录' };
   const handle = genHandle(identifier);
@@ -104,8 +154,8 @@ function authRegister(identifier, password, type, displayName) {
   }
   const user = {
     identifier,
-    type, // 'phone' | 'email'
-    password, // 注意：纯前端不安全，仅作演示
+    type,
+    password,
     handle: handle,
     name: name,
     bio: '',
@@ -124,17 +174,45 @@ function authRegister(identifier, password, type, displayName) {
   };
   users[identifier] = user;
   saveUsers(users);
-  // 注册成功自动登录（建立 session，脱敏存储）
   const sessionUser = { ...user };
   delete sessionUser.password;
   setSession(sessionUser);
   return { ok: true, user: sessionUser };
 }
 
-// ===== 登录 =====
-// !WARNING: 密码比对为明文比较，仅演示用。生产环境应使用哈希 + 后端服务。
-function authLogin(identifier, credential, type) {
-  // type: 'phone'（验证码）| 'email'（密码）
+// ===== 登录（支持 API + 本地回退）=====
+async function authLogin(identifier, credential, type) {
+  // 先尝试 API
+  const apiOk = await isAPIAvailable();
+  if (apiOk) {
+    try {
+      const user = await AuthAPI.login(identifier, credential);
+      const sessionUser = {
+        identifier: user.email || identifier,
+        type: 'email',
+        handle: user.handle,
+        name: user.name,
+        bio: user.bio || '',
+        location: user.location || '',
+        avatarBg: user.avatar_bg || 'linear-gradient(135deg,#667eea,#764ba2)',
+        verified: !!user.verified,
+        role: 'user',
+        followers: user.followers || 0,
+        following: user.following || 0,
+        posts: user.posts || 0,
+        liked: 0,
+        joinedDate: user.created_at ? user.created_at.slice(0, 10) : '',
+        createdAt: Date.now(),
+        _apiUser: true,
+      };
+      setSession(sessionUser);
+      return { ok: true, user: sessionUser };
+    } catch (err) {
+      return { ok: false, msg: err.message };
+    }
+  }
+
+  // 本地回退
   const users = getUsers();
   const user = users[identifier];
   if (!user) return { ok: false, msg: '账号未注册，请先注册' };
@@ -143,26 +221,52 @@ function authLogin(identifier, credential, type) {
   } else {
     if (user.password !== credential) return { ok: false, msg: '密码错误' };
   }
-  // 返回脱敏用户对象（不含密码）
   const sessionUser = { ...user };
   delete sessionUser.password;
   setSession(sessionUser);
   return { ok: true, user: sessionUser };
 }
 
-// ===== 登录（按任意标识：用户名/邮箱/手机号）=====
-function authLoginByAny(input, password) {
+// ===== 按任意标识登录 =====
+async function authLoginByAny(input, password) {
+  const apiOk = await isAPIAvailable();
+  if (apiOk) {
+    try {
+      const user = await AuthAPI.login(input, password);
+      const sessionUser = {
+        identifier: user.email || input,
+        type: 'email',
+        handle: user.handle,
+        name: user.name,
+        bio: user.bio || '',
+        location: user.location || '',
+        avatarBg: user.avatar_bg || 'linear-gradient(135deg,#667eea,#764ba2)',
+        verified: !!user.verified,
+        role: 'user',
+        followers: user.followers || 0,
+        following: user.following || 0,
+        posts: user.posts || 0,
+        liked: 0,
+        joinedDate: user.created_at ? user.created_at.slice(0, 10) : '',
+        createdAt: Date.now(),
+        _apiUser: true,
+      };
+      setSession(sessionUser);
+      return { ok: true, user: sessionUser };
+    } catch (err) {
+      return { ok: false, msg: err.message };
+    }
+  }
+
+  // 本地回退
   const users = getUsers();
-  // 1. 先按 identifier（邮箱或手机号）查找
   let user = users[input];
   if (!user) {
-    // 2. 按 handle 查找（去掉开头的 @）
     const cleanHandle = input.startsWith('@') ? input : '@' + input;
     user = Object.values(users).find(u => u.handle === cleanHandle);
   }
   if (!user) return { ok: false, msg: '账号不存在，请先注册' };
   if (user.password !== password) return { ok: false, msg: '密码错误' };
-  // 返回脱敏用户对象（不含密码）
   const sessionUser = { ...user };
   delete sessionUser.password;
   setSession(sessionUser);
@@ -171,10 +275,11 @@ function authLoginByAny(input, password) {
 
 // ===== 登出 =====
 function authLogout() {
+  AuthAPI.logout();
   clearSession();
 }
 
-// ===== 获取当前登录用户（脱敏）=====
+// ===== 获取当前登录用户 =====
 function currentUser() {
   return getSession();
 }
@@ -222,12 +327,19 @@ function randomGradient() {
 function updateCurrentUser(updates) {
   const session = getSession();
   if (!session) return false;
+
+  // API 模式下暂不支持更新（后续可加）
+  if (session._apiUser) {
+    Object.assign(session, updates);
+    setSession(session);
+    return true;
+  }
+
   const users = getUsers();
   const identifier = session.identifier;
   if (!users[identifier]) return false;
   Object.assign(users[identifier], updates);
   saveUsers(users);
-  // 更新 session（脱敏）
   const updated = { ...users[identifier] };
   delete updated.password;
   setSession(updated);
@@ -235,7 +347,6 @@ function updateCurrentUser(updates) {
 }
 
 // ===== 预置管理员账号 =====
-// 首次加载时自动创建，后续不重复创建
 (function initAdminAccount() {
   const ADMIN_INIT_KEY = 'yan_admin_initialized';
   if (localStorage.getItem(ADMIN_INIT_KEY)) return;
@@ -248,7 +359,7 @@ function updateCurrentUser(updates) {
       password: 'admin888',
       handle: '@admin',
       name: '管理员',
-      bio: '言平台管理员 | 维护社区秩序，保障用户体验',
+      bio: '言平台管理员',
       location: '中国',
       website: '',
       avatar: null,
@@ -268,13 +379,11 @@ function updateCurrentUser(updates) {
   localStorage.setItem(ADMIN_INIT_KEY, '1');
 })();
 
-// ===== 检查是否是管理员 =====
 function isAdmin() {
   const user = getSession();
   return !!(user && user.role === 'admin');
 }
 
-// ===== 获取所有用户列表（仅管理员可用）=====
 function getAllUsers() {
   if (!isAdmin()) return [];
   const users = getUsers();

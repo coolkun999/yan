@@ -1,5 +1,32 @@
+# Dependencies
 node_modules/
-package-lock.json
-backup-root/
+server/node_modules/
+
+# Database
+server/yan.db
+server/yan.db-shm
+server/yan.db-wal
+
+# Logs
+*.log
+npm-debug.log*
+
+# OS
 .DS_Store
 Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Temp files
+*.tmp
+*.temp
+kunshagj.conf
+kunshagj_fixed.conf
+
+# Python
+__pycache__/
+*.pyc

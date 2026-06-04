@@ -27,6 +27,7 @@
 <link rel="preload" href="css/style.css" as="style">
 <link rel="preload" href="js/app.js" as="script">
 <link rel="stylesheet" href="css/style.css">
+<script src="js/api.js"></script>
 <!-- Leaflet 免费地图（OpenStreetMap 瓦片，无需 API Key）-->
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="">
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
@@ -308,7 +309,10 @@
     <div class="modal-body">
       <div style="margin-bottom:12px">
         <label style="font-size:13px;color:var(--text2);font-weight:600;display:block;margin-bottom:8px">发送至</label>
-        <input type="text" id="newMsgRecipient" placeholder="输入用户名（不含@）" style="width:100%;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:12px;font-size:15px;color:var(--text)">
+        <div style="position:relative">
+          <input type="text" id="newMsgRecipient" placeholder="输入用户名（不含@）" autocomplete="off" oninput="searchMsgRecipient(this.value)" style="width:100%;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:12px;font-size:15px;color:var(--text);box-sizing:border-box">
+          <div id="newMsgSuggestions" style="position:absolute;top:100%;left:0;right:0;background:var(--bg2);border:1px solid var(--border);border-radius:8px;z-index:9999;max-height:180px;overflow-y:auto;display:none"></div>
+        </div>
       </div>
       <div>
         <label style="font-size:13px;color:var(--text2);font-weight:600;display:block;margin-bottom:8px">消息内容</label>
