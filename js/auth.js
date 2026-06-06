@@ -1,29 +1,144 @@
 /**
  * ===== AUTH SYSTEM: 账号系统 =====
- * 支持：邮箱+密码登录/注册，后端 API + localStorage 双模式
- *
- * 优先使用后端 API，API 不可用时回退到 localStorage
+ * 优先走 Django 后端 API，API 不可用时本地回退（密码哈希存储）
  */
 
-const AUTH_KEY = 'yan_auth_users';
-const SESSION_KEY = 'yan_current_user';
+const SESSION_KEY = 'yan_session';
+const USERS_KEY = 'yan_users';
+let _apiAvailable = null; // null=未检测, true=在线, false=离线
 
-// ===== API 可用性检测 =====
-let _apiAvailable = null;
+// ===== Session 管理 =====
+
+function getSession() {
+  try { return JSON.parse(localStorage.getItem(SESSION_KEY)); } catch(e) { return null; }
+}
+
+function setSession(user) {
+  try { localStorage.setItem(SESSION_KEY, JSON.stringify(user)); } catch(e) {}
+}
+
+function clearSession() {
+  localStorage.removeItem(SESSION_KEY);
+}
+
+// ===== 密码哈希工具 =====
+
+/**
+ * 对密码做 SHA-256 哈希，返回 hex 字符串
+ * 用于本地回退时存储密码摘要（不存明文）
+ */
+async function hashPassword(password) {
+  try {
+    const encoder = new TextEncoder();
+    const data = encoder.encode(password);
+    const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    return hashArray.map(function(b) { return b.toString(16).padStart(2, '0'); }).join('');
+  } catch(e) {
+    // crypto.subtle 不可用时 fallback 到 btoa
+    return btoa(password);
+  }
+}
+
+// ===== 本地用户存储（仅用于离线回退） =====
+
+function getLocalUsers() {
+  try { return JSON.parse(localStorage.getItem(USERS_KEY)) || {}; } catch(e) { return {}; }
+}
+
+function saveLocalUsers(users) {
+  try { localStorage.setItem(USERS_KEY, JSON.stringify(users)); } catch(e) {}
+}
+
+// ===== 工具函数 =====
+
+function isValidEmail(email) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+}
+
+function isValidPhone(phone) {
+  return /^1[3-9]\d{9}$/.test(phone);
+}
+
+function isValidPassword(pw) {
+  return pw.length >= 6;
+}
+
+function genCode(length) {
+  length = length || 6;
+  let code = '';
+  for (let i = 0; i < length; i++) {
+    code += Math.floor(Math.random() * 10).toString();
+  }
+  return code;
+}
+
+function randomGradient() {
+  const palettes = [
+    ['#667eea', '#764ba2'],
+    ['#f093fb', '#f5576c'],
+    ['#4facfe', '#00f2fe'],
+    ['#43e97b', '#38f9d7'],
+    ['#fa709a', '#fee140'],
+    ['#a18cd1', '#fbc2eb'],
+    ['#fccb90', '#d57eeb'],
+    ['#e0c3fc', '#8ec5fc'],
+    ['#f5576c', '#ff686b'],
+    ['#11998e', '#38ef7d'],
+  ];
+  const pair = palettes[Math.floor(Math.random() * palettes.length)];
+  return 'linear-gradient(135deg,' + pair[0] + ',' + pair[1] + ')';
+}
+
+// ===== Django 用户数据转本地格式 =====
+
+function djangoUserToSession(apiUser) {
+  return {
+    identifier: apiUser.email || apiUser.username,
+    type: 'email',
+    handle: '@' + (apiUser.username || 'user'),
+    name: apiUser.username || '用户',
+    bio: apiUser.bio || '',
+    location: apiUser.location || '',
+    avatarBg: 'linear-gradient(135deg,#667eea,#764ba2)',
+    avatarUrl: apiUser.avatar ? (apiUser.avatar.startsWith('http') ? apiUser.avatar : window.location.origin + apiUser.avatar) : null,
+    verified: false,
+    role: 'user',
+    followers: apiUser.followers_count || 0,
+    following: apiUser.following_count || 0,
+    posts: apiUser.posts_count || 0,
+    liked: 0,
+    joinedDate: apiUser.created_at ? apiUser.created_at.slice(0, 10) : '',
+    createdAt: Date.now(),
+    _djangoUserId: apiUser.user_id || apiUser.id,
+  };
+}
+
+// ===== API 状态检测 =====
+
 async function isAPIAvailable() {
   if (_apiAvailable !== null) return _apiAvailable;
-  try {
-    _apiAvailable = await checkAPI();
-  } catch {
-    _apiAvailable = false;
-  }
-  // 显示 API 状态
-  updateAPIStatus(_apiAvailable);
+  await updateAPIStatus();
   return _apiAvailable;
 }
 
-// 更新 API 状态指示器
-function updateAPIStatus(online) {
+async function updateAPIStatus() {
+  try {
+    // 复用 checkAPI（定义在 api.js 中）
+    if (typeof checkAPI === 'function') {
+      _apiAvailable = await checkAPI();
+    } else {
+      // api.js 未加载时的简单探测
+      const res = await fetch(window.location.origin + '/api/posts/?page=1&page_size=1', {
+        signal: AbortSignal.timeout(3000),
+      });
+      _apiAvailable = res.ok;
+    }
+  } catch(e) {
+    _apiAvailable = false;
+  }
+
+  // 更新 UI 指示器
   let indicator = document.getElementById('apiStatusIndicator');
   if (!indicator) {
     indicator = document.createElement('div');
@@ -31,138 +146,65 @@ function updateAPIStatus(online) {
     indicator.className = 'api-status';
     document.body.appendChild(indicator);
   }
-  indicator.className = `api-status ${online ? 'online' : 'offline'}`;
-  indicator.textContent = online ? '🟢 已连接' : '🔴 离线模式';
-  indicator.title = online ? '已连接到服务器' : '使用本地存储模式';
+  indicator.className = 'api-status ' + (_apiAvailable ? 'online' : 'offline');
+  indicator.textContent = _apiAvailable ? '已连接' : '离线';
+  indicator.title = _apiAvailable ? '已连接到服务器' : '服务器离线';
+
+  return _apiAvailable;
 }
 
-// ===== 本地"数据库"操作（回退模式）=====
-function getUsers() {
-  try { return JSON.parse(localStorage.getItem(AUTH_KEY)) || {}; } catch(e) { return {}; }
-}
-function saveUsers(users) {
-  try { localStorage.setItem(AUTH_KEY, JSON.stringify(users)); } catch(e) { console.warn('[言] 用户数据写入失败', e); }
-}
-function getSession() {
-  try { return JSON.parse(localStorage.getItem(SESSION_KEY)); } catch(e) { return null; }
-}
-function setSession(user) {
-  try { localStorage.setItem(SESSION_KEY, JSON.stringify(user)); } catch(e) { console.warn('[言] 会话写入失败', e); }
-}
-function clearSession() {
-  localStorage.removeItem(SESSION_KEY);
-}
+// ===== 注册 =====
 
-// ===== 工具函数 =====
-function isValidPhone(phone) {
-  return /^1[3-9]\d{9}$/.test(phone);
-}
-function isValidEmail(email) {
-  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-}
-function isValidPassword(pw) {
-  return pw.length >= 6;
-}
-function genCode() {
-  return Math.floor(100000 + Math.random() * 900000).toString();
-}
-
-// 模拟发送验证码
-const CODE_KEY = 'yan_verify_codes';
-function getCodes() {
-  try { return JSON.parse(localStorage.getItem(CODE_KEY)) || {}; } catch(e) { return {}; }
-}
-function saveCodes(codes) {
-  try { localStorage.setItem(CODE_KEY, JSON.stringify(codes)); } catch(e) { console.warn('[言] 验证码写入失败', e); }
-}
-function sendVerifyCode(phoneOrEmail) {
-  const code = genCode();
-  const codes = getCodes();
-  codes[phoneOrEmail] = { code: code, expires: Date.now() + 5 * 60 * 1000 };
-  saveCodes(codes);
-  showVerifyCode(phoneOrEmail, code);
-  return code;
-}
-
-function showVerifyCode(identifier, code) {
-  const old = document.getElementById('devCodeTip');
-  if (old) old.remove();
-  const tip = document.createElement('div');
-  tip.id = 'devCodeTip';
-  tip.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:99999;background:#1d9bf0;color:#fff;text-align:center;padding:10px 48px 10px 16px;font-size:14px;font-weight:600;letter-spacing:1px;box-shadow:0 2px 8px rgba(0,0,0,0.2)';
-  tip.innerHTML = '📱 验证码已发送：<b style="font-size:20px;margin:0 8px;letter-spacing:4px">' + code + '</b><span style="font-size:13px;opacity:0.85">（模拟发送给 ' + identifier + '，正式环境为真实短信）</span>'
-    + '<button onclick="document.getElementById(\'devCodeTip\').remove()" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);background:rgba(255,255,255,0.3);border:none;color:#fff;width:24px;height:24px;border-radius:50%;cursor:pointer;font-size:16px;line-height:1;display:flex;align-items:center;justify-content:center">×</button>';
-  document.body.appendChild(tip);
-  setTimeout(function(){ if(tip.parentNode) tip.remove(); }, 60000);
-}
-function verifyCode(phoneOrEmail, inputCode) {
-  const codes = getCodes();
-  const rec = codes[phoneOrEmail];
-  if (!rec) return false;
-  if (Date.now() > rec.expires) { delete codes[phoneOrEmail]; saveCodes(codes); return false; }
-  if (rec.code !== inputCode) return false;
-  delete codes[phoneOrEmail];
-  saveCodes(codes);
-  return true;
-}
-
-// ===== 注册（支持 API + 本地回退）=====
 async function authRegister(identifier, password, type, displayName) {
-  // 先尝试 API
-  const apiOk = await isAPIAvailable();
-  if (apiOk) {
+  var name = displayName || (type === 'email' ? identifier.split('@')[0] : '用户' + identifier.slice(-4));
+
+  // 优先走后端 API
+  var online = await isAPIAvailable();
+  if (online && typeof AuthAPI !== 'undefined') {
     try {
-      const name = displayName || (type === 'email' ? identifier.split('@')[0] : '用户' + identifier.slice(-4));
-      const user = await AuthAPI.register(name, identifier, password);
-      // 将 API 用户转为本地格式
-      const sessionUser = {
-        identifier: user.email || identifier,
-        type: 'email',
-        handle: user.handle,
-        name: user.name,
-        bio: user.bio || '',
-        location: user.location || '',
-        avatarBg: user.avatar_bg || 'linear-gradient(135deg,#667eea,#764ba2)',
-        verified: !!user.verified,
-        role: 'user',
-        followers: 0,
-        following: 0,
-        posts: 0,
-        liked: 0,
-        joinedDate: user.created_at ? user.created_at.slice(0, 10) : new Date().toISOString().slice(0, 10),
-        createdAt: Date.now(),
-        _apiUser: true,
-      };
-      setSession(sessionUser);
-      return { ok: true, user: sessionUser };
-    } catch (err) {
-      return { ok: false, msg: err.message };
+      var result = await AuthAPI.register(name, identifier, password);
+      if (result.error) {
+        return { ok: false, msg: result.error };
+      }
+      if (result.user) {
+        var sessionUser = djangoUserToSession(result.user);
+        setSession(sessionUser);
+        return { ok: true, user: sessionUser };
+      }
+      return { ok: false, msg: '注册失败，请稍后重试' };
+    } catch(e) {
+      console.warn('[auth] 注册 API 调用失败，尝试本地回退:', e.message);
+      online = false;
     }
   }
 
-  // 本地回退
-  const users = getUsers();
-  if (users[identifier]) return { ok: false, msg: '该账号已注册，请直接登录' };
-  const handle = genHandle(identifier);
-  let name;
-  if (displayName && displayName.trim()) {
-    name = displayName.trim();
-  } else if (type === 'phone') {
-    name = '用户' + identifier.slice(-4);
-  } else {
-    name = identifier.split('@')[0];
+  // 本地回退：密码哈希存储
+  var users = getLocalUsers();
+  if (users[identifier]) {
+    return { ok: false, msg: '该账号已被注册' };
   }
-  const user = {
-    identifier,
-    type,
-    password,
-    handle: handle,
+
+  var hashedPw = await hashPassword(password);
+  users[identifier] = {
+    name: name,
+    identifier: identifier,
+    type: type || 'email',
+    passwordHash: hashedPw,
+    avatarBg: randomGradient(),
+    createdAt: Date.now(),
+  };
+  saveLocalUsers(users);
+
+  // 自动登录
+  var localUser = {
+    identifier: identifier,
+    type: type || 'email',
+    handle: '@' + name,
     name: name,
     bio: '',
     location: '',
-    website: '',
-    avatar: null,
-    avatarBg: randomGradient(),
+    avatarBg: users[identifier].avatarBg,
+    avatarUrl: null,
     verified: false,
     role: 'user',
     followers: 0,
@@ -170,225 +212,336 @@ async function authRegister(identifier, password, type, displayName) {
     posts: 0,
     liked: 0,
     joinedDate: new Date().toISOString().slice(0, 10),
-    createdAt: Date.now()
+    createdAt: Date.now(),
+    _local: true,
   };
-  users[identifier] = user;
-  saveUsers(users);
-  const sessionUser = { ...user };
-  delete sessionUser.password;
-  setSession(sessionUser);
-  return { ok: true, user: sessionUser };
+  setSession(localUser);
+  return { ok: true, user: localUser };
 }
 
-// ===== 登录（支持 API + 本地回退）=====
+// ===== 登录 =====
+
 async function authLogin(identifier, credential, type) {
-  // 先尝试 API
-  const apiOk = await isAPIAvailable();
-  if (apiOk) {
+  // 优先走后端 API
+  var online = await isAPIAvailable();
+  if (online && typeof AuthAPI !== 'undefined') {
     try {
-      const user = await AuthAPI.login(identifier, credential);
-      const sessionUser = {
-        identifier: user.email || identifier,
-        type: 'email',
-        handle: user.handle,
-        name: user.name,
-        bio: user.bio || '',
-        location: user.location || '',
-        avatarBg: user.avatar_bg || 'linear-gradient(135deg,#667eea,#764ba2)',
-        verified: !!user.verified,
-        role: 'user',
-        followers: user.followers || 0,
-        following: user.following || 0,
-        posts: user.posts || 0,
-        liked: 0,
-        joinedDate: user.created_at ? user.created_at.slice(0, 10) : '',
-        createdAt: Date.now(),
-        _apiUser: true,
-      };
-      setSession(sessionUser);
-      return { ok: true, user: sessionUser };
-    } catch (err) {
-      return { ok: false, msg: err.message };
+      var result = await AuthAPI.login(identifier, credential);
+      if (result.error) {
+        return { ok: false, msg: result.error };
+      }
+      if (result.user) {
+        var sessionUser = djangoUserToSession(result.user);
+        setSession(sessionUser);
+        return { ok: true, user: sessionUser };
+      }
+      return { ok: false, msg: '登录失败，请稍后重试' };
+    } catch(e) {
+      console.warn('[auth] 登录 API 调用失败，尝试本地回退:', e.message);
+      online = false;
     }
   }
 
-  // 本地回退
-  const users = getUsers();
-  const user = users[identifier];
-  if (!user) return { ok: false, msg: '账号未注册，请先注册' };
-  if (type === 'phone') {
-    if (!verifyCode(identifier, credential)) return { ok: false, msg: '验证码错误或未过期' };
-  } else {
-    if (user.password !== credential) return { ok: false, msg: '密码错误' };
+  // 本地回退：验证哈希密码
+  var users = getLocalUsers();
+  var userRecord = users[identifier];
+  if (!userRecord) {
+    return { ok: false, msg: '账号不存在' };
   }
-  const sessionUser = { ...user };
-  delete sessionUser.password;
-  setSession(sessionUser);
-  return { ok: true, user: sessionUser };
+
+  var hashedCredential = await hashPassword(credential);
+  if (hashedCredential !== userRecord.passwordHash) {
+    return { ok: false, msg: '密码错误' };
+  }
+
+  var localUser = {
+    identifier: identifier,
+    type: userRecord.type || (type || 'email'),
+    handle: '@' + userRecord.name,
+    name: userRecord.name,
+    bio: '',
+    location: '',
+    avatarBg: userRecord.avatarBg || randomGradient(),
+    avatarUrl: null,
+    verified: false,
+    role: userRecord.role || 'user',
+    followers: 0,
+    following: 0,
+    posts: 0,
+    liked: 0,
+    joinedDate: new Date(userRecord.createdAt).toISOString().slice(0, 10),
+    createdAt: Date.now(),
+    _local: true,
+  };
+  setSession(localUser);
+  return { ok: true, user: localUser };
 }
 
-// ===== 按任意标识登录 =====
+// ===== 按任意标识登录（自动判断 email/phone/handle） =====
+
 async function authLoginByAny(input, password) {
-  const apiOk = await isAPIAvailable();
-  if (apiOk) {
+  // 优先走后端 API（API 端统一处理）
+  var online = await isAPIAvailable();
+  if (online && typeof AuthAPI !== 'undefined') {
     try {
-      const user = await AuthAPI.login(input, password);
-      const sessionUser = {
-        identifier: user.email || input,
-        type: 'email',
-        handle: user.handle,
-        name: user.name,
-        bio: user.bio || '',
-        location: user.location || '',
-        avatarBg: user.avatar_bg || 'linear-gradient(135deg,#667eea,#764ba2)',
-        verified: !!user.verified,
-        role: 'user',
-        followers: user.followers || 0,
-        following: user.following || 0,
-        posts: user.posts || 0,
-        liked: 0,
-        joinedDate: user.created_at ? user.created_at.slice(0, 10) : '',
-        createdAt: Date.now(),
-        _apiUser: true,
-      };
-      setSession(sessionUser);
-      return { ok: true, user: sessionUser };
-    } catch (err) {
-      return { ok: false, msg: err.message };
+      var result = await AuthAPI.login(input, password);
+      if (result.error) {
+        return { ok: false, msg: result.error };
+      }
+      if (result.user) {
+        var sessionUser = djangoUserToSession(result.user);
+        setSession(sessionUser);
+        return { ok: true, user: sessionUser };
+      }
+      return { ok: false, msg: '登录失败，请稍后重试' };
+    } catch(e) {
+      console.warn('[auth] authLoginByAny API 失败，本地回退:', e.message);
     }
   }
 
-  // 本地回退
-  const users = getUsers();
-  let user = users[input];
-  if (!user) {
-    const cleanHandle = input.startsWith('@') ? input : '@' + input;
-    user = Object.values(users).find(u => u.handle === cleanHandle);
+  // 本地回退：遍历查找
+  var users = getLocalUsers();
+
+  // 先精确匹配 identifier
+  if (users[input]) {
+    return await authLogin(input, password, users[input].type);
   }
-  if (!user) return { ok: false, msg: '账号不存在，请先注册' };
-  if (user.password !== password) return { ok: false, msg: '密码错误' };
-  const sessionUser = { ...user };
-  delete sessionUser.password;
-  setSession(sessionUser);
-  return { ok: true, user: sessionUser };
+
+  // 按 handle 匹配（去掉 @ 前缀）
+  var cleanInput = input.replace('@', '');
+  for (var key in users) {
+    if (users.hasOwnProperty(key)) {
+      if (users[key].name === cleanInput) {
+        return await authLogin(key, password, users[key].type);
+      }
+    }
+  }
+
+  return { ok: false, msg: '未找到该账号' };
 }
 
 // ===== 登出 =====
-function authLogout() {
-  AuthAPI.logout();
+
+async function authLogout() {
+  // 尝试调后端登出接口
+  if (_apiAvailable && typeof AuthAPI !== 'undefined') {
+    try { await AuthAPI.logout(); } catch(e) {}
+  }
   clearSession();
 }
 
+// ===== 发送短信验证码 =====
+
+async function sendVerifyCode(phone) {
+  // 优先走后端 SMS 接口
+  var online = await isAPIAvailable();
+  if (online) {
+    try {
+      var resp = await fetch(window.location.origin + '/api/users/sms/send/', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ phone: phone }),
+      });
+      var data = await resp.json();
+      if (resp.ok) {
+        return { ok: true, msg: '验证码已发送' };
+      }
+      return { ok: false, msg: data.error || '发送失败' };
+    } catch(e) {
+      console.warn('[auth] SMS API 调用失败:', e.message);
+    }
+  }
+
+  // 本地 mock 回退：生成验证码并缓存到 localStorage（仅供开发/演示用）
+  var code = genCode(6);
+  localStorage.setItem('yan_mock_sms_' + phone, JSON.stringify({
+    code: code,
+    expiresAt: Date.now() + 5 * 60 * 1000, // 5分钟有效
+  }));
+  console.warn('[auth] [MOCK] 验证码已生成（仅用于开发模式）: ' + code);
+  return { ok: true, mockCode: code, msg: '验证码已发送（开发模式）' };
+}
+
+// ===== 验证短信验证码（本地校验缓存的 mock code 或服务端校验） =====
+
+async function verifySMSCode(phone, code) {
+  var online = await isAPIAvailable();
+  if (online) {
+    // 生产环境应由后端验证，这里预留接口
+    return { ok: true }; // 后端在注册/登录时一并校验
+  }
+
+  // 本地 mock 校验
+  var cached = localStorage.getItem('yan_mock_sms_' + phone);
+  if (!cached) return { ok: false, msg: '验证码已过期或未发送' };
+
+  var data = JSON.parse(cached);
+  if (Date.now() > data.expiresAt) {
+    localStorage.removeItem('yan_mock_sms_' + phone);
+    return { ok: false, msg: '验证码已过期' };
+  }
+
+  if (data.code === code) {
+    localStorage.removeItem('yan_mock_sms_' + phone);
+    return { ok: true };
+  }
+  return { ok: false, msg: '验证码错误' };
+}
+
 // ===== 获取当前登录用户 =====
+
 function currentUser() {
   return getSession();
 }
 
 // ===== 判断是否已登录 =====
+
 function isLoggedIn() {
   return !!getSession();
 }
 
-// ===== 生成唯一 handle =====
-function genHandle(identifier) {
-  const users = getUsers();
-  let base = '';
-  if (identifier.includes('@')) {
-    base = identifier.split('@')[0].replace(/[^a-zA-Z0-9_]/g, '').slice(0, 12);
-    if (!base) base = 'user';
-  } else {
-    base = 'user_' + identifier.slice(-4);
-  }
-  let handle = '@' + base;
-  let i = 1;
-  while (Object.values(users).some(u => u.handle === handle)) {
-    handle = '@' + base + i;
-    i++;
-  }
-  return handle;
-}
+// ===== 更新当前用户信息（本地 session 同步） =====
 
-// ===== 随机渐变背景 =====
-function randomGradient() {
-  const gradients = [
-    'linear-gradient(135deg,#667eea,#764ba2)',
-    'linear-gradient(135deg,#f093fb,#f5576c)',
-    'linear-gradient(135deg,#4facfe,#00f2fe)',
-    'linear-gradient(135deg,#43e97b,#38f9d7)',
-    'linear-gradient(135deg,#fa709a,#fee140)',
-    'linear-gradient(135deg,#a18cd1,#fbc2eb)',
-    'linear-gradient(135deg,#fccb90,#d57eeb)',
-    'linear-gradient(135deg,#e0c3fc,#8ec5fc)',
-  ];
-  return gradients[Math.floor(Math.random() * gradients.length)];
-}
-
-// ===== 更新当前用户信息 =====
 function updateCurrentUser(updates) {
-  const session = getSession();
+  var session = getSession();
   if (!session) return false;
-
-  // API 模式下暂不支持更新（后续可加）
-  if (session._apiUser) {
-    Object.assign(session, updates);
-    setSession(session);
-    return true;
-  }
-
-  const users = getUsers();
-  const identifier = session.identifier;
-  if (!users[identifier]) return false;
-  Object.assign(users[identifier], updates);
-  saveUsers(users);
-  const updated = { ...users[identifier] };
-  delete updated.password;
-  setSession(updated);
+  Object.assign(session, updates);
+  setSession(session);
   return true;
 }
 
-// ===== 预置管理员账号 =====
-(function initAdminAccount() {
-  const ADMIN_INIT_KEY = 'yan_admin_initialized';
-  if (localStorage.getItem(ADMIN_INIT_KEY)) return;
-  const users = getUsers();
-  const adminId = 'admin@yan.com';
-  if (!users[adminId]) {
-    users[adminId] = {
-      identifier: adminId,
-      type: 'email',
-      password: 'admin888',
-      handle: '@admin',
-      name: '管理员',
-      bio: '言平台管理员',
-      location: '中国',
-      website: '',
-      avatar: null,
-      avatarBg: 'linear-gradient(135deg,#1d9bf0,#0056b3)',
-      verified: true,
-      role: 'admin',
-      followers: 999,
-      following: 0,
-      posts: 0,
-      liked: 0,
-      joinedDate: new Date().toISOString().slice(0, 10),
-      createdAt: Date.now()
-    };
-    saveUsers(users);
-    console.log('[言] 管理员账号已初始化：admin@yan.com / admin888');
-  }
-  localStorage.setItem(ADMIN_INIT_KEY, '1');
-})();
+// ===== 通过 API 更新用户资料 =====
 
-function isAdmin() {
-  const user = getSession();
+async function updateProfileAPI(data) {
+  if (!_apiAvailable || typeof AuthAPI === 'undefined') {
+    // 本地回退：只更新 session
+    if (updateCurrentUser(data)) {
+      return { ok: true, msg: '资料已更新（本地）' };
+    }
+    return { ok: false, msg: '未登录' };
+  }
+
+  try {
+    var csrfToken = null;
+    if (typeof ensureCSRF === 'function') {
+      csrfToken = await ensureCSRF();
+    }
+
+    var headers = { 'Content-Type': 'application/json' };
+    if (csrfToken) {
+      headers['X-CSRFToken'] = csrfToken;
+    }
+
+    var resp = await fetch(window.location.origin + '/api/users/profile/update/', {
+      method: 'POST',
+      headers: headers,
+      credentials: 'include',
+      body: JSON.stringify(data),
+    });
+
+    var result = await resp.json();
+    if (resp.ok) {
+      // 同步更新本地 session
+      updateCurrentUser(data);
+      return { ok: true, data: result };
+    }
+    return { ok: false, msg: result.error || '更新失败' };
+  } catch(e) {
+    console.warn('[auth] 更新资料 API 失败:', e.message);
+    // 降级为本地更新
+    if (updateCurrentUser(data)) {
+      return { ok: true, msg: '资料已更新（本地回退）' };
+    }
+    return { ok: false, msg: e.message };
+  }
+}
+
+// ===== 通过 API 上传头像 =====
+
+async function uploadAvatarAPI(file) {
+  if (!file) return { ok: false, msg: '未选择文件' };
+
+  if (!_apiAvailable) {
+    return { ok: false, msg: '服务器离线，无法上传' };
+  }
+
+  try {
+    var formData = new FormData();
+    formData.append('avatar', file);
+
+    var csrfToken = null;
+    if (typeof ensureCSRF === 'function') {
+      csrfToken = await ensureCSRF();
+    }
+
+    var headers = {};
+    if (csrfToken) {
+      headers['X-CSRFToken'] = csrfToken;
+    }
+
+    var resp = await fetch(window.location.origin + '/api/users/profile/avatar/', {
+      method: 'POST',
+      headers: headers,
+      credentials: 'include',
+      body: formData,
+    });
+
+    var result = await resp.json();
+    if (resp.ok) {
+      var avatarUrl = result.avatar || result.url || result.avatar_url;
+      if (avatarUrl) {
+        if (!avatarUrl.startsWith('http')) {
+          avatarUrl = window.location.origin + avatarUrl;
+        }
+        updateCurrentUser({ avatarUrl: avatarUrl });
+      }
+      return { ok: true, url: avatarUrl, data: result };
+    }
+    return { ok: false, msg: result.error || '上传失败' };
+  } catch(e) {
+    console.warn('[auth] 上传头像 API 失败:', e.message);
+    return { ok: false, msg: '网络错误，上传失败' };
+  }
+}
+
+// ===== 管理员账号初始化 =====
+
+async function initAdminAccount() {
+  var adminEmail = 'admin@yan.local';
+  var adminName = '管理员';
+  var adminPlainPwd = 'admin123';
+
+  // 如果已有管理员则跳过
+  var users = getLocalUsers();
+  if (users[adminEmail]) return;
+
+  var hashedPw = await hashPassword(adminPlainPwd);
+  users[adminEmail] = {
+    name: adminName,
+    identifier: adminEmail,
+    type: 'email',
+    passwordHash: hashedPw,
+    avatarBg: 'linear-gradient(135deg,#f093fb,#f5576c)',
+    role: 'admin',
+    createdAt: Date.now(),
+  };
+  saveLocalUsers(users);
+  console.log('[auth] 管理员账号已初始化（本地回退模式），密码已哈希存储');
+}
+
+// ===== 管理员判断 =====
+function isAdmin(){
+  var user = getSession();
   return !!(user && user.role === 'admin');
 }
 
-function getAllUsers() {
-  if (!isAdmin()) return [];
-  const users = getUsers();
-  return Object.values(users).map(u => {
-    const safe = { ...u };
+function getAllUsers(){
+  if(!isAdmin()) return [];
+  var users = getLocalUsers();
+  return Object.values(users).map(function(u){
+    var safe = Object.assign({}, u);
+    delete safe.passwordHash;
     delete safe.password;
     return safe;
   });

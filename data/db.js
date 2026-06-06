@@ -97,13 +97,7 @@ const DB = {
   mutedUsers: [],    // 静音用户 handle 列表，如 ['@handle1', '@handle2']
   blockedUsers: [],  // 屏蔽用户 handle 列表
   searchResults: [],
-  likersList: [
-    {name:'林小雨',handle:'@linxiaoyu',avatar:'林',avatarBg:'linear-gradient(135deg,#667eea,#764ba2)',verified:true,following:true},
-    {name:'はるみ',handle:'@harumi',avatar:'は',avatarBg:'linear-gradient(135deg,#4facfe,#00f2fe)',verified:false,following:false},
-    {name:'Amelia',handle:'@amelia',avatar:'A',avatarBg:'linear-gradient(135deg,#43e97b,#38f9d7)',verified:false,following:false},
-    {name:'诗雅',handle:'@shiya',avatar:'诗',avatarBg:'linear-gradient(135deg,#f093fb,#f5576c)',verified:false,following:true},
-    {name:'无',handle:'@wu',avatar:'无',avatarBg:'linear-gradient(135deg,#fa709a,#fee140)',verified:false,following:false}
-  ]
+  likersList: []
 
 };
 

@@ -446,14 +446,12 @@ function formatTime(createdAt){
   const d = new Date(createdAt);
   return (d.getMonth()+1) + '月' + d.getDate() + '日';
 }
-// 添加通知到 DB.notifications
+// 添加通知到 DB.notifications（保留用于本地操作反馈，不依赖 mock 数据）
 function addNotification(type, text, extra){
   const u = currentUser();
   if(!u) return;
-  // 从 FOLLOWERS_DATA 中随机选一个"通知来源"用户
-  const pool = (typeof FOLLOWERS_DATA!=='undefined') ? FOLLOWERS_DATA : [];
-  if(pool.length === 0) return;
-  const src = pool[Math.floor(Math.random()*pool.length)];
+  // 通知由后端 API 管理，此函数保留但不生成 mock 数据
+  const src = { name: u.name, handle: u.handle, avatar: u.avatar, avatarBg: u.avatarBg };
   const notif = {
     id: Date.now(),
     type: type, // 'like','retweet','reply','follow','mention'
@@ -513,7 +511,7 @@ function renderTweet(t, showReply=false){
       <div class="tactions">
         <button class="ab" onclick="event.stopPropagation();openReplyModal(${t.id})">${rSvg()}<span class="ac">${f(t.replies)}</span></button>
         <button class="ab rt${rtD}" onclick="event.stopPropagation();doRetweet(${t.id},this)">${vbSvg()}<span class="ac">${f(t.retweets)}</span></button>
-        <button class="ab like${likedD}" onclick="event.stopPropagation();doLike(${t.id},this)">${vSvg()}<span class="ac" id="lk-${t.id}">${f(t.likes)}</span></button>
+        <button class="ab like${likedD}" onclick="event.stopPropagation();doLike(${t.id},this)">${vSvg()}<span class="ac" id="lk-${t.id}" style="cursor:pointer" onclick="event.stopPropagation();openLikersModal(${t.id})">${f(t.likes)}</span></button>
         <button class="ab" onclick="event.stopPropagation();openShareModal(${t.id})">${viewsSvg()}<span class="ac">${t.views}</span></button>
         <button class="ab" onclick="event.stopPropagation();openMoreMenu(${t.id},event)"><svg viewBox="0 0 24 24" fill="var(--text2)"><path d="M4 4.5C4 3.12 5.119 2 6.5 2h11C18.881 2 20 3.12 20 4.5v18.44l-8-5.71-8 5.71V4.5z"/></svg></button>
       </div>
@@ -785,7 +783,7 @@ function renderPromoCard(){
 function renderForYouFeed(){
   const promoted = renderPromoCard();
 
-  // 如果 API 可用，异步加载
+  // 如果 API 可用，异步加载（Django 用 session cookie，不需要 _apiUser）
   if(typeof PostsAPI !== 'undefined'){
     loadForYouFromAPI();
     return promoted + '<div id="apiLoading" style="text-align:center;padding:40px;color:var(--text2)">加载中...</div>';
@@ -810,61 +808,39 @@ async function loadForYouFromAPI(){
     const feed = document.getElementById('homeFeed');
     if(!feed) return;
     const promoted = renderPromoCard();
-    // 转换 API 数据为前端格式
-    const tweets = data.posts.map(p => ({
-      id: p.id,
-      name: p.name,
-      handle: p.handle,
-      verified: !!p.verified,
-      time: formatTime(new Date(p.created_at).getTime()),
-      createdAt: new Date(p.created_at).getTime(),
-      text: p.content,
-      avatar: (p.name||'用').slice(0,1),
-      avatarBg: p.avatar_bg || 'linear-gradient(135deg,#667eea,#764ba2)',
-      likes: p.likes_count || 0,
-      retweets: p.retweets_count || 0,
-      replies: p.replies_count || 0,
-      views: p.views_count ? String(p.views_count) : '0',
-      liked: !!p.liked,
-      retweeted: false,
-      bookmarked: false,
-    }));
+    // PostsAPI.list 已通过 formatPost 转换为前端格式，直接使用
+    const tweets = data.posts;
     state.homeHasMore = data.hasMore;
     feed.innerHTML = promoted + tweets.map(t=>renderTweet(t)).join('') + (data.hasMore ? renderLoadMoreBtn('home') : '');
     initEmojiPicker();
     initHomeEmojiPicker();
   } catch(err) {
-    console.warn('[言] API 加载失败，使用本地数据:', err.message);
-    // 回退到本地数据
+    console.error('[言] API 加载失败:', err.message);
     const feed = document.getElementById('homeFeed');
     if(feed) {
-      const muted = DB.mutedUsers || [];
-      const blocked = DB.blockedUsers || [];
-      const visibleTweets = DB.tweets.filter(t => !muted.includes(t.handle) && !blocked.includes(t.handle));
-      visibleTweets.sort((a,b)=> (b.createdAt||0) - (a.createdAt||0));
-      feed.innerHTML = visibleTweets.map(t=>renderTweet(t)).join('') + renderLoadMoreBtn('home');
+      feed.innerHTML = '<div class="empty-state"><h3>加载失败</h3><p>' + err.message + '</p></div>';
     }
   }
 }
 
 function renderFollowingFeed(){
-  // 读取 FOLLOWING_DATA 中的关注用户 handle 列表
-  const followingHandles = (typeof FOLLOWING_DATA !== 'undefined') ?
-    FOLLOWING_DATA.filter(u => u.following).map(u => u.handle) :
-    ['@linxiaoyu', '@techdaily']; // 兜底
-  // 也包含当前用户自己的帖子
-  const myHandle = isLoggedIn() ? currentUser().handle : '';
-  // 过滤静音/屏蔽
-  const muted = DB.mutedUsers || [];
-  const blocked = DB.blockedUsers || [];
-  const followingTweets = DB.tweets.filter(t =>
-    (followingHandles.includes(t.handle) || (myHandle && t.handle === myHandle)) &&
-    !muted.includes(t.handle) && !blocked.includes(t.handle)
-  ).sort((a,b)=> (b.createdAt||0) - (a.createdAt||0));
-  if(followingTweets.length === 0){
-    return `<div class="empty-state"><svg viewBox="0 0 24 24"><path d="M5.651 19h12.698c-.337-1.8-1.023-3.21-1.945-4.19C15.318 13.65 13.838 13 12 13s-3.317.65-4.404 1.81c-.922.98-1.608 2.39-1.945 4.19z"/></svg><h3>还没有内容</h3><p>关注更多用户，在这里看到他们的帖子</p></div>`;
-  }
-  return followingTweets.map(t=>renderTweet(t)).join('');
+  var me = isLoggedIn() ? currentUser() : null;
+  if(!me) return '<div class="empty-state"><h3>请先登录</h3><p>登录后查看关注用户的动态</p></div>';
+  setTimeout(function(){
+    var wrap = document.getElementById('followingFeedWrap');
+    if(!wrap) return;
+    PostsAPI.list(0, 20).then(function(data){
+      var posts = (data && data.posts) || [];
+      if(posts.length > 0){
+        wrap.innerHTML = posts.map(function(t){ return renderTweet(t); }).join('');
+      } else {
+        wrap.innerHTML = '<div class="empty-state"><h3>还没有内容</h3><p>关注更多用户，在这里看到他们的帖子</p></div>';
+      }
+    }).catch(function(){
+      wrap.innerHTML = '<div class="empty-state"><h3>还没有内容</h3><p>关注更多用户，在这里看到他们的帖子</p></div>';
+    });
+  }, 0);
+  return '<div id="followingFeedWrap"><div style="padding:32px;text-align:center;color:var(--text2)">加载中...</div></div>';
 }
 
 // 加载更多按钮渲染
@@ -889,21 +865,12 @@ async function loadMoreHome(){
 
   state.homePage++;
 
-  // API 模式
+  // API 模式（Django 用 session cookie，不需要 _apiUser）
   if(typeof PostsAPI !== 'undefined'){
     try {
       const data = await PostsAPI.list(state.homePage, state.homePageSize);
-      const newTweets = data.posts.map(p => ({
-        id: p.id, name: p.name, handle: p.handle, verified: !!p.verified,
-        time: formatTime(new Date(p.created_at).getTime()),
-        createdAt: new Date(p.created_at).getTime(),
-        text: p.content,
-        avatar: (p.name||'用').slice(0,1),
-        avatarBg: p.avatar_bg || 'linear-gradient(135deg,#667eea,#764ba2)',
-        likes: p.likes_count||0, retweets: p.retweets_count||0, replies: p.replies_count||0,
-        views: p.views_count?String(p.views_count):'0',
-        liked: !!p.liked, retweeted:false, bookmarked:false
-      }));
+      // PostsAPI.list 已通过 formatPost 转换为前端格式，直接使用
+      const newTweets = data.posts;
       state.homeHasMore = data.hasMore;
       const feed = document.getElementById('homeFeed');
       if(feed){
@@ -988,10 +955,11 @@ async function homePost(){
   const u = currentUser() || {};
 
   // 尝试 API 发帖
-  if(typeof PostsAPI !== 'undefined' && u._apiUser){
+  if(typeof PostsAPI !== 'undefined'){
     try {
       const media = (state.composeMedia||[]).map(m=>({url:m.url}));
-      const newPost = await PostsAPI.create(v, media);
+      const newPost = await PostsAPI.create(v, media, state.selectedLocation);
+      // PostsAPI.create 已经通过 formatPost 转换格式
       const t = {
         id: newPost.id,
         name: newPost.name || u.name,
@@ -999,9 +967,10 @@ async function homePost(){
         verified: !!newPost.verified,
         time: '刚刚',
         createdAt: Date.now(),
-        text: newPost.content || v,
+        text: newPost.text || v,
         avatar: ((newPost.name||u.name||'用')).slice(0,1),
-        avatarBg: newPost.avatar_bg || u.avatarBg || 'linear-gradient(135deg,#667eea,#764ba2)',
+        avatarBg: newPost.avatarBg || u.avatarBg || 'linear-gradient(135deg,#667eea,#764ba2)',
+        avatarUrl: newPost.avatarUrl || null,
         likes: 0, retweets: 0, replies: 0, views: '0',
         liked: false, retweeted: false, bookmarked: false
       };
@@ -1013,11 +982,21 @@ async function homePost(){
       const locTag = document.getElementById('selectedLocationTag'); if(locTag) locTag.remove();
       return;
     } catch(err) {
-      console.warn('[言] API 发帖失败，回退本地:', err.message);
+      console.error('[言] API 发帖失败:', err.message);
+      showToast('发帖失败: ' + err.message, 'error');
+      btn.disabled = false;
+      btn.textContent = '发帖';
+      return;
     }
   }
 
-  // 本地回退
+  // API 不可用
+  showToast('服务器连接失败，无法发帖', 'error');
+  btn.disabled = false;
+  btn.textContent = '发帖';
+  return;
+
+  // (以下本地代码已废弃)
   const viewsOptions=['15','28','47','89','124','203'];
   const t = {id:Date.now(),name:u.name||'用户',handle:u.handle||'@user',verified:u.verified||false,time:"刚刚",createdAt:Date.now(),text:v,avatar:(u.name||'用').slice(0,1),avatarBg:u.avatarBg||"linear-gradient(135deg,#667eea,#764ba2)",likes:0,retweets:0,replies:0,views:viewsOptions[Math.floor(Math.random()*viewsOptions.length)],liked:false,retweeted:false,bookmarked:false};
   if(state.composeMedia && state.composeMedia.length > 0){
@@ -1505,17 +1484,13 @@ function renderNotifications(){
   const nb = document.getElementById('notif-badge');
   if(nb){ nb.querySelector('.b').style.display = 'none'; }
   const tab = state.notifTab;
-  let n = DB.notifications;
-  if(tab==='mentions') n = n.filter(x=>x.type==='mention'||x.type==='reply');
   const allActive = tab==='all'?'active':'';
   const menActive = tab==='mentions'?'active':'';
-  const hasUnread = n.some(x=>x.unread);
   main.innerHTML = `
     <div class="ct">
       <div class="main-header" style="justify-content:space-between">
         <div class="page-title">通知</div>
         <div style="display:flex;align-items:center;gap:8px">
-          ${hasUnread ? '<button class="back-btn" style="display:flex;width:auto;padding:0 12px;border-radius:9999px;font-size:13px;font-weight:600;color:var(--accent);border:1px solid var(--border)" onclick="markAllNotificationsRead()">全部已读</button>' : ''}
           <button class="back-btn" style="display:flex" onclick="openNotifSettings()" title="设置">
           <svg viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.31.06-.63.06-.94 0-.31-.02-.63-.06-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.04.31-.06.63-.06.94s.02.63.06.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58z"/></svg>
         </button>
@@ -1526,9 +1501,105 @@ function renderNotifications(){
       </div>
     </div>
     ${tab==='all'?renderPushNotifCard():''}
-    ${n.length===0?`<div class="empty-state"><svg viewBox="0 0 24 24"><path d="M19.993 9.042C19.48 5.017 16.054 2 11.996 2s-7.49 3.021-7.999 7.051L2.866 18H7.1c.463 2.282 2.481 4 4.9 4s4.437-1.718 4.9-4h4.236l-1.143-8.958z"/></svg><h3>暂无通知</h3><p>当有人与你互动时，你会在这里看到通知。</p></div>`:''}
-    ${n.map(notif=>renderNotifItem(notif)).join('')}
+    <div id="notifContent"><div style="text-align:center;padding:40px;color:var(--text2)">加载中...</div></div>
   `;
+  loadNotifications();
+}
+
+async function loadNotifications(){
+  const area = document.getElementById('notifContent');
+  if(!area) return;
+  const tab = state.notifTab;
+  try {
+    if(typeof NotificationsAPI !== 'undefined'){
+      const data = await NotificationsAPI.list();
+      let notifs = data.notifications || data || [];
+      if(tab==='mentions') notifs = notifs.filter(n=>n.type==='mention'||n.type==='reply');
+      const hasUnread = notifs.some(n=>!n.is_read);
+      // 渲染已读按钮
+      if(hasUnread){
+        const header = document.querySelector('.main-header');
+        if(header){
+          const btn = document.createElement('button');
+          btn.className = 'back-btn';
+          btn.style.cssText = 'display:flex;width:auto;padding:0 12px;border-radius:9999px;font-size:13px;font-weight:600;color:var(--accent);border:1px solid var(--border)';
+          btn.textContent = '全部已读';
+          btn.onclick = markAllNotificationsRead;
+          header.querySelector('div[style]').prepend(btn);
+        }
+      }
+      if(notifs.length === 0){
+        area.innerHTML = '<div class="empty-state"><svg viewBox="0 0 24 24"><path d="M19.993 9.042C19.48 5.017 16.054 2 11.996 2s-7.49 3.021-7.999 7.051L2.866 18H7.1c.463 2.282 2.481 4 4.9 4s4.437-1.718 4.9-4h4.236l-1.143-8.958z"/></svg><h3>暂无通知</h3><p>当有人与你互动时，你会在这里看到通知。</p></div>';
+        return;
+      }
+      area.innerHTML = notifs.map(n=>{
+        return renderAPINotifItem(n);
+      }).join('');
+      return;
+    }
+  } catch(e){
+    console.error('Failed to load notifications:', e);
+  }
+  // 本地回退
+  let n = DB.notifications;
+  if(tab==='mentions') n = n.filter(x=>x.type==='mention'||x.type==='reply');
+  if(n.length===0){
+    area.innerHTML = '<div class="empty-state"><svg viewBox="0 0 24 24"><path d="M19.993 9.042C19.48 5.017 16.054 2 11.996 2s-7.49 3.021-7.999 7.051L2.866 18H7.1c.463 2.282 2.481 4 4.9 4s4.437-1.718 4.9-4h4.236l-1.143-8.958z"/></svg><h3>暂无通知</h3><p>当有人与你互动时，你会在这里看到通知。</p></div>';
+  } else {
+    area.innerHTML = n.map(notif=>renderNotifItem(notif)).join('');
+  }
+}
+
+function renderAPINotifItem(n){
+  const typeIcons = {
+    like: '<svg viewBox="0 0 24 24"><path d="M16.697 5.5c-1.222-.06-2.679.51-3.89 2.16l-.805 1.09-.806-1.09C9.984 6.01 8.526 5.44 7.304 5.5c-1.243.07-2.349.78-2.91 1.91-.552 1.12-.633 2.78.479 4.82 1.074 1.97 3.257 4.27 7.129 6.61 3.87-2.34 6.052-4.64 7.126-6.61 1.111-2.04 1.03-3.7.477-4.82-.561-1.13-1.666-1.84-2.908-1.91z"/></svg>',
+    follow: '<svg viewBox="0 0 24 24"><path d="M5.651 19h12.698c-.337-1.8-1.023-3.21-1.945-4.19C15.318 13.65 13.838 13 12 13s-3.317.65-4.404 1.81c-.922.98-1.608 2.39-1.945 4.19zM12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm11 5h-2v-2h-2v2h-2v2h2v2h2v-2h2v-2z"/></svg>',
+    retweet: '<svg viewBox="0 0 24 24"><path d="M4.5 3.88l4.432 4.14-1.364 1.46L5.5 7.55V16c0 1.1.896 2 2 2H13v2H7.5c-2.209 0-4-1.79-4-4V7.55L1.432 9.48.068 8.02 4.5 3.88zM16.5 14.12l-4.432-4.14 1.364-1.46 2.068 1.97V2h2v9.45l2.068-1.97 1.364 1.46-4.432 4.14z"/></svg>',
+    reply: '<svg viewBox="0 0 24 24"><path d="M1.751 10c0-4.42 3.584-8 8.005-8h4.366c4.49 0 7.501 3.858 7.501 7.501 0 3.808-2.851 7.091-6.056 7.765.005.099.01.197.01.297 0 1.68-1.072 2.96-2.584 3.063C11.51 21.954 11.013 22 10.5 22c-4.394 0-8.75-3.519-8.75-8.5 0-1.085.225-2.107.625-3.025-.001-.075-.014-.155-.014-.237C2.361 10 2.056 10 1.75 10z"/></svg>',
+    mention: '<svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-1-13h2v6h-2zm0 8h2v2h-2z"/></svg>'
+  };
+  const iconHtml = typeIcons[n.type] || typeIcons.mention;
+  const avatar = n.sender_avatar
+    ? `<img src="${n.sender_avatar}" style="width:40px;height:40px;border-radius:50%;object-fit:cover" onerror="this.outerHTML='<div style=\\'width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,#667eea,#764ba2);display:flex;align-items:center;justify-content:center;font-weight:700;color:#fff;font-size:16px\\'>${(n.sender_name||'?')[0].toUpperCase()}</div>'">`
+    : `<div style="width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,#667eea,#764ba2);display:flex;align-items:center;justify-content:center;font-weight:700;color:#fff;font-size:16px">${(n.sender_name||'?')[0].toUpperCase()}</div>`;
+  const actionText = {like:'赞了你的帖子',follow:'关注了你',retweet:'转发了你的帖子',reply:'回复了你',mention:'提及了你'};
+  return `
+    <div class="notif ${n.is_read?'':'unread'}" onclick="handleAPINotif(${n.id},'${n.type}',${n.post_id||'null'})">
+      <div class="notif-layout">
+        <div class="notif-icon-col">
+          <div class="nicon ${n.type}">${iconHtml}</div>
+          ${avatar}
+        </div>
+        <div class="nbody" style="padding-top:2px">
+          <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
+            <span style="font-weight:700;font-size:15px">${escapeHtml(n.sender_name||'')}</span>
+            <span style="color:var(--text2);font-size:15px">@${escapeHtml(n.sender_name||'')}</span>
+            <span style="color:var(--text2);font-size:15px">· ${formatTime(n.created_at)}</span>
+          </div>
+          <div class="ntext">${actionText[n.type]||n.content||''}</div>
+          ${n.post_content?`<div class="ntarget">${escapeHtml(n.post_content.slice(0,80))}</div>`:''}
+        </div>
+      </div>
+    </div>`;
+}
+
+function handleAPINotif(id, type, postId){
+  // 标记已读
+  if(typeof NotificationsAPI !== 'undefined'){
+    NotificationsAPI.markRead().catch(()=>{});
+  }
+  if(postId){
+    navigate('post', postId);
+  }
+}
+
+async function markAllNotificationsRead(){
+  try {
+    if(typeof NotificationsAPI !== 'undefined'){
+      await NotificationsAPI.markRead();
+    }
+  } catch(e){}
+  renderNotifications();
 }
 function showNotifFilterMenu(){
   body.innerHTML='<div class="d-item" onclick="closeMoreMenu()"><svg viewBox="0 0 24 24"><path d="M19.993 9.042C19.48 5.017 16.054 2 11.996 2s-7.49 3.021-7.999 7.051L2.866 18H7.1c.463 2.282 2.481 4 4.9 4s4.437-1.718 4.9-4h4.236l-1.143-8.958z"/></svg> 所有通知</div><div class="d-item" onclick="closeMoreMenu()"><svg viewBox="0 0 24 24"><path d="M5.651 19h12.698c-.337-1.8-1.023-3.21-1.945-4.19C15.318 13.65 13.838 13 12 13s-3.317.65-4.404 1.81c-.922.98-1.608 2.39-1.945 4.19z"/></svg> 新粉丝</div><div class="d-item" onclick="closeMoreMenu()"><svg viewBox="0 0 24 24"><path d="M16.697 5.5c-1.222-.06-2.679.51-3.89 2.16l-.805 1.09-.806-1.09C9.984 6.01 8.526 5.44 7.304 5.5c-1.243.07-2.349.78-2.91 1.91-.552 1.12-.633 2.78.479 4.82 1.074 1.97 3.257 4.27 7.129 6.61 3.87-2.34 6.052-4.64 7.126-6.61 1.111-2.04 1.03-3.7.477-4.82-.561-1.13-1.666-1.84-2.908-1.91z"/></svg> 喜欢</div><div class="d-item" onclick="closeMoreMenu()"><svg viewBox="0 0 24 24"><path d="M4.5 3.88l4.432 4.14-1.364 1.46L5.5 7.55V16c0 1.1.896 2 2 2H13v2H7.5c-2.209 0-4-1.79-4-4V7.55L1.432 9.48.068 8.02 4.5 3.88z"/></svg> 转帖</div><div class="d-item" onclick="closeMoreMenu()"><svg viewBox="0 0 24 24"><path d="M1.751 10c0-4.42 3.584-8 8.005-8h4.366c4.49 0 7.501 3.858 7.501 7.501 0 3.808-2.851 7.091-6.056 7.765 .005.099.01.197.01.297 0 1.68-1.072 2.96-2.584 3.063C11.51 21.954 11.013 22 10.5 22c-4.394 0-8.75-3.519-8.75-8.5 0-1.085.225-2.107.625-3.025-.001-.075-.014-.155-.014-.237C2.361 10 2.056 10 1.75 10z"/></svg> 回复和提及</div><div class="d-divider"></div><div class="d-item" onclick="openNotifSettings()"><svg viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.31.06-.63.06-.94 0-.31-.02-.63-.06-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.04.31-.06.63-.06.94s.02.63.06.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg> 通知设置</div>';
@@ -1639,6 +1710,8 @@ function handleNotif(id,type){
 
 // ===== MESSAGES =====
 let activeChat = null;
+let _conversations = []; // API 缓存的对话列表
+
 function renderMessages(){
   activeChat = null;
   const main = document.getElementById('mainContent');
@@ -1655,7 +1728,7 @@ function renderMessages(){
           </div>
         </div>
         <div id="msgListItems">
-          ${renderMsgListItems(DB.messages)}
+          <div class="empty-state" style="padding:40px"><h3>加载中...</h3></div>
         </div>
       </div>
       <div class="msg-chat" id="chatArea">
@@ -1667,25 +1740,55 @@ function renderMessages(){
       </div>
     </div>
   `;
+  // 从 API 加载对话列表
+  loadConversations();
 }
+
+async function loadConversations(){
+  const area = document.getElementById('msgListItems');
+  if(!area) return;
+  try {
+    if(typeof MessagesAPI !== 'undefined'){
+      _conversations = await MessagesAPI.list();
+      area.innerHTML = renderMsgListItems(_conversations);
+      return;
+    }
+  } catch(e){
+    console.error('Failed to load conversations:', e);
+  }
+  // 本地回退
+  _conversations = DB.messages || [];
+  area.innerHTML = renderMsgListItems(_conversations);
+}
+
 function openChat(id){
   document.querySelectorAll('.msg-item').forEach(m=>m.classList.remove('active'));
   document.getElementById('msg-'+id)?.classList.add('active');
-  const chat = DB.messages.find(m=>m.id===id);
-  if(!chat) return;
-  activeChat = chat;
-  chat.unread = 0;
+  // 先从缓存中找到对话
+  const conv = _conversations.find(c=>c.id===id);
+  if(!conv) return;
+  activeChat = {
+    _conversationId: id,
+    other_user: conv.other_user,
+    unread_count: conv.unread_count || 0
+  };
+  const avatar = conv.other_user?.avatar
+    ? `<img src="${conv.other_user.avatar}" style="width:40px;height:40px;border-radius:50%;object-fit:cover" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"><div style="width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,#667eea,#764ba2);display:none;align-items:center;justify-content:center;font-weight:700;color:#fff;font-size:16px">${(conv.other_user?.username||'?')[0].toUpperCase()}</div>`
+    : `<div style="width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,#667eea,#764ba2);display:flex;align-items:center;justify-content:center;font-weight:700;color:#fff;font-size:16px">${(conv.other_user?.username||'?')[0].toUpperCase()}</div>`;
   const area = document.getElementById('chatArea');
   area.innerHTML = `
     <div class="msg-chat-header">
       <button class="back-btn" style="display:none" onclick="navigate('messages')">
         <svg viewBox="0 0 24 24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>
       </button>
-      <div class="msg-av online" style="background:${chat.avatarBg};width:40px;height:40px;font-size:16px">${chat.avatar}</div>
-      <div class="msg-chat-name">${chat.name}<span>${chat.handle}</span><span class="chat-online">在线</span></div>
+      ${avatar}
+      <div class="msg-chat-name">${conv.other_user?.username||'未知'}<span>@${conv.other_user?.username||''}</span></div>
+      <button style="margin-left:auto;background:none;border:none;color:var(--text2);cursor:pointer;padding:8px" onclick="deleteConversation(${id})" title="删除对话">
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M16 9v10H8V9h8m-1.5-6h-5l-1 1H5v2h14V4h-3.5l-1-1zM18 7H6v12c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7z"/></svg>
+      </button>
     </div>
     <div class="chat-body" id="chatBody">
-      ${renderChatMessages(chat.messages)}
+      <div style="text-align:center;padding:20px;color:var(--text2)">加载消息中...</div>
     </div>
     <div class="msg-chat-input" style="position:relative">
       <div class="emoji-picker" id="emojiPicker">
@@ -1714,27 +1817,82 @@ function openChat(id){
       <button class="chat-send" id="chatSendBtn" onclick="sendMsg()" disabled>发送</button>
     </div>
   `;
-  setTimeout(()=>area.querySelector('#chatBody').scrollTop=area.querySelector('#chatBody').scrollHeight,10);
+  // 从 API 加载消息
+  loadChatMessages(id);
 }
-function renderChatMessages(messages){
+
+async function loadChatMessages(conversationId){
+  const body = document.getElementById('chatBody');
+  if(!body) return;
+  try {
+    if(typeof MessagesAPI !== 'undefined'){
+      const messages = await MessagesAPI.getMessages(conversationId, null, 50);
+      body.innerHTML = renderAPIMessages(messages);
+      body.scrollTop = body.scrollHeight;
+      return;
+    }
+  } catch(e){
+    console.error('Failed to load messages:', e);
+    body.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text2)">加载失败，请重试</div>';
+    return;
+  }
+  // 本地回退
+  const chat = DB.messages.find(m=>m.id===conversationId);
+  if(chat){
+    body.innerHTML = renderChatMessages(chat.messages || []);
+    body.scrollTop = body.scrollHeight;
+  }
+}
+
+function renderAPIMessages(messages){
+  if(!messages || messages.length === 0){
+    return '<div style="text-align:center;padding:20px;color:var(--text2)">暂无消息，发送一条开始聊天吧</div>';
+  }
+  const cu = currentUser();
+  const myId = cu ? (cu.user_id || cu.id) : null;
   return messages.map((m,i)=>{
-    const showDate = i===0 || getDateKey(messages[i-1].time) !== getDateKey(m.time);
-    const dateHtml = showDate ? `<div class="chat-date">${getDateLabel(m.time)}</div>` : '';
-    const seenClass = m.seen ? ' seen' : '';
-    // 图片消息渲染
-    if(m.isImage && m.imageData){
+    const isSent = m.sender_id === myId;
+    const timeStr = formatTime(m.created_at);
+    const showDate = i===0 || (i>0 && getDateKeyISO(messages[i-1].created_at) !== getDateKeyISO(m.created_at));
+    const dateHtml = showDate ? '<div class="chat-date">' + getDateLabelISO(m.created_at) + '</div>' : '';
+    if(m.image){
       return `${dateHtml}
-        <div style="display:flex;flex-direction:column;align-items:${m.sent?'flex-end':'flex-start'}">
-          <img src="${m.imageData}" style="max-width:200px;max-height:200px;border-radius:16px;object-fit:cover;cursor:pointer" onclick="this.style.maxWidth=this.style.maxWidth==='100%'?'200px':'100%'" />
-          <div class="chat-time${seenClass}">${m.time}${m.seen&&!m.sent?' · 已读':''}</div>
+        <div style="display:flex;flex-direction:column;align-items:${isSent?'flex-end':'flex-start'}">
+          <img src="${m.image}" style="max-width:200px;max-height:200px;border-radius:16px;object-fit:cover;cursor:pointer" onclick="this.style.maxWidth=this.style.maxWidth==='100%'?'200px':'100%'" />
+          <div class="chat-time${isSent&&m.is_read?' seen':''}">${timeStr}${isSent&&m.is_read?' · 已读':''}</div>
         </div>`;
     }
     return `${dateHtml}
-      <div style="display:flex;flex-direction:column;align-items:${m.sent?'flex-end':'flex-start'}">
-        <div class="chat-bubble ${m.sent?'sent':'received'}">${m.text}</div>
-        <div class="chat-time${seenClass}">${m.time}${m.seen&&!m.sent?' · 已读':''}</div>
+      <div style="display:flex;flex-direction:column;align-items:${isSent?'flex-end':'flex-start'}">
+        <div class="chat-bubble ${isSent?'sent':'received'}">${escapeHtml(m.content)}</div>
+        <div class="chat-time${isSent&&m.is_read?' seen':''}">${timeStr}${isSent&&m.is_read?' · 已读':''}</div>
       </div>`;
   }).join('');
+}
+
+function getDateKeyISO(isoStr){
+  if(!isoStr) return 'unknown';
+  const d = new Date(isoStr);
+  const now = new Date();
+  if(d.toDateString() === now.toDateString()) return 'today';
+  const yesterday = new Date(now);
+  yesterday.setDate(yesterday.getDate()-1);
+  if(d.toDateString() === yesterday.toDateString()) return 'yesterday';
+  return d.toDateString();
+}
+
+function getDateLabelISO(isoStr){
+  if(!isoStr) return '';
+  const d = new Date(isoStr);
+  const now = new Date();
+  if(d.toDateString() === now.toDateString()) return '今天';
+  const yesterday = new Date(now);
+  yesterday.setDate(yesterday.getDate()-1);
+  if(d.toDateString() === yesterday.toDateString()) return '昨天';
+  const weekdays = ['周日','周一','周二','周三','周四','周五','周六'];
+  const diffDays = Math.floor((now - d) / 86400000);
+  if(diffDays < 7) return weekdays[d.getDay()];
+  return d.toLocaleDateString('zh-CN');
 }
 function getDateKey(timeStr){
   if(timeStr.includes('今天')) return 'today';
@@ -1767,6 +1925,27 @@ function sendMsg(){
   const input = document.getElementById('chatInput');
   const text = input.value.trim();
   if(!text||!activeChat) return;
+
+  // 优先走 API 发送消息
+  if(typeof MessagesAPI !== 'undefined' && activeChat._conversationId){
+    MessagesAPI.sendMessage(activeChat._conversationId, text).then(function(msg){
+      // 消息已发送，渲染到界面
+      var body = document.getElementById('chatBody');
+      var div = document.createElement('div');
+      div.className = 'chat-msg sent';
+      div.innerHTML = '<div class="chat-bubble sent">' + escapeHtml(text) + '<span class="chat-time">' + formatTime(Date.now()) + '</span></div>';
+      body.appendChild(div);
+      body.scrollTop = body.scrollHeight;
+    }).catch(function(err){
+      showToast('发送失败: ' + err.message, 'error');
+    });
+    input.value = '';
+    input.style.height = '42px';
+    document.getElementById('chatSendBtn').disabled = true;
+    return;
+  }
+
+  // 本地回退
   const now = new Date();
   const timeStr = now.toLocaleTimeString('zh-CN',{hour:'2-digit',minute:'2-digit'});
   activeChat.messages.push({sent:true,text,time:timeStr,seen:true});
@@ -1780,60 +1959,22 @@ function sendMsg(){
   input.value = '';
   input.style.height = '42px';
   document.getElementById('chatSendBtn').disabled = true;
-  
-  // 更新消息列表预览
-  const msgItem = document.getElementById('msg-'+activeChat.id);
-  if(msgItem){
-    msgItem.querySelector('.msg-preview').innerHTML = text;
-    msgItem.querySelector('.msg-time').textContent = timeStr;
-    const unread = msgItem.querySelector('.msg-unread');
-    if(unread) unread.remove();
-  }
   LS.save();
-  
-  // 显示"正在输入..."
-  const typingDiv = document.createElement('div');
-  typingDiv.id = 'typingIndicator';
-  typingDiv.innerHTML = `<div class="chat-typing"><div class="chat-typing-dots"><span></span><span></span><span></span></div></div>`;
-  body.appendChild(typingDiv);
-  body.scrollTop = body.scrollHeight;
-  
-  // 自动回复
-  setTimeout(()=>{
-    const typing = document.getElementById('typingIndicator');
-    if(typing) typing.remove();
-    
-    const replies = [
-      '好的，我知道了！',
-      '哈哈，太有趣了 😄',
-      '这个主意不错 👍',
-      '收到，我看看',
-      '明白了！',
-      '等我有空详细聊聊',
-      '听起来很棒！',
-      '有意思，继续说',
-      '我也有同感',
-      '感谢分享 🙏'
-    ];
-    const reply = replies[Math.floor(Math.random()*replies.length)];
-    const replyTime = new Date().toLocaleTimeString('zh-CN',{hour:'2-digit',minute:'2-digit'});
-    activeChat.messages.push({sent:false,text:reply,time:replyTime,seen:false});
-    activeChat.time = replyTime;
-    activeChat.preview = reply;
-    
-    const replyDiv = document.createElement('div');
-    replyDiv.innerHTML = renderChatMessages([activeChat.messages[activeChat.messages.length-1]]);
-    body.appendChild(replyDiv.lastElementChild);
-    body.scrollTop = body.scrollHeight;
-    
-    // 更新消息列表
-    const msgItem2 = document.getElementById('msg-'+activeChat.id);
-    if(msgItem2){
-      msgItem2.querySelector('.msg-preview').innerHTML = `<span style="color:var(--text);font-weight:700">${reply}</span>`;
-      msgItem2.querySelector('.msg-time').textContent = replyTime;
+}
+
+async function deleteConversation(conversationId){
+  if(!confirm('确定删除此对话？')) return;
+  try {
+    if(typeof MessagesAPI !== 'undefined'){
+      await MessagesAPI.deleteConversation(conversationId);
+      showToast('对话已删除');
     }
-    LS.save();
-  }, 1500 + Math.random()*1500);
+  } catch(e){
+    console.error('Delete conversation failed:', e);
+  }
+  _conversations = _conversations.filter(c=>c.id !== conversationId);
+  activeChat = null;
+  navigate('messages');
 }
 
 // ===== BOOKMARKS =====
@@ -1850,20 +1991,45 @@ function renderBookmarks(){
             <div style="font-size:13px;color:var(--text2)">${u.handle}</div>
           </div>
         </div>
-        ${DB.bookmarks.length>0?`<button class="back-btn" style="display:flex;color:var(--accent)" onclick="clearAllBookmarks()" title="清除所有书签">
-          <svg viewBox="0 0 24 24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
-        </button>`:''}
       </div>
     </div>
-    ${DB.bookmarks.length===0?`
+    <div id="bookmarksContent"><div style="text-align:center;padding:40px;color:var(--text2)">加载中...</div></div>
+  `;
+  loadBookmarks();
+}
+
+async function loadBookmarks(){
+  const area = document.getElementById('bookmarksContent');
+  if(!area) return;
+  try {
+    if(typeof BookmarksAPI !== 'undefined'){
+      const result = await BookmarksAPI.list(1, 20);
+      if(!result.posts || result.posts.length === 0){
+        area.innerHTML = `
+          <div class="empty-state">
+            <svg viewBox="0 0 24 24"><path d="M4 4.5C4 3.12 5.119 2 6.5 2h11C18.881 2 20 3.12 20 4.5v18.44l-8-5.71-8 5.71V4.5z"/></svg>
+            <h3>还没有书签</h3>
+            <p>保存帖子以便稍后阅读，只需点击帖子上的书签图标即可</p>
+          </div>`;
+        return;
+      }
+      area.innerHTML = result.posts.map(t=>renderTweet(t)).join('');
+      return;
+    }
+  } catch(e){
+    console.error('Failed to load bookmarks:', e);
+  }
+  // 本地回退
+  if(DB.bookmarks.length===0){
+    area.innerHTML = `
       <div class="empty-state">
         <svg viewBox="0 0 24 24"><path d="M4 4.5C4 3.12 5.119 2 6.5 2h11C18.881 2 20 3.12 20 4.5v18.44l-8-5.71-8 5.71V4.5z"/></svg>
         <h3>还没有书签</h3>
         <p>保存帖子以便稍后阅读，只需点击帖子上的书签图标即可</p>
-      </div>`:
-      DB.bookmarks.map(id=>DB.tweets.find(t=>t.id===id)).filter(Boolean).map(t=>renderTweet(t)).join('')
-    }
-  `;
+      </div>`;
+  } else {
+    area.innerHTML = DB.bookmarks.map(id=>DB.tweets.find(t=>t.id===id)).filter(Boolean).map(t=>renderTweet(t)).join('');
+  }
 }
 function bookmark(id,btn){
   const t = DB.tweets.find(x=>x.id===id);
@@ -2324,50 +2490,19 @@ function renderProfile(){
   const u = currentUser() || state.user;
   const tab = state.profileTab;
   const main = document.getElementById('mainContent');
+  
   const tabs = [
     {key:'posts',label:'帖子'},
     {key:'replies',label:'回复'},
     {key:'media',label:'媒体'},
     {key:'likes',label:'喜欢'}
   ];
-  const myHandle = isLoggedIn() ? currentUser().handle : '';
-  const userTweets = DB.tweets.filter(t=>t.handle===myHandle);
-  let content = '';
+  
+  const avatarHtml = u.avatarUrl 
+    ? '<img src="' + u.avatarUrl + '" style="width:80px;height:80px;border-radius:50%;object-fit:cover">'
+    : '<div class="profile-avatar" style="background:' + (u.avatarBg || 'linear-gradient(135deg,#667eea,#764ba2)') + '">' + (u.avatar || (u.name||'用').slice(0,1)) + '</div>';
 
-  if(tab==='posts'){
-    if(userTweets.length>0){
-      content = userTweets.map(t=>renderTweet(t)).join('');
-    }else{
-      content = '<div class="empty-state"><h3>还没有帖子</h3><p>发布你的第一条帖子吧！</p></div>';
-    }
-  }else if(tab==='replies'){
-    const userReplyIds = userTweets.map(t=>t.id);
-    const allReplies = userReplyIds.flatMap(tid=>{
-      const rs = (DB.replies[tid]||[]).map(r=>({...r,tweetId:tid,parentTweet:DB.tweets.find(tw=>tw.id===tid)}));
-      return rs;
-    }).sort((a,b)=>b.id-a.id);
-    if(allReplies.length>0){
-      content = allReplies.map(r=>renderProfileReply(r)).join('');
-    }else{
-      content = '<div class="empty-state"><h3>还没有回复</h3><p>当有人回复你的帖子时，会显示在这里</p></div>';
-    }
-  }else if(tab==='media'){
-    const mediaTweets = userTweets.filter(t=>t.media && t.media.length > 0);
-    if(mediaTweets.length>0){
-      content = mediaTweets.map(t=>renderTweet(t)).join('');
-    }else{
-      content = '<div class="empty-state"><h3>还没有媒体内容</h3><p>发布包含图片或视频的帖子，会显示在这里</p></div>';
-    }
-  }else if(tab==='likes'){
-    const likedTweets = DB.tweets.filter(t=>t.liked);
-    if(likedTweets.length>0){
-      content = likedTweets.map(t=>renderTweet(t)).join('');
-    }else{
-      content = '<div class="empty-state"><h3>还没有喜欢的帖子</h3><p>点击帖子下方的心形图标，喜欢的帖子会显示在这里</p></div>';
-    }
-  }
-
-  const postCount = userTweets.length;
+  // 先渲染骨架，再异步加载帖子
   main.innerHTML = `
     <div class="ct">
       <div class="main-header" style="justify-content:space-between">
@@ -2375,7 +2510,7 @@ function renderProfile(){
           <button class="back-btn" onclick="navigate('home')"><svg viewBox="0 0 24 24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg></button>
           <div>
             <div style="font-size:17px;font-weight:800">${u.name}</div>
-            <div style="font-size:13px;color:var(--text2)">${f(postCount)} 帖子</div>
+            <div style="font-size:13px;color:var(--text2)" id="profilePostCount">帖子</div>
           </div>
         </div>
         <button class="back-btn" style="display:flex" onclick="navigate('search')" title="搜索">
@@ -2384,34 +2519,69 @@ function renderProfile(){
       </div>
     </div>
     <div class="profile-header">
-      <div class="profile-cover" onclick="changeProfileCover(this)" style="cursor:pointer" title="点击更换封面"></div>
-      <div class="profile-avatar-wrap">
-        <div class="profile-avatar" onclick="changeProfileAvatar(this)" style="cursor:pointer" title="点击更换头像">${(u.name||'用').slice(0,1)}</div>
-      </div>
-      <button class="profile-edit-btn" onclick="openEditProfileModal()">编辑个人资料</button>
+      <div class="profile-cover" style="background:linear-gradient(135deg,#1a1a2e,#16213e)"></div>
+      <div class="profile-avatar-wrap">${avatarHtml}</div>
     </div>
     <div class="profile-info">
-      <div style="height:8px"></div>
-      <div class="pi-name">${u.name}</div>
-      <div class="pi-handle">${u.handle}</div>
-      <div class="pi-bio">${u.bio}</div>
-      <div class="pi-meta">
-        ${u.location?`<div class="pi-meta-item"><svg viewBox="0 0 24 24"><path d="M12 7c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0-5C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/></svg>${u.location}</div>`:''}
-        ${u.joinedDate?`<div class="pi-meta-item"><svg viewBox="0 0 24 24"><path d="M19.708 2H4.292C3.028 2 2 3.028 2 4.292v15.416C2 20.972 3.028 22 4.292 22h15.416C20.972 22 22 20.972 22 19.708V4.292C22 3.028 20.972 2 19.708 2zm.792 17.708c0 .437-.355.792-.792.792H4.292c-.437 0-.792-.355-.792-.792V6.418c0-.437.355-.792.792-.792h16.416c.437 0 .792.355.792.792v13.29zM17 8.75c0-.414-.336-.75-.75-.75h-2.5c-.414 0-.75.336-.75.75s.336.75.75.75h2.5c.414 0 .75-.336.75-.75zm0 3.5c0-.414-.336-.75-.75-.75h-2.5c-.414 0-.75.336-.75.75s.336.75.75.75h2.5c.414 0 .75-.336.75-.75zm-5.75-3.5c-.414 0-.75.336-.75.75s.336.75.75.75h2.5c.414 0 .75-.336.75-.75s-.336-.75-.75-.75h-2.5zm0 3.5c-.414 0-.75.336-.75.75s.336.75.75.75h2.5c.414 0 .75-.336.75-.75s-.336-.75-.75-.75h-2.5zM8 8.75c0-.414-.336-.75-.75-.75h-2.5c-.414 0-.75.336-.75.75s.336.75.75.75h2.5c.414 0 .75-.336.75-.75zm0 3.5c0-.414-.336-.75-.75-.75h-2.5c-.414 0-.75.336-.75.75s.336.75.75.75h2.5c.414 0 .75-.336.75-.75z"/></svg>${u.joinedDate} 加入 ></div>`:''}
+      <div style="display:flex;justify-content:flex-end;gap:8px;padding-bottom:8px">
+        <button class="back-btn" style="display:flex" onclick="openSettings()" title="设置">
+          <svg viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58a.49.49 0 00.12-.61l-1.92-3.32a.49.49 0 00-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54a.484.484 0 00-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.07.62-.07.94s.02.64.07.94l-2.03 1.58a.49.49 0 00-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6A3.6 3.6 0 1112 8.4a3.6 3.6 0 010 7.2z"/></svg>
+        </button>
       </div>
+      <div class="pi-name">${u.name}</div>
+      <div class="pi-handle">${u.handle || ''}</div>
+      <div class="pi-bio">${u.bio || ''}</div>
       <div class="pi-stats">
-        <span class="ps" onclick="navigate('following')"><span>${f(u.following)}</span> 正在关注</span>
-        <span class="ps" onclick="navigate('followers')"><span>${f(u.followers)}</span> 关注者</span>
-        <span class="ps" onclick="openLikersModal()"><span>${f(u.liked)}</span> 获赞</span>
+        <span class="ps"><span>${f(u.following || 0)}</span> 正在关注</span>
+        <span class="ps"><span>${f(u.followers || 0)}</span> 关注者</span>
       </div>
       <div class="profile-tabs">
-        ${tabs.map(t=>`<div class="profile-tab ${tab===t.key?'active':''}" onclick="switchProfileTab('${t.key}')">${t.label}</div>`).join('')}
+        ${tabs.map(t => '<div class="profile-tab' + (t.key === tab ? ' active' : '') + '" onclick="switchProfileTab(\'' + t.key + '\')">' + t.label + '</div>').join('')}
       </div>
     </div>
-    ${!u.verified?renderVerifyBanner():''}
-    ${content}
+    <div id="profileContent">
+      <div style="text-align:center;padding:20px;color:var(--text2)">加载中...</div>
+    </div>
   `;
+  
+  // 异步加载帖子
+  loadProfileContent(tab, u);
 }
+
+async function loadProfileContent(tab, u){
+  const cont = document.getElementById('profileContent');
+  if(!cont) return;
+  
+  try {
+    if(tab === 'posts'){
+      const data = await UsersAPI.posts(u.handle, 0);
+      const posts = data.posts || [];
+      const countEl = document.getElementById('profilePostCount');
+      if(countEl) countEl.textContent = posts.length + ' 帖子';
+      cont.innerHTML = posts.length > 0 
+        ? posts.map(t => renderTweet(t)).join('')
+        : '<div class="empty-state"><h3>还没有帖子</h3><p>发布你的第一条帖子吧！</p></div>';
+    } else if(tab === 'likes'){
+      // 喜欢的帖子需要通过用户 ID 获取
+      if(u._djangoUserId){
+        const resp = await apiRequest('users/likes/' + u._djangoUserId + '/');
+        const posts = (resp.posts || []).map(formatPost);
+        cont.innerHTML = posts.length > 0
+          ? posts.map(t => renderTweet(t)).join('')
+          : '<div class="empty-state"><h3>还没有喜欢的帖子</h3></div>';
+      } else {
+        cont.innerHTML = '<div class="empty-state"><h3>还没有喜欢的帖子</h3></div>';
+      }
+    } else {
+      // replies, media 暂时显示空
+      cont.innerHTML = '<div class="empty-state"><h3>暂无数据</h3></div>';
+    }
+  } catch(err) {
+    console.warn('[言] 加载个人帖子失败:', err.message);
+    cont.innerHTML = '<div class="empty-state"><h3>加载失败</h3></div>';
+  }
+}
+
 function switchProfileTab(tab){state.profileTab=tab;renderProfile();}
 function renderProfileReply(r){
   const parent = r.parentTweet;
@@ -2454,65 +2624,64 @@ function renderVerifyBanner(){
 
 // ===== USER PROFILE =====
 function renderUserProfile(handle){
-  const users = {
-    '@linxiaoyu':{name:'林小雨',handle:'@linxiaoyu',bio:'产品经理 / AI爱好者 / 生活记录者',followers:12834,following:432,posts:892,avatar:'林',avatarBg:'linear-gradient(135deg,#667eea,#764ba2)',coverBg:'linear-gradient(135deg,#1a1a2e,#16213e)',verified:true},
-    '@techdaily':{name:'科技日报',handle:'@techdaily',bio:'第一时间报道科技前沿资讯',followers:892341,following:12,posts:3421,avatar:'科',avatarBg:'linear-gradient(135deg,#f093fb,#f5576c)',coverBg:'linear-gradient(135deg,#0f2027,#203a43,#2c5364)',verified:true},
-    '@zhangwei':{name:'张伟',handle:'@zhangwei',bio:'产品经理 / AI创业者',followers:5623,following:891,posts:234,avatar:'张',avatarBg:'linear-gradient(135deg,#4facfe,#00f2fe)',coverBg:'linear-gradient(135deg,#200122,#6f0000)',verified:true},
-    '@lina_tech':{name:'李娜',handle:'@lina_tech',bio:'全栈工程师 / 开源贡献者',followers:8934,following:567,posts:1567,avatar:'李',avatarBg:'linear-gradient(135deg,#43e97b,#38f9d7)',coverBg:'linear-gradient(135deg,#093028,#237a57)',verified:false}
-  };
-  const u = users[handle]||{name:handle.replace('@',''),handle,bio:'',followers:0,following:0,posts:0,avatar:handle[1]?.toUpperCase()||'?',avatarBg:'linear-gradient(135deg,#667eea,#764ba2)',verified:false};
-  const userTweets = DB.tweets.filter(t=>t.handle===handle);
   const main = document.getElementById('mainContent');
-  main.innerHTML = `
-    <div class="ct">
-      <div class="main-header" style="justify-content:space-between">
-        <div style="display:flex;align-items:center;gap:20px">
-          <button class="back-btn" onclick="navigate('home')"><svg viewBox="0 0 24 24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg></button>
-          <div>
-            <div style="font-size:17px;font-weight:800">${u.name}</div>
-            <div style="font-size:13px;color:var(--text2)">${f(u.posts)} 帖子</div>
+  main.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text2)">加载中...</div>';
+  
+  (async function(){
+    try {
+      const u = await UsersAPI.get(handle);
+      if(!u){
+        main.innerHTML = '<div class="empty-state"><h3>用户不存在</h3></div>';
+        return;
+      }
+      const postsData = await UsersAPI.posts(handle, 0);
+      const userPosts = postsData.posts || [];
+      
+      const avatarHtml = u.avatarUrl 
+        ? '<img src="' + u.avatarUrl + '" style="width:100%;height:100%;object-fit:cover;border-radius:50%">'
+        : '<div class="profile-avatar" style="background:' + u.avatarBg + '">' + u.avatar + '</div>';
+      
+      main.innerHTML = `
+        <div class="ct">
+          <div class="main-header" style="justify-content:space-between">
+            <div style="display:flex;align-items:center;gap:20px">
+              <button class="back-btn" onclick="navigate('home')"><svg viewBox="0 0 24 24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg></button>
+              <div>
+                <div style="font-size:17px;font-weight:800">${u.name}</div>
+                <div style="font-size:13px;color:var(--text2)">${f(u.posts)} 帖子</div>
+              </div>
+            </div>
           </div>
         </div>
-        <button class="back-btn" style="display:flex" onclick="navigate('search')" title="搜索">
-          <svg viewBox="0 0 24 24"><path d="M10.25 3.75c-3.59 0-6.5 2.91-6.5 6.5s2.91 6.5 6.5 6.5c1.795 0 3.419-.726 4.596-1.904 1.178-1.177 1.904-2.801 1.904-4.596 0-3.59-2.91-6.5-6.5-6.5zM2 10.25a8.25 8.25 0 1114.59 5.28l4.69 4.69a.75.75 0 11-1.06 1.06l-4.69-4.69A8.25 8.25 0 012 10.25z"/></svg>
-        </button>
-      </div>
-    </div>
-    <div class="profile-header">
-      <div class="profile-cover" style="background:${u.coverBg||'linear-gradient(135deg,#1a1a2e,#16213e)'}"></div>
-      <div class="profile-avatar-wrap">
-        <div class="profile-avatar" style="background:${u.avatarBg}">${u.avatar}</div>
-      </div>
-    </div>
-    <div class="profile-info">
-      <div style="display:flex;justify-content:flex-end;gap:8px;padding-bottom:8px">
-        <button class="back-btn" style="display:flex;width:36px;height:36px" onclick="navigate('search')" title="搜索">
-          <svg viewBox="0 0 24 24"><path d="M10.25 3.75c-3.59 0-6.5 2.91-6.5 6.5s2.91 6.5 6.5 6.5c1.795 0 3.419-.726 4.596-1.904 1.178-1.177 1.904-2.801 1.904-4.596 0-3.59-2.91-6.5-6.5-6.5z"/></svg>
-        </button>
-        <button class="fbtn" id="msgBtn-${handle}" onclick="sendMsgToUser('${handle}')" style="border-radius:9999px;padding:0 16px;min-width:80px">
-          <svg width="18" height="18" viewBox="0 0 24 24" style="vertical-align:middle"><path d="M1.998 5.5c0-1.381 1.119-2.5 2.5-2.5h15c1.381 0 2.5 1.119 2.5 2.5v13c0 1.381-1.119 2.5-2.5 2.5h-15c-1.381 0-2.5-1.119-2.5-2.5v-13z"/></svg>
-        </button>
-        <button class="fbtn" id="followBtn-${handle}" onclick="toggleUserFollow('${handle}',this)">关注</button>
-      </div>
-      <div class="pi-name">${u.name} ${u.verified?`<span style="color:var(--accent);display:inline-flex;vertical-align:middle"><svg width="18" height="18" viewBox="0 0 24 24"><path fill="var(--accent)" d="M20.396 11c-.018-.646-.215-1.275-.57-1.816-.354-.54-.852-.972-1.438-1.246.223-.607.27-1.264.14-1.897-.131-.634-.437-1.218-.882-1.687-.47-.445-1.053-.75-1.687-.882-.633-.13-1.29-.083-1.897.14-.273-.587-.704-1.086-1.245-1.44S11.647 1.62 11 1.604c-.646.017-1.273.213-1.813.568s-.969.854-1.24 1.441c-.608-.223-1.267-.272-1.902-.14-.635.13-1.22.436-1.69.882-.445.47-.749 1.055-.878 1.688-.13.633-.08 1.29.144 1.896-.587.274-1.087.705-1.443 1.245-.356.54-.555 1.17-.574 1.817.02.647.218 1.276.574 1.817.356.54.856.972 1.443 1.245-.224.606-.274 1.263-.144 1.896.13.634.433 1.218.877 1.688.47.443 1.054.747 1.687.878.633.132 1.29.084 1.897-.136.274.586.705 1.084 1.246 1.439.54.354 1.17.551 1.816.569.647-.016 1.276-.213 1.817-.567s.972-.854 1.245-1.44c.604.239 1.266.296 1.903.164.636-.132 1.22-.447 1.68-.907.46-.46.776-1.044.908-1.681s.075-1.299-.165-1.903c.586-.274 1.084-.705 1.439-1.246.354-.54.551-1.17.569-1.816z"/></svg></span>`:''}</div>
-      <div class="pi-handle">${u.handle}</div>
-      <div class="pi-bio">${u.bio}</div>
-      <div class="pi-stats">
-        <span class="ps"><span>${f(u.following)}</span> 正在关注</span>
-        <span class="ps"><span>${f(u.followers)}</span> 关注者</span>
-      </div>
-      <div class="profile-tabs">
-        <div class="profile-tab active" onclick="switchUserProfileTab(this,'posts','${handle}')">帖子</div>
-        <div class="profile-tab" onclick="switchUserProfileTab(this,'replies','${handle}')">回复</div>
-        <div class="profile-tab" onclick="switchUserProfileTab(this,'media','${handle}')">媒体</div>
-        <div class="profile-tab" onclick="switchUserProfileTab(this,'likes','${handle}')">喜欢</div>
-      </div>
-    </div>
-    <div id="userProfileContent">
-      ${userTweets.length>0?userTweets.map(t=>renderTweet(t)).join(''):'<div class="empty-state"><h3>还没有帖子</h3></div>'}
-    </div>
-  `;
+        <div class="profile-header">
+          <div class="profile-cover" style="background:linear-gradient(135deg,#1a1a2e,#16213e)"></div>
+          <div class="profile-avatar-wrap">
+            ${avatarHtml}
+          </div>
+        </div>
+        <div class="profile-info">
+          <div style="display:flex;justify-content:flex-end;gap:8px;padding-bottom:8px">
+            <button class="fbtn" id="followBtn-${handle}" onclick="toggleUserFollow('${handle}',this)">${u.is_following ? '已关注' : '关注'}</button>
+          </div>
+          <div class="pi-name">${u.name}</div>
+          <div class="pi-handle">${u.handle}</div>
+          <div class="pi-bio">${u.bio || ''}</div>
+          <div class="pi-stats">
+            <span class="ps"><span>${f(u.following)}</span> 正在关注</span>
+            <span class="ps"><span>${f(u.followers)}</span> 关注者</span>
+          </div>
+        </div>
+        <div id="userProfileContent">
+          ${userPosts.length > 0 ? userPosts.map(t => renderTweet(t)).join('') : '<div class="empty-state"><h3>还没有帖子</h3></div>'}
+        </div>
+      `;
+    } catch(err) {
+      console.warn('[言] 加载用户资料失败:', err.message);
+      main.innerHTML = '<div class="empty-state"><h3>加载失败</h3><p>' + err.message + '</p></div>';
+    }
+  })();
 }
+
 function switchUserProfileTab(el, tab, handle){
   document.querySelectorAll('.profile-tab').forEach(t=>t.classList.remove('active'));
   el.classList.add('active');
@@ -2551,10 +2720,11 @@ function toggleUserFollow(handle,btn){
 }
 function sendMsgToUser(handle){
   const cleanHandle = handle.replace('@','');
-  const existingMsg = DB.messages.find(m=>m.handle==='@'+cleanHandle);
-  if(existingMsg){
+  // 优先从 API 缓存查找
+  const existingConv = _conversations.find(c=>c.other_user?.username === cleanHandle);
+  if(existingConv){
     navigate('messages');
-    setTimeout(()=>openChat(existingMsg.id),100);
+    setTimeout(()=>openChat(existingConv.id),100);
   } else {
     openNewMsgModal();
     document.getElementById('newMsgRecipient').value = cleanHandle;
@@ -2563,56 +2733,69 @@ function sendMsgToUser(handle){
 
 // ===== POST DETAIL =====
 function renderPostDetail(id){
-  const t = DB.tweets.find(x=>x.id===id);
-  if(!t) return navigate('home');
-  const replies = DB.replies[id]||[];
   const main = document.getElementById('mainContent');
-  main.innerHTML = `
-    <div class="ct">
-      <div class="main-header">
-        <button class="back-btn" onclick="navigate('home')"><svg viewBox="0 0 24 24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg></button>
-        <div class="page-title">帖子</div>
-      </div>
-    </div>
-    ${renderTweet(t)}
-    ${isLoggedIn() ? `
-    <div class="reply-input">
-      <div class="av" style="background:${(currentUser()&&currentUser().avatarBg)||'linear-gradient(135deg,#667eea,#764ba2)'}">${(currentUser()&&currentUser().name&&currentUser().name.slice(0,1))||state.user.name.slice(0,1)}</div>
-      <textarea class="ri-textarea" placeholder="发一条回复..." id="replyTextMain" onkeydown="if(event.key==='Enter'&&!event.shiftKey&&event.ctrlKey){submitMainReply(${id})}"></textarea>
-      <button class="pb" onclick="submitMainReply(${id})" style="align-self:flex-end">回复</button>
-    </div>` : `
-    <div class="reply-input" style="display:flex;align-items:center;justify-content:center;padding:20px">
-      <span style="color:var(--text2);font-size:14px">💬 <a href="javascript:navigate('auth')" style="color:var(--accent);text-decoration:none">登录</a>后参与讨论</span>
-    </div>`}
-    <div id="repliesArea">
-      ${replies.map(r=>`
-        <div class="reply-item">
-          <div class="ta" style="background:${r.avatarBg};width:36px;height:36px;font-size:14px">${r.avatar}</div>
-          <div class="tbdy">
-            <div class="th">
-              <span class="tn">${r.name}</span>
-              <span class="thandle">${r.handle}</span>
-              <span class="tt">· ${formatTime(r.createdAt||r.time)}</span>
-            </div>
-            <div class="ttxt">${r.text}</div>
-            <div class="tactions">
-              <button class="ab" onclick="doLikeReply(${r.id},${id},this)">${vSvg()}<span class="ac">${r.likes}</span></button>
-            </div>
+  main.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text2)">加载中...</div>';
+  
+  (async function(){
+    try {
+      const result = await PostsAPI.get(id);
+      if(!result.post){
+        main.innerHTML = '<div class="empty-state"><h3>帖子不存在</h3></div>';
+        return;
+      }
+      const t = result.post;
+      const replies = result.replies || [];
+      const cu = currentUser();
+      
+      main.innerHTML = `
+        <div class="ct">
+          <div class="main-header">
+            <button class="back-btn" onclick="navigate('home')"><svg viewBox="0 0 24 24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg></button>
+            <div class="page-title">帖子</div>
           </div>
         </div>
-      `).join('')}
-    </div>
-  `;
-  state.modalTweet = t;
+        ${renderTweet(t)}
+        ${cu ? `
+        <div class="reply-input">
+          <div class="av" style="background:${cu.avatarBg || 'linear-gradient(135deg,#667eea,#764ba2)'}">${(cu.name || '用').slice(0,1)}</div>
+          <textarea class="ri-textarea" placeholder="发一条回复..." id="replyTextMain" onkeydown="if(event.key==='Enter'&&!event.shiftKey&&event.ctrlKey){submitMainReply(${id})}"></textarea>
+          <button class="pb" onclick="submitMainReply(${id})" style="align-self:flex-end">回复</button>
+        </div>` : `
+        <div class="reply-input" style="display:flex;align-items:center;justify-content:center;padding:20px">
+          <span style="color:var(--text2);font-size:14px">💬 <a href="javascript:openLoginPrompt()" style="color:var(--accent);text-decoration:none">登录</a>后参与讨论</span>
+        </div>`}
+        <div id="repliesArea">
+          ${replies.map(r => `
+            <div class="reply-item">
+              <div class="ta" style="background:${r.avatarBg || 'linear-gradient(135deg,#667eea,#764ba2)'};width:36px;height:36px;font-size:14px">${r.avatar || '?'}</div>
+              <div class="tbdy">
+                <div class="th">
+                  <span class="tn">${r.name}</span>
+                  <span class="thandle">${r.handle}</span>
+                  <span class="tt">· ${r.time}</span>
+                </div>
+                <div class="ttxt">${r.text}</div>
+              </div>
+            </div>
+          `).join('')}
+        </div>
+      `;
+      state.modalTweet = t;
+    } catch(err) {
+      console.warn('[言] 加载帖子详情失败:', err.message);
+      main.innerHTML = '<div class="empty-state"><h3>加载失败</h3><p>' + err.message + '</p></div>';
+    }
+  })();
 }
+// 回复帖子 — API 优先
 async function submitMainReply(id){
   if(!requireLogin()) return;
   const text = document.getElementById('replyTextMain').value.trim();
   if(!text) return;
   const u = currentUser() || {};
 
-  // API 模式
-  if(typeof PostsAPI !== 'undefined' && u._apiUser){
+  // API 模式（Django session 认证）
+  if(typeof PostsAPI !== 'undefined'){
     try {
       const reply = await PostsAPI.reply(id, text);
       const r = {
@@ -2764,30 +2947,12 @@ function setTheme(theme,el){
 
 // ===== SEARCH =====
 let _searchTab = 'all';
+// 搜索结果缓存（避免 tab 切换重复请求）
+let _searchCache = { q: null, posts: [], users: [] };
+
 function renderSearch(q=''){
   const main = document.getElementById('mainContent');
-  const tweetResults = q ? DB.tweets.filter(t=>t.text.includes(q)||t.name.includes(q)||t.handle.includes(q)) : [];
-  // 增强搜索：同时搜索用户（含注册用户）和话题
-  const allUserData = [...(typeof FOLLOWING_DATA!=='undefined'?FOLLOWING_DATA:[]), ...(typeof FOLLOWERS_DATA!=='undefined'?FOLLOWERS_DATA:[]), ...DB.likersList];
-  // 加入注册用户（yan_auth_users）
-  try {
-    const regUsers = JSON.parse(localStorage.getItem('yan_auth_users')||'{}');
-    Object.values(regUsers).forEach(ru => {
-      allUserData.push({name:ru.name,handle:ru.handle,avatar:(ru.name||'用').slice(0,1),avatarBg:ru.avatarBg||'linear-gradient(135deg,#667eea,#764ba2)',verified:ru.verified||false,bio:ru.bio||''});
-    });
-  } catch(e){}
-  // 去重
-  const seenHandles = new Set();
-  const uniqueUsers = [];
-  allUserData.forEach(u => { if(!seenHandles.has(u.handle)){ seenHandles.add(u.handle); uniqueUsers.push(u); } });
-  const userResults = q ? uniqueUsers.filter(u=>u.name.includes(q)||u.handle.toLowerCase().includes(q.toLowerCase())||(u.bio&&u.bio.includes(q))) : [];
-  const topicResults = q && typeof TOPICS_DATA!=='undefined' ? TOPICS_DATA.filter(t=>t.name.includes(q)) : [];
-  const hasResults = tweetResults.length > 0 || userResults.length > 0 || topicResults.length > 0;
-  const totalCount = tweetResults.length + userResults.length + topicResults.length;
-  // 根据 tab 过滤显示
-  const tabTweets = _searchTab==='all'||_searchTab==='tweets' ? tweetResults : [];
-  const tabUsers = _searchTab==='all'||_searchTab==='users' ? userResults : [];
-  const tabTopics = _searchTab==='all'||_searchTab==='topics' ? topicResults : [];
+  // 渲染搜索框骨架（立即同步）
   main.innerHTML = `
     <div class="ct">
       <div class="main-header">
@@ -2796,61 +2961,89 @@ function renderSearch(q=''){
           <div class="search-box" style="position:static;padding:0">
             <div class="sbw">
               <svg viewBox="0 0 24 24"><path d="M10.25 3.75c-3.59 0-6.5 2.91-6.5 6.5s2.91 6.5 6.5 6.5c1.795 0 3.419-.726 4.596-1.904 1.178-1.177 1.904-2.801 1.904-4.596 0-3.59-2.91-6.5-6.5-6.5z"/></svg>
-              <input class="sin" placeholder="搜索" id="searchInput" value="${q}" oninput="doSearch(this.value)" onkeydown="if(event.key==='Enter')doSearch(this.value)">
+              <input class="sin" placeholder="搜索" id="searchInput" value="${q}" oninput="doSearch(this.value)" onkeydown="if(event.key==='Enter')doSearch(this.value)" autofocus>
             </div>
           </div>
         </div>
       </div>
     </div>
-    ${q?`
-      <div style="padding:12px 16px;font-size:14px;color:var(--text2)">"${q}" 的搜索结果 · ${totalCount} 条</div>
-      <div class="tab-row" style="padding:0 16px;border-bottom:1px solid var(--border)">
-        <div class="tab ${_searchTab==='all'?'active':''}" onclick="_searchTab='all';renderSearch('${q.replace(/'/g,"\\'")}')">全部${totalCount>0?' · '+totalCount:''}</div>
-        <div class="tab ${_searchTab==='users'?'active':''}" onclick="_searchTab='users';renderSearch('${q.replace(/'/g,"\\'")}')">用户${userResults.length>0?' · '+userResults.length:''}</div>
-        <div class="tab ${_searchTab==='topics'?'active':''}" onclick="_searchTab='topics';renderSearch('${q.replace(/'/g,"\\'")}')">话题${topicResults.length>0?' · '+topicResults.length:''}</div>
-        <div class="tab ${_searchTab==='tweets'?'active':''}" onclick="_searchTab='tweets';renderSearch('${q.replace(/'/g,"\\'")}')">帖子${tweetResults.length>0?' · '+tweetResults.length:''}</div>
+    <div id="searchResults">${q ? '<div style="padding:32px;text-align:center;color:var(--text2)">搜索中...</div>' : _buildSearchEmpty()}</div>
+  `;
+  if(!q) return;
+  // 如果缓存命中，直接渲染（tab 切换时）
+  if(_searchCache.q === q){
+    _renderSearchResults(q, _searchCache.posts, _searchCache.users);
+    return;
+  }
+  // 并行请求帖子和用户
+  Promise.all([
+    PostsAPI.search(q).catch(()=>({ posts: [] })),
+    UsersAPI.search(q).catch(()=>[]),
+  ]).then(function(results){
+    var postsRes = results[0];
+    var usersRes = results[1];
+    var tweetResults = postsRes.posts || [];
+    var userResults = Array.isArray(usersRes) ? usersRes : [];
+    _searchCache = { q: q, posts: tweetResults, users: userResults };
+    _renderSearchResults(q, tweetResults, userResults);
+  }).catch(function(e){
+    var r = document.getElementById('searchResults');
+    if(r) r.innerHTML = '<div class="empty-state"><h3>搜索失败</h3><p>网络异常，请稍后重试</p></div>';
+  });
+}
+
+function _buildSearchEmpty(){
+  var histHtml = '';
+  if(state.searchHistory && state.searchHistory.length > 0){
+    histHtml = `<div style="padding:12px 16px"><div style="display:flex;justify-content:space-between;align-items:center;padding:0 0 12px"><div style="font-size:15px;font-weight:700">搜索历史</div><button onclick="state.searchHistory=[];renderSearch()" style="background:none;border:none;color:var(--accent);cursor:pointer;font-size:13px">清除</button></div>${state.searchHistory.map(k=>`<div style="display:flex;align-items:center;gap:12px;padding:8px 0;border-bottom:1px solid var(--border)"><svg viewBox="0 0 24 24" width="16" height="16" fill="var(--text2)"><path d="M13.5 5.5c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zM9.8 8.9L7 23h2.1l1.8-8 2.1 2v6h2v-7.5l-2.1-2 .6-3C14.8 12 16.8 13 19 13v-2c-1.9 0-3.5-1-4.3-2.4l-1-1.6c-.4-.6-1-1-1.7-1-.3 0-.5.1-.8.1L6 8.3V13h2V9.6l1.8-.7"/></svg><span style="flex:1;cursor:pointer" onclick="document.getElementById('searchInput').value='${k}';navigate('search','${k}')">${k}</span><button onclick="event.stopPropagation();state.searchHistory=state.searchHistory.filter(h=>h!=='${k}');renderSearch()" style="background:none;border:none;color:var(--text2);cursor:pointer">✕</button></div>`).join('')}</div>`;
+  }
+  return `<div class="empty-state"><h3>搜索「言」</h3><p>输入关键词搜索帖子或用户</p></div>
+    ${histHtml}
+    <div style="padding:12px 16px"><div class="wt" style="padding:0 0 12px">推荐搜索</div>
+      <div style="display:flex;flex-wrap:wrap;gap:8px">
+        ${['AI大模型','前端开发','Vue 4.0','创业','科技新闻'].map(k=>`<div style="background:var(--bg2);padding:8px 16px;border-radius:20px;font-size:14px;cursor:pointer" onclick="document.getElementById('searchInput').value='${k}';navigate('search','${k}')">${k}</div>`).join('')}
       </div>
-    `:''}
-    ${q&&!hasResults?'<div class="empty-state"><h3>未找到结果</h3><p>试试其他关键词</p></div>':
-      (q?`
-        ${tabUsers.length>0?`
-          <div style="padding:12px 16px 8px;font-size:15px;font-weight:700">用户</div>
-          ${tabUsers.slice(0, _searchTab==='users'?50:5).map(u=>`
-            <div class="fi" style="padding:12px 16px;cursor:pointer" onclick="navigate('user','${u.handle}')">
-              <div class="fa" style="background:${u.avatarBg};width:44px;height:44px;font-size:16px">${u.avatar}</div>
-              <div class="fi-info">
-                <div class="fi-name">${u.name}${u.verified?'<span style="color:var(--accent);display:inline-flex"><svg width="14" height="14" viewBox="0 0 24 24"><path fill="var(--accent)" d="M20.396 11c-.018-.646-.215-1.275-.57-1.816-.354-.54-.852-.972-1.438-1.246.223-.607.27-1.264.14-1.897-.131-.634-.437-1.218-.882-1.687-.47-.445-1.053-.75-1.687-.882-.633-.13-1.29-.083-1.897.14-.273-.587-.704-1.086-1.245-1.44S11.647 1.62 11 1.604c-.646.017-1.273.213-1.813.568s-.969.854-1.24 1.441c-.608-.223-1.267-.272-1.902-.14-.635.13-1.22.436-1.69.882-.445.47-.749 1.055-.878 1.688-.13.633-.08 1.29.144 1.896-.587.274-1.087.705-1.443 1.245-.356.54-.555 1.17-.574 1.817.02.647.218 1.276.574 1.817.356.54.856.972 1.443 1.245-.224.606-.274 1.263-.144 1.896.13.634.433 1.218.877 1.688.47.443 1.054.747 1.687.878.633.132 1.29.084 1.897-.136.274.586.705 1.084 1.246 1.439.54.354 1.17.551 1.816.569.647-.016 1.276-.213 1.817-.567s.972-.854 1.245-1.44c.604.239 1.266.296 1.903.164.636-.132 1.22-.447 1.68-.907.46-.46.776-1.044.908-1.681s.075-1.299-.165-1.903c.586-.274 1.084-.705 1.439-1.246.354-.54.551-1.17.569-1.816z"/></svg></span>':''}</div>
-                <div class="fi-handle">${u.handle}</div>
-                ${u.bio?`<div style="font-size:13px;color:var(--text2);margin-top:2px">${u.bio.length>60?u.bio.slice(0,60)+'...':u.bio}</div>`:''}
-              </div>
+    </div>`;
+}
+
+function _renderSearchResults(q, tweetResults, userResults){
+  var container = document.getElementById('searchResults');
+  if(!container) return;
+  var hasResults = tweetResults.length > 0 || userResults.length > 0;
+  var totalCount = tweetResults.length + userResults.length;
+  var tabTweets = _searchTab==='all'||_searchTab==='tweets' ? tweetResults : [];
+  var tabUsers = _searchTab==='all'||_searchTab==='users' ? userResults : [];
+  var qE = q.replace(/'/g,"\\'");
+  container.innerHTML = `
+    <div style="padding:12px 16px;font-size:14px;color:var(--text2)">"${escapeHtml(q)}" 的搜索结果 · ${totalCount} 条</div>
+    <div class="tab-row" style="padding:0 16px;border-bottom:1px solid var(--border)">
+      <div class="tab ${_searchTab==='all'?'active':''}" onclick="_searchTab='all';_renderSearchResults('${qE}',_searchCache.posts,_searchCache.users)">全部${totalCount>0?' · '+totalCount:''}</div>
+      <div class="tab ${_searchTab==='users'?'active':''}" onclick="_searchTab='users';_renderSearchResults('${qE}',_searchCache.posts,_searchCache.users)">用户${userResults.length>0?' · '+userResults.length:''}</div>
+      <div class="tab ${_searchTab==='tweets'?'active':''}" onclick="_searchTab='tweets';_renderSearchResults('${qE}',_searchCache.posts,_searchCache.users)">帖子${tweetResults.length>0?' · '+tweetResults.length:''}</div>
+    </div>
+    ${!hasResults ? '<div class="empty-state"><h3>未找到结果</h3><p>试试其他关键词</p></div>' : `
+      ${tabUsers.length>0?`
+        <div style="padding:12px 16px 8px;font-size:15px;font-weight:700">用户</div>
+        ${tabUsers.slice(0, _searchTab==='users'?50:5).map(u=>`
+          <div class="fi" style="padding:12px 16px;cursor:pointer" onclick="navigate('user','${u.handle}')">
+            ${u.avatarUrl ? `<img src="${u.avatarUrl}" style="width:44px;height:44px;border-radius:50%;object-fit:cover;flex-shrink:0" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"><div class="fa" style="background:${u.avatarBg};width:44px;height:44px;font-size:16px;display:none">${u.avatar}</div>` : `<div class="fa" style="background:${u.avatarBg};width:44px;height:44px;font-size:16px">${u.avatar}</div>`}
+            <div class="fi-info">
+              <div class="fi-name">${escapeHtml(u.name)}</div>
+              <div class="fi-handle">${escapeHtml(u.handle)}</div>
+              ${u.bio?`<div style="font-size:13px;color:var(--text2);margin-top:2px">${escapeHtml(u.bio.slice(0,60))}${u.bio.length>60?'...':''}</div>`:''}
+              <div style="font-size:12px;color:var(--text2);margin-top:2px">${u.followers||0} 关注者</div>
             </div>
-          `).join('')}
-        `:''}
-        ${tabTopics.length>0?`
-          <div style="padding:12px 16px 8px;font-size:15px;font-weight:700">话题</div>
-          ${tabTopics.slice(0, _searchTab==='topics'?50:5).map(t=>`
-            <div class="trend-item" style="padding:16px;cursor:pointer" onclick="navigate('topic','${t.name}')">
-              <div style="font-size:20px;margin-bottom:4px">${t.icon||''}</div>
-              <div class="tn2" style="font-size:15px">${t.name}</div>
-              <div class="tc">${t.posts} 条帖子</div>
-            </div>
-          `).join('')}
-        `:''}
-        ${tabTweets.length>0?`
-          <div style="padding:12px 16px 8px;font-size:15px;font-weight:700">帖子</div>
-          ${tabTweets.map(t=>renderTweet(t)).join('')}
-        `:''}
-      `:
-      `<div class="empty-state"><h3>搜索「言」</h3><p>输入关键词搜索帖子、用户或话题</p></div>
-      ${state.searchHistory&&state.searchHistory.length>0?`<div style="padding:12px 16px"><div style="display:flex;justify-content:space-between;align-items:center;padding:0 0 12px"><div style="font-size:15px;font-weight:700">搜索历史</div><button onclick="state.searchHistory=[];renderSearch()" style="background:none;border:none;color:var(--accent);cursor:pointer;font-size:13px">清除</button></div>${state.searchHistory.map(k=>`<div style="display:flex;align-items:center;gap:12px;padding:8px 0;border-bottom:1px solid var(--border)"><svg viewBox="0 0 24 24" width="16" height="16" fill="var(--text2)"><path d="M13.5 5.5c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zM9.8 8.9L7 23h2.1l1.8-8 2.1 2v6h2v-7.5l-2.1-2 .6-3C14.8 12 16.8 13 19 13v-2c-1.9 0-3.5-1-4.3-2.4l-1-1.6c-.4-.6-1-1-1.7-1-.3 0-.5.1-.8.1L6 8.3V13h2V9.6l1.8-.7"/></svg><span style="flex:1;cursor:pointer" onclick="document.getElementById('searchInput').value='${k}';navigate('search','${k}')">${k}</span><button onclick="event.stopPropagation();state.searchHistory=state.searchHistory.filter(h=>h!=='${k}');renderSearch()" style="background:none;border:none;color:var(--text2);cursor:pointer">✕</button></div>`).join('')}</div>`:''}
-      <div style="padding:12px 16px"><div class="wt" style="padding:0 0 12px">推荐搜索</div>
-        <div style="display:flex;flex-wrap:wrap;gap:8px">
-          ${['AI大模型','前端开发','Vue 4.0','创业','科技新闻'].map(k=>`<div style="background:var(--bg2);padding:8px 16px;border-radius:20px;font-size:14px;cursor:pointer" onclick="document.getElementById('searchInput').value='${k}';navigate('search','${k}')">${k}</div>`).join('')}
-        </div>
-      </div>`
-    )}
+          </div>
+        `).join('')}
+      `:''}
+      ${tabTweets.length>0?`
+        <div style="padding:12px 16px 8px;font-size:15px;font-weight:700">帖子</div>
+        ${tabTweets.map(t=>renderTweet(t)).join('')}
+      `:''}
+    `}
   `;
 }
+
 let _searchTimer = null;
 function doSearch(q){
   // 实时搜索：300ms 防抖，输入少于2字不触发
@@ -3128,135 +3321,124 @@ function renderTopicPage(topic){
 }
 
 // ===== FOLLOWING / FOLLOWERS =====
-const FOLLOWING_DATA = [
-  {name:'林小雨',handle:'@linxiaoyu',bio:'产品经理 / AI爱好者 🌈 分享科技、职场和生活',avatar:'林',avatarBg:'linear-gradient(135deg,#667eea,#764ba2)',verified:true,following:true},
-  {name:'科技日报',handle:'@techdaily',bio:'第一时间报道科技前沿资讯，关注AI/区块链/芯片',avatar:'科',avatarBg:'linear-gradient(135deg,#f093fb,#f5576c)',verified:true,following:true},
-  {name:'张伟',handle:'@zhangwei',bio:'产品经理 / AI创业者 | 三次创业 | B站 50w 粉',avatar:'张',avatarBg:'linear-gradient(135deg,#4facfe,#00f2fe)',verified:false,following:true},
-  {name:'李娜',handle:'@lina_tech',bio:'全栈工程师 / 开源贡献者 🔥 Vue/React/Node',avatar:'李',avatarBg:'linear-gradient(135deg,#43e97b,#38f9d7)',verified:false,following:true},
-  {name:'前端开发者社区',handle:'@fe_community',bio:'分享前端技术和最佳实践 | 每日一题 | 30万开发者',avatar:'前',avatarBg:'linear-gradient(135deg,#fa709a,#fee140)',verified:true,following:true},
-  {name:'陈明',handle:'@chenming_ai',bio:'AI研究员 @ 清华大学 | NLP / LLM / 计算机视觉',avatar:'陈',avatarBg:'linear-gradient(135deg,#43e97b,#38f9d7)',verified:true,following:true},
-  {name:'产品猎人',handle:'@producthunt_cn',bio:'发现优秀产品，每日精选新品推荐',avatar:'产',avatarBg:'linear-gradient(135deg,#f093fb,#f5576c)',verified:false,following:true},
-  {name:'阿里云',handle:'@aliyun',bio:'阿里云官方账号，云计算解决方案领导者',avatar:'阿',avatarBg:'linear-gradient(135deg,#f6d365,#fda085)',verified:true,following:false},
-  {name:'GitHub',handle:'@github',bio:'How people build software',avatar:'G',avatarBg:'linear-gradient(135deg,#333,#555)',verified:true,following:false},
-  {name:'Vue.js',handle:'@vuejs',bio:'The Progressive JavaScript Framework',avatar:'V',avatarBg:'linear-gradient(135deg,#42b883,#35495e)',verified:true,following:false}
-];
-const FOLLOWERS_DATA = [
-  {name:'王珊珊',handle:'@wangshanshan',bio:'UI/UX 设计师 | Figma 爱好者 | 记录生活',avatar:'王',avatarBg:'linear-gradient(135deg,#fa709a,#fee140)',verified:false,following:false},
-  {name:'陈明',handle:'@chenming_ai',bio:'AI研究员 @ 清华大学 | NLP / LLM / 计算机视觉',avatar:'陈',avatarBg:'linear-gradient(135deg,#43e97b,#38f9d7)',verified:true,following:true},
-  {name:'诗雅',handle:'@shiya',bio:'自由撰稿人 ✍️ 科技 / 文化 / 社会观察',avatar:'诗',avatarBg:'linear-gradient(135deg,#f093fb,#f5576c)',verified:false,following:false},
-  {name:'刘宇航',handle:'@liuyuhang_dev',bio:'Android/iOS独立开发者 🚀 App Store 5款产品在架',avatar:'刘',avatarBg:'linear-gradient(135deg,#4facfe,#00f2fe)',verified:false,following:true},
-  {name:'赵晓梅',handle:'@zhaoxiaomei',bio:'投资人 / 创业导师 | 关注早期科技项目 | DM open',avatar:'赵',avatarBg:'linear-gradient(135deg,#667eea,#764ba2)',verified:true,following:false},
-  {name:'周杰',handle:'@zhoujie_pm',bio:'产品总监 | 用户增长 | 曾就职字节/腾讯',avatar:'周',avatarBg:'linear-gradient(135deg,#f6d365,#fda085)',verified:false,following:false}
-];
-function renderFollowing(){
+// ===== 关注/粉丝列表（真实 API）=====
+function _renderFollowPage(type){
   const main = document.getElementById('mainContent');
-  const u = currentUser() || state.user;
-  main.innerHTML=`
+  const cu = currentUser() || state.user;
+  const backTarget = state.viewingUserId ? 'user' : 'profile';
+  const targetId = state.viewingUserId || (cu && cu.id);
+  const title = type === 'following' ? '正在关注' : '关注者';
+  const countLabel = type === 'following'
+    ? ((cu.following_count || cu.following || 0) + ' 正在关注')
+    : ((cu.followers_count || cu.followers || 0) + ' 关注者');
+  main.innerHTML = `
     <div class="ct">
       <div class="main-header" style="justify-content:space-between">
         <div style="display:flex;align-items:center;gap:20px">
-          <button class="back-btn" onclick="navigate('profile')"><svg viewBox="0 0 24 24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg></button>
+          <button class="back-btn" onclick="navigate('${backTarget}')"><svg viewBox="0 0 24 24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg></button>
           <div>
-            <div style="font-size:17px;font-weight:800">${u.name||'王坤'}</div>
-            <div style="font-size:13px;color:var(--text2)">${u.following||state.user.following} 正在关注</div>
+            <div style="font-size:17px;font-weight:800">${escapeHtml(cu.name||'用户')}</div>
+            <div style="font-size:13px;color:var(--text2)">${countLabel}</div>
           </div>
         </div>
       </div>
     </div>
-    ${FOLLOWING_DATA.map(u=>renderFollowItem(u)).join('')}
-    ${FOLLOWING_DATA.length===0?'<div class="empty-state"><h3>还没有关注任何人</h3><p>关注更多人，发现精彩内容</p></div>':''}
+    <div id="followListBody"><div style="padding:32px;text-align:center;color:var(--text2)">加载中...</div></div>
   `;
-}
-function renderFollowers(){
-  const main = document.getElementById('mainContent');
-  const u = currentUser() || state.user;
-  main.innerHTML=`
-    <div class="ct">
-      <div class="main-header" style="justify-content:space-between">
-        <div style="display:flex;align-items:center;gap:20px">
-          <button class="back-btn" onclick="navigate('profile')"><svg viewBox="0 0 24 24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg></button>
-          <div>
-            <div style="font-size:17px;font-weight:800">${u.name||'王坤'}</div>
-            <div style="font-size:13px;color:var(--text2)">${u.followers||state.user.followers} 关注者</div>
-          </div>
-        </div>
-      </div>
-    </div>
-    ${FOLLOWERS_DATA.map(u=>renderFollowItem(u)).join('')}
-    ${FOLLOWERS_DATA.length===0?'<div class="empty-state"><h3>还没有关注者</h3><p>分享你的内容，吸引关注</p></div>':''}
-  `;
-}
-function renderFollowItem(u){
-  return `
-    <div class="fi" style="padding:16px">
-      <div class="fa" style="background:${u.avatarBg};width:48px;height:48px;font-size:18px;cursor:pointer" onclick="navigate('user','${u.handle}')">${u.avatar}</div>
-      <div class="fi-info" style="flex:1">
-        <div class="fi-name" onclick="navigate('user','${u.handle}')">${u.name}${u.verified?'<span style="color:var(--accent);display:inline-flex"><svg width="14" height="14" viewBox="0 0 24 24"><path fill="var(--accent)" d="M20.396 11c-.018-.646-.215-1.275-.57-1.816-.354-.54-.852-.972-1.438-1.246.223-.607.27-1.264.14-1.897-.131-.634-.437-1.218-.882-1.687-.47-.445-1.053-.75-1.687-.882-.633-.13-1.29-.083-1.897.14-.273-.587-.704-1.086-1.245-1.44S11.647 1.62 11 1.604c-.646.017-1.273.213-1.813.568s-.969.854-1.24 1.441c-.608-.223-1.267-.272-1.902-.14-.635.13-1.22.436-1.69.882-.445.47-.749 1.055-.878 1.688-.13.633-.08 1.29.144 1.896-.587.274-1.087.705-1.443 1.245-.356.54-.555 1.17-.574 1.817.02.647.218 1.276.574 1.817.356.54.856.972 1.443 1.245-.224.606-.274 1.263-.144 1.896.13.634.433 1.218.877 1.688.47.443 1.054.747 1.687.878.633.132 1.29.084 1.897-.136.274.586.705 1.084 1.246 1.439.54.354 1.17.551 1.816.569.647-.016 1.276-.213 1.817-.567s.972-.854 1.245-1.44c.604.239 1.266.296 1.903.164.636-.132 1.22-.447 1.68-.907.46-.46.776-1.044.908-1.681s.075-1.299-.165-1.903c.586-.274 1.084-.705 1.439-1.246.354-.54.551-1.17.569-1.816z"/></svg></span>':''}</div>
-        <div class="fi-handle">${u.handle}</div>
-        <div style="font-size:14px;color:var(--text2);margin-top:4px">${u.bio}</div>
-      </div>
-      <button class="${u.following?'fbtn following':'fbtn'}" onclick="toggleFollowItem(this,'${u.handle}')">${u.following?'正在关注':'关注'}</button>
-    </div>
-  `;
-}
-function toggleFollowItem(btn,handle){
-  const allUsers = [...FOLLOWING_DATA, ...FOLLOWERS_DATA];
-  const user = allUsers.find(u=>u.handle===handle);
-  if(user) user.following=!user.following;
-  // 持久化关注状态到 LocalStorage
-  saveFollowState(handle, user ? user.following : false);
-  if(btn.classList.contains('following')){
-    btn.classList.remove('following');
-    btn.classList.add('fbtn');
-    btn.textContent='关注';
-    btn.style.cssText='';
-  } else {
-    btn.classList.add('following');
-    btn.textContent='正在关注';
-    btn.style.cssText='background:transparent;color:var(--text);border:1px solid var(--border);border-radius:9999px;padding:7px 18px;font-size:14px;font-weight:700';
-    btn.onmouseout=function(){this.style.cssText='background:transparent;color:var(--text);border:1px solid var(--border);border-radius:9999px;padding:7px 18px;font-size:14px;font-weight:700'};
-  }
-}
-// 关注状态持久化
-function saveFollowState(handle, following){
-  const key = 'yan_follow_state';
-  let states = {};
-  try { states = JSON.parse(localStorage.getItem(key)) || {}; } catch(e) {}
-  states[handle] = following;
-  try { localStorage.setItem(key, JSON.stringify(states)); } catch(e) { console.warn('localStorage 写入失败', e); }
-}
-function loadFollowStates(){
-  const key = 'yan_follow_state';
-  try {
-    const states = JSON.parse(localStorage.getItem(key)) || {};
-    // 应用到 FOLLOWING_DATA 和 FOLLOWERS_DATA
-    [...FOLLOWING_DATA, ...FOLLOWERS_DATA].forEach(u => {
-      if(states[u.handle] !== undefined) u.following = states[u.handle];
-    });
-  } catch(e) {}
+  if(!targetId){ document.getElementById('followListBody').innerHTML='<div class="empty-state"><h3>请先登录</h3></div>'; return; }
+  var apiCall = type === 'following' ? UsersAPI.following(targetId) : UsersAPI.followers(targetId);
+  apiCall.then(function(users){
+    var body = document.getElementById('followListBody');
+    if(!body) return;
+    if(!users || users.length === 0){
+      body.innerHTML = type === 'following'
+        ? '<div class="empty-state"><h3>还没有关注任何人</h3><p>关注更多人，发现精彩内容</p></div>'
+        : '<div class="empty-state"><h3>还没有关注者</h3><p>分享你的内容，吸引关注</p></div>';
+      return;
+    }
+    body.innerHTML = users.map(function(u){ return renderFollowItem(u); }).join('');
+  }).catch(function(){
+    var body = document.getElementById('followListBody');
+    if(body) body.innerHTML = '<div class="empty-state"><h3>加载失败</h3><p>请稍后重试</p></div>';
+  });
 }
 
-// ===== LIKERS LIST =====
-function openLikersModal(){
-  const body = document.getElementById('likersListBody');
-  if(DB.likersList.length===0){
-    body.innerHTML='<div class="empty-state"><h3>还没有人喜欢</h3></div>';
-  } else {
-    body.innerHTML = DB.likersList.map(u=>`
-      <div class="liker-item">
-        <div class="ta" style="background:${u.avatarBg};width:40px;height:40px;font-size:16px;cursor:pointer" onclick="closeLikersModal();navigate('user','${u.handle}')">${u.avatar}</div>
-        <div style="flex:1;min-width:0;cursor:pointer" onclick="closeLikersModal();navigate('user','${u.handle}')">
-          <div style="display:flex;align-items:center;gap:4px">
-            <span style="font-weight:700;font-size:15px">${u.name}</span>
-            ${u.verified?'<svg width="14" height="14" viewBox="0 0 24 24"><path fill="var(--accent)" d="M20.396 11c-.018-.646-.215-1.275-.57-1.816-.354-.54-.852-.972-1.438-1.246.223-.607.27-1.264.14-1.897-.131-.634-.437-1.218-.882-1.687-.47-.445-1.053-.75-1.687-.882-.633-.13-1.29-.083-1.897.14-.273-.587-.704-1.086-1.245-1.44S11.647 1.62 11 1.604c-.646.017-1.273.213-1.813.568s-.969.854-1.24 1.441c-.608-.223-1.267-.272-1.902-.14-.635.13-1.22.436-1.69.882-.445.47-.749 1.055-.878 1.688-.13.633-.08 1.29.144 1.896-.587.274-1.087.705-1.443 1.245-.356.54-.555 1.17-.574 1.817.02.647.218 1.276.574 1.817.356.54.856.972 1.443 1.245-.224.606-.274 1.263-.144 1.896.13.634.433 1.218.877 1.688.47.443 1.054.747 1.687.878.633.132 1.29.084 1.897-.136.274.586.705 1.084 1.246 1.439.54.354 1.17.551 1.816.569.647-.016 1.276-.213 1.817-.567s.972-.854 1.245-1.44c.604.239 1.266.296 1.903.164.636-.132 1.22-.447 1.68-.907.46-.46.776-1.044.908-1.681s.075-1.299-.165-1.903c.586-.274 1.084-.705 1.439-1.246.354-.54.551-1.17.569-1.816z"/></svg>':''}
-          </div>
-          <div style="color:var(--text2);font-size:14px">${u.handle}</div>
-        </div>
-        <button class="${u.following?'fbtn following':'fbtn'}" onclick="toggleLikerFollow(this,'${u.handle}')">${u.following?'正在关注':'关注'}</button>
+function renderFollowing(){ _renderFollowPage('following'); }
+function renderFollowers(){ _renderFollowPage('followers'); }
+
+function renderFollowItem(u){
+  var handle = (u.handle||u.username||'').replace('@','');
+  var avatarHtml = u.avatarUrl
+    ? `<img src="${u.avatarUrl}" style="width:48px;height:48px;border-radius:50%;object-fit:cover;cursor:pointer;flex-shrink:0" onclick="navigate('user','${handle}')" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"><div class="fa" style="background:${u.avatarBg};width:48px;height:48px;font-size:18px;cursor:pointer;display:none" onclick="navigate('user','${handle}')">${u.avatar}</div>`
+    : `<div class="fa" style="background:${u.avatarBg};width:48px;height:48px;font-size:18px;cursor:pointer" onclick="navigate('user','${handle}')">${u.avatar}</div>`;
+  var isFollowing = u.is_following || false;
+  return `
+    <div class="fi" style="padding:16px">
+      ${avatarHtml}
+      <div class="fi-info" style="flex:1">
+        <div class="fi-name" onclick="navigate('user','${handle}')">${escapeHtml(u.name||handle)}</div>
+        <div class="fi-handle">@${escapeHtml(handle)}</div>
+        ${u.bio ? `<div style="font-size:14px;color:var(--text2);margin-top:4px">${escapeHtml(u.bio.slice(0,80))}</div>` : ''}
+        ${u.followers !== undefined ? `<div style="font-size:12px;color:var(--text2);margin-top:2px">${u.followers} 关注者</div>` : ''}
       </div>
-    `).join('');
-  }
+      <button class="${isFollowing?'fbtn following':'fbtn'}" onclick="toggleFollowItem(this,'${handle}')">${isFollowing?'正在关注':'关注'}</button>
+    </div>
+  `;
+}
+
+function toggleFollowItem(btn, handle){
+  var isNowFollowing = btn.classList.contains('following');
+  var apiCall = isNowFollowing ? UsersAPI.unfollow(handle) : UsersAPI.follow(handle);
+  btn.disabled = true;
+  apiCall.then(function(){
+    if(isNowFollowing){
+      btn.classList.remove('following');
+      btn.textContent = '关注';
+      btn.style.cssText = '';
+    } else {
+      btn.classList.add('following');
+      btn.textContent = '正在关注';
+      btn.style.cssText = 'background:transparent;color:var(--text);border:1px solid var(--border);border-radius:9999px;padding:7px 18px;font-size:14px;font-weight:700';
+    }
+    btn.disabled = false;
+  }).catch(function(){
+    showToast('操作失败，请重试', 'error');
+    btn.disabled = false;
+  });
+}
+
+// renderFollowingFeed 使用 API 数据
+function loadFollowStates(){ /* 已改为 API 管理，无需 localStorage */ }
+
+// ===== LIKERS LIST =====
+function openLikersModal(postId){
   document.getElementById('likersModal').classList.add('active');
+  const body = document.getElementById('likersListBody');
+  body.innerHTML = '<div style="padding:32px;text-align:center;color:var(--text2)">加载中...</div>';
+  // 调后端 API 获取点赞用户
+  PostsAPI.likers(postId).then(function(users){
+    if(!users || users.length === 0){
+      body.innerHTML = '<div class="empty-state"><h3>还没有人喜欢</h3></div>';
+      return;
+    }
+    body.innerHTML = users.map(function(u){
+      var handle = (u.handle||u.username||'').replace('@','');
+      var avatarHtml = u.avatarUrl
+        ? '<img src="'+u.avatarUrl+'" style="width:40px;height:40px;border-radius:50%;object-fit:cover;flex-shrink:0" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'flex\'"><div class="ta" style="background:'+u.avatarBg+';width:40px;height:40px;font-size:16px;display:none">'+u.avatar+'</div>'
+        : '<div class="ta" style="background:'+u.avatarBg+';width:40px;height:40px;font-size:16px">'+u.avatar+'</div>';
+      return '<div class="liker-item">'+
+        '<div style="display:flex;align-items:center;gap:10px;flex:1;min-width:0;cursor:pointer" onclick="closeLikersModal();navigate(\'user\',\''+handle+'\')">'+
+          avatarHtml+
+          '<div style="flex:1;min-width:0">'+
+            '<div style="font-weight:700;font-size:15px">'+escapeHtml(u.name||handle)+'</div>'+
+            '<div style="color:var(--text2);font-size:14px">@'+escapeHtml(handle)+'</div>'+
+          '</div>'+
+        '</div>'+
+      '</div>';
+    }).join('');
+  }).catch(function(){
+    body.innerHTML = '<div class="empty-state"><h3>加载失败</h3><p>请稍后重试</p></div>';
+  });
 }
 
 // ===== NEW MESSAGE =====
@@ -3275,29 +3457,31 @@ function searchMsgRecipient(q){
   const sg = document.getElementById('newMsgSuggestions');
   if(!sg) return;
   if(!q || q.length < 1){ sg.style.display='none'; return; }
-  // 从注册用户库搜索
   let candidates = [];
+  // 从 API 缓存的对话用户中搜索
+  _conversations.forEach(c=>{
+    if(c.other_user){
+      const h = (c.other_user.username||'').toLowerCase();
+      if(h.includes(q.toLowerCase())){
+        candidates.push({name:c.other_user.username, handle:c.other_user.username, avatar:c.other_user.username[0]?.toUpperCase()||'?', avatarBg:c.other_user.avatar?'transparent':'linear-gradient(135deg,#667eea,#764ba2)'});
+      }
+    }
+  });
+  // 从注册用户库搜索
   try{
     const allUsers = JSON.parse(localStorage.getItem('yan_auth_users')||'{}');
     const me = isLoggedIn() ? currentUser().handle : null;
     Object.values(allUsers).forEach(u=>{
-      if(me && ('@'+u.handle===me || u.handle===me)) return; // 排除自己
+      if(me && ('@'+u.handle===me || u.handle===me)) return;
       const h = (u.handle||'').toLowerCase();
       const n = (u.name||'').toLowerCase();
       if(h.includes(q.toLowerCase())||n.includes(q.toLowerCase())){
-        candidates.push({name:u.name||u.handle, handle:u.handle, avatar:(u.name||'用').slice(0,1), avatarBg:u.avatarBg||'linear-gradient(135deg,#667eea,#764ba2)'});
+        if(!candidates.find(c=>c.handle===u.handle)){
+          candidates.push({name:u.name||u.handle, handle:u.handle, avatar:(u.name||'用').slice(0,1), avatarBg:u.avatarBg||'linear-gradient(135deg,#667eea,#764ba2)'});
+        }
       }
     });
   } catch(e){}
-  // 加入 mock 用户池兜底
-  const mockPool = [...(typeof FOLLOWING_DATA!=='undefined'?FOLLOWING_DATA:[]),...(typeof FOLLOWERS_DATA!=='undefined'?FOLLOWERS_DATA:[])];
-  mockPool.forEach(u=>{
-    const h=(u.handle||'').toLowerCase().replace('@','');
-    const n=(u.name||'').toLowerCase();
-    if((h.includes(q.toLowerCase())||n.includes(q.toLowerCase()))&&!candidates.find(c=>c.handle===u.handle)){
-      candidates.push({name:u.name,handle:u.handle.replace('@',''),avatar:u.avatar,avatarBg:u.avatarBg||'linear-gradient(135deg,#aaa,#666)'});
-    }
-  });
   candidates = candidates.slice(0,6);
   if(candidates.length===0){ sg.style.display='none'; return; }
   sg.innerHTML = candidates.map(u=>`
@@ -3322,50 +3506,54 @@ function startNewMessage(){
   const recipient = document.getElementById('newMsgRecipient').value.trim();
   const text = document.getElementById('newMsgText').value.trim();
   if(!recipient){ showToast('请输入用户名'); return; }
+  if(!text){ showToast('请输入消息内容'); return; }
   const cleanHandle = recipient.replace(/^@/,'');
-  // 已有对话 → 直接打开
-  const existingMsg = DB.messages.find(m=>m.handle==='@'+cleanHandle);
-  if(existingMsg){ closeNewMsgModal(); navigate('messages'); setTimeout(()=>openChat(existingMsg.id),100); return; }
-  // 从注册用户库/mock 里找资料
-  let name = cleanHandle, avatar = cleanHandle[0]?.toUpperCase()||'?', avatarBg = 'linear-gradient(135deg,#667eea,#764ba2)';
-  try{
-    const allUsers = JSON.parse(localStorage.getItem('yan_auth_users')||'{}');
-    const found = Object.values(allUsers).find(u=>u.handle===cleanHandle||u.handle==='@'+cleanHandle);
-    if(found){ name=found.name||cleanHandle; avatar=(found.name||cleanHandle).slice(0,1); if(found.avatarBg) avatarBg=found.avatarBg; }
-  } catch(e){}
-  if(name===cleanHandle && typeof FOLLOWING_DATA!=='undefined'){
-    const mu = FOLLOWING_DATA.find(u=>u.handle==='@'+cleanHandle||u.handle===cleanHandle);
-    if(mu){ name=mu.name; avatar=mu.avatar||name.slice(0,1); if(mu.avatarBg) avatarBg=mu.avatarBg; }
+  // 查找已有对话
+  const existingConv = _conversations.find(c=>c.other_user?.username === cleanHandle);
+  if(existingConv){
+    closeNewMsgModal();
+    navigate('messages');
+    setTimeout(()=>openChat(existingConv.id),100);
+    return;
   }
-  const newId = Date.now();
-  const newMsg = { id:newId, name, handle:'@'+cleanHandle, avatar, avatarBg, preview:text||'开始对话...', time:'刚刚', unread:0, messages:text?[{sent:true,text,time:new Date().toLocaleTimeString('zh-CN',{hour:'2-digit',minute:'2-digit'}),seen:true}]:[] };
-  DB.messages.unshift(newMsg);
-  LS.save();
-  closeNewMsgModal();
-  navigate('messages');
-  if(text) setTimeout(()=>openChat(newId),100);
+  // 通过 API 创建新对话
+  (async function(){
+    try {
+      if(typeof MessagesAPI !== 'undefined'){
+        const result = await MessagesAPI.create(cleanHandle, text);
+        closeNewMsgModal();
+        navigate('messages');
+        // 刷新对话列表
+        await loadConversations();
+        // 打开新对话
+        if(result.conversation_id){
+          setTimeout(()=>openChat(result.conversation_id),100);
+        }
+        return;
+      }
+    } catch(e){
+      showToast('发送失败: ' + e.message, 'error');
+      return;
+    }
+    // 本地回退
+    let name = cleanHandle, avatar = cleanHandle[0]?.toUpperCase()||'?', avatarBg = 'linear-gradient(135deg,#667eea,#764ba2)';
+    try{
+      const allUsers = JSON.parse(localStorage.getItem('yan_auth_users')||'{}');
+      const found = Object.values(allUsers).find(u=>u.handle===cleanHandle||u.handle==='@'+cleanHandle);
+      if(found){ name=found.name||cleanHandle; avatar=(found.name||cleanHandle).slice(0,1); if(found.avatarBg) avatarBg=found.avatarBg; }
+    } catch(e){}
+    const newId = Date.now();
+    const newMsg = { id:newId, other_user:{username:cleanHandle}, last_message:{content:text}, unread_count:0, updated_at:new Date().toISOString() };
+    _conversations.unshift(newMsg);
+    DB.messages.unshift({ id:newId, name, handle:'@'+cleanHandle, avatar, avatarBg, preview:text, time:'刚刚', unread:0, messages:[{sent:true,text,time:new Date().toLocaleTimeString('zh-CN',{hour:'2-digit',minute:'2-digit'}),seen:true}] });
+    LS.save();
+    closeNewMsgModal();
+    navigate('messages');
+    setTimeout(()=>openChat(newId),100);
+  })();
 }
 function closeLikersModal(){
   document.getElementById('likersModal').classList.remove('active');
-}
-function toggleLikerFollow(btn,handle){
-  const user = DB.likersList.find(u=>u.handle===handle);
-  if(user) user.following=!user.following;
-  // 持久化关注状态到 LocalStorage
-  if(typeof saveFollowState === 'function'){
-    saveFollowState(handle, user ? user.following : false);
-  }
-  if(btn.classList.contains('following')){
-    btn.classList.remove('following');
-    btn.classList.add('fbtn');
-    btn.textContent='关注';
-    btn.style.cssText='';
-  } else {
-    btn.classList.add('following');
-    btn.textContent='正在关注';
-    btn.style.cssText='background:transparent;color:var(--text);border:1px solid var(--border);border-radius:9999px;padding:7px 18px;font-size:14px;font-weight:700';
-    btn.onmouseout=function(){this.style.cssText='background:transparent;color:var(--text);border:1px solid var(--border);border-radius:9999px;padding:7px 18px;font-size:14px;font-weight:700'};
-  }
 }
 
 // ===== AUTH =====
@@ -3507,8 +3695,8 @@ async function doLike(id,btn){
   if(!requireLogin()) return;
   const u = currentUser() || {};
 
-  // 尝试 API 点赞
-  if(typeof PostsAPI !== 'undefined' && u._apiUser){
+  // 尝试 API 点赞（Django session 认证）
+  if(typeof PostsAPI !== 'undefined'){
     try {
       const result = await PostsAPI.like(id);
       btn.classList.toggle('liked', result.liked);
@@ -3688,29 +3876,54 @@ function submitPost(){
   const v=document.getElementById('modalText').value.trim();
   const hasMedia = state.composeMedia && state.composeMedia.length > 0;
   if(!v && !hasMedia) return;
-  const viewsOptions=['12','32','58','103','156','234'];
   const u = currentUser() || {};
+
   if(state.editingTweetId){
-    // 编辑已有帖子
+    // 编辑已有帖子 — 暂不支持API编辑，保留本地
     const t = DB.tweets.find(x=>x.id===state.editingTweetId);
-    if(t){
-      t.text = v;
-      t.edited = true;
-      LS.save();
-    }
+    if(t){ t.text = v; t.edited = true; LS.save(); }
     state.editingTweetId = null;
     document.getElementById('modalPostBtn').textContent = '发帖';
   } else {
-    // 新建帖子
+    // 优先走 API 创建帖子
+    if(typeof PostsAPI !== 'undefined'){
+      var btn = document.getElementById('modalPostBtn');
+      if(btn){ btn.disabled = true; btn.textContent = '发送中...'; }
+
+      // 检查是否有图片需要上传
+      var hasImage = state.composeMedia && state.composeMedia.length > 0 && state.composeMedia[0].url;
+      if(hasImage){
+        // FormData 方式上传图片
+        PostsAPI.createWithMedia(v, state.composeMedia, state.selectedLocation).then(function(post){
+          closePostModal();
+          showToast('发帖成功', 'success');
+          if(state.currentPage==='home') renderHome();
+          else if(state.currentPage==='profile') renderProfile();
+        }).catch(function(err){
+          showToast('发帖失败: ' + err.message, 'error');
+          if(btn){ btn.disabled = false; btn.textContent = '发帖'; }
+        });
+      } else {
+        // 纯文本发帖
+        PostsAPI.create(v, null, state.selectedLocation).then(function(post){
+          closePostModal();
+          showToast('发帖成功', 'success');
+          if(state.currentPage==='home') renderHome();
+          else if(state.currentPage==='profile') renderProfile();
+        }).catch(function(err){
+          showToast('发帖失败: ' + err.message, 'error');
+          if(btn){ btn.disabled = false; btn.textContent = '发帖'; }
+        });
+      }
+      return;
+    }
+
+    // 本地回退
+    const viewsOptions=['12','32','58','103','156','234'];
     const t={
-      id:Date.now(),
-      name:u.name||'用户',
-      handle:u.handle||'@user',
-      verified:u.verified||false,
-      time:'刚刚',
-      createdAt:Date.now(),
-      text:v,
-      avatar:(u.name||'用').slice(0,1),
+      id:Date.now(), name:u.name||'用户', handle:u.handle||'@user',
+      verified:u.verified||false, time:'刚刚', createdAt:Date.now(),
+      text:v, avatar:(u.name||'用').slice(0,1),
       avatarBg:u.avatarBg||'linear-gradient(135deg,#667eea,#764ba2)',
       likes:0,retweets:0,replies:0,
       views:viewsOptions[Math.floor(Math.random()*viewsOptions.length)],
@@ -3719,21 +3932,8 @@ function submitPost(){
     if(state.composeMedia && state.composeMedia.length > 0){
       t.media = state.composeMedia.map(m=>({url:m.url}));
     }
-    if(state.selectedLocation){
-      t.location = state.selectedLocation;
-    }
+    if(state.selectedLocation){ t.location = state.selectedLocation; }
     DB.tweets.unshift(t);
-    u.posts = (u.posts||0) + 1;
-    // 持久化更新后的用户数据（users 表 + session）
-    try {
-      const allUsers = JSON.parse(localStorage.getItem('yan_auth_users')||'{}');
-      if(allUsers[u.identifier]){
-        allUsers[u.identifier].posts = u.posts;
-        localStorage.setItem('yan_auth_users', JSON.stringify(allUsers));
-      }
-      // 同步更新 session
-      setSession(u);
-    } catch(e) { console.warn('localStorage 写入失败', e); }
     LS.save();
   }
   closePostModal();
@@ -3843,15 +4043,38 @@ function changeWhoCanReply(id){
 }
 function closeMoreMenu(){document.getElementById('moreModal').classList.remove('active')}
 function toggleBookmarkFromMore(id){
-  const t=DB.tweets.find(x=>x.id===id);
-  if(!t)return;
-  t.bookmarked=!t.bookmarked;
-  if(t.bookmarked){if(!DB.bookmarks.includes(id))DB.bookmarks.push(id);}else{DB.bookmarks=DB.bookmarks.filter(x=>x!==id);}
-  LS.save();
-  openMoreMenu(id,event);
+  // 优先走 API
+  if(typeof BookmarksAPI !== 'undefined'){
+    BookmarksAPI.toggle(id).then(function(data){
+      showToast(data.bookmarked ? '已添加到书签' : '已从书签移除', 'success');
+      // 更新本地状态
+      var t = DB.tweets.find(function(x){return x.id===id;});
+      if(t) t.bookmarked = !!data.bookmarked;
+    }).catch(function(err){
+      showToast('操作失败: ' + err.message, 'error');
+    });
+    return;
+  }
+  // 本地回退
+  var t=DB.tweets.find(x=>x.id===id);
+  if(t){t.bookmarked=!t.bookmarked; LS.save();}
+  showToast(t&&t.bookmarked?'已添加到书签':'已从书签移除', 'success');
 }
 function copyTweetLink(id){openShareModal(id)}
 function deleteTweet(id){
+  if(!requireLogin()) return;
+  // 优先走 API 删除
+  if(typeof PostsAPI !== 'undefined'){
+    PostsAPI.delete(id).then(function(){
+      var el = document.getElementById('tweet-'+id);
+      if(el) el.remove();
+      showToast('帖子已删除', 'success');
+    }).catch(function(err){
+      showToast('删除失败: ' + err.message, 'error');
+    });
+    return;
+  }
+  // 本地回退
   DB.tweets=DB.tweets.filter(x=>x.id!==id);
   LS.save();
   document.getElementById('tweet-'+id)?.remove();
@@ -3974,9 +4197,6 @@ function initGifPicker(){
   `;
   parent.insertBefore(picker,emojiPicker);
   renderGifGrid(GIF_DATA, picker.querySelector('#gifGrid'));
-}    `).join('')}</div>
-  `;
-  parent.insertBefore(picker,emojiPicker);
 }
 function toggleGif(ctx){
   // 关闭所有 emoji picker
@@ -4030,18 +4250,18 @@ function pickGif(id){
     if(ta.id==='chatInput' && activeChat){
       ta.value=''; // 清空再用图片消息发送
       const now=new Date();
-      const timeStr=now.toLocaleTimeString('zh-CN',{hour:'2-digit',minute:'2-digit'});
-      activeChat.messages.push({sent:true,isImage:true,imageData:gif.gif,time:timeStr,seen:true});
-      activeChat.time=timeStr;
-      activeChat.preview='[GIF]';
+      const timeStr=now.getHours().toString().padStart(2,'0')+':'+now.getMinutes().toString().padStart(2,'0');
       const body=document.getElementById('chatBody');
       if(body){
-        const div=document.createElement('div');
-        div.innerHTML=renderChatMessages([activeChat.messages[activeChat.messages.length-1]]);
-        body.appendChild(div.lastElementChild||div);
+        const wrapper = document.createElement('div');
+        wrapper.style.cssText = 'display:flex;flex-direction:column;align-items:flex-end;margin-bottom:12px';
+        wrapper.innerHTML = `
+          <img src="${gif.gif}" style="max-width:200px;max-height:200px;border-radius:16px;object-fit:cover;cursor:pointer" onclick="this.style.maxWidth=this.style.maxWidth==='100%'?'200px':'100%'" />
+          <div class="chat-time" style="margin-top:4px">${timeStr}</div>
+        `;
+        body.appendChild(wrapper);
         body.scrollTop=body.scrollHeight;
       }
-      LS.save();
     }
   }
   document.querySelectorAll('.gif-picker.active').forEach(p=>p.classList.remove('active'));
@@ -4428,7 +4648,29 @@ function saveProfile(){
   const oldHandle = isLoggedIn() ? currentUser().handle : state.user.handle;
 
   function applyProfileSave(finalAvatarImg, finalCoverImg){
-    // 更新 state.user（兜底）
+    // 优先走 API 保存
+    (async function(){
+      try {
+        if(typeof updateProfileAPI === 'function' && isLoggedIn()){
+          const data = { name: name, bio: bio, location: location };
+          await updateProfileAPI(data);
+          // 上传头像
+          if(finalAvatarImg){
+            try {
+              // base64 转 Blob 上传
+              const blob = await (await fetch(finalAvatarImg)).blob();
+              if(typeof uploadAvatarAPI === 'function'){
+                await uploadAvatarAPI(blob);
+              }
+            } catch(e){ console.error('Avatar upload failed:', e); }
+          }
+        }
+      } catch(e){
+        console.error('Profile API save failed:', e);
+      }
+    })();
+
+    // 更新 state.user（兜底 + 本地即时显示）
     state.user.name = name;
     state.user.bio = bio;
     state.user.location = location;
@@ -4492,25 +4734,50 @@ function sendImageMsg(){
     fileInput.addEventListener('change', function(){
       const file = this.files && this.files[0];
       if(!file || !activeChat) { this.value=''; return; }
-      const reader = new FileReader();
-      reader.onload = function(e){
-        const dataUrl = e.target.result;
-        const now = new Date();
-        const timeStr = now.getHours().toString().padStart(2,'0')+':'+now.getMinutes().toString().padStart(2,'0');
-        // 存入消息记录（存 dataUrl，下次打开仍可显示）
-        activeChat.messages.push({sent:true,text:'[图片]',time:timeStr,seen:true,isImage:true,imageData:dataUrl});
-        LS.save();
-        const cb = document.getElementById('chatBody');
-        if(cb){
+      const now = new Date();
+      const timeStr = now.getHours().toString().padStart(2,'0')+':'+now.getMinutes().toString().padStart(2,'0');
+      const cb = document.getElementById('chatBody');
+      if(!cb){ this.value=''; return; }
+
+      // API 模式：上传图片并发送
+      if(typeof MessagesAPI !== 'undefined' && activeChat._conversationId){
+        const reader = new FileReader();
+        reader.onload = function(e){
+          // 显示发送中的图片
           const wrapper = document.createElement('div');
-          wrapper.style.cssText = 'display:flex;flex-direction:column;align-items:flex-end;margin-bottom:12px';
+          wrapper.style.cssText = 'display:flex;flex-direction:column;align-items:flex-end;margin-bottom:12px;opacity:0.6';
           wrapper.innerHTML = `
-            <img src="${dataUrl}" style="max-width:200px;max-height:200px;border-radius:16px;object-fit:cover;cursor:pointer" onclick="this.style.maxWidth=this.style.maxWidth==='100%'?'200px':'100%'" />
-            <div class="chat-time seen" style="margin-top:4px">${timeStr} · 已读</div>
+            <img src="${e.target.result}" style="max-width:200px;max-height:200px;border-radius:16px;object-fit:cover" />
+            <div class="chat-time" style="margin-top:4px">${timeStr} · 发送中...</div>
           `;
           cb.appendChild(wrapper);
           cb.scrollTop = cb.scrollHeight;
-        }
+
+          // 将 base64 转 Blob 发送（暂不支持图片私信，仅本地展示）
+          // TODO: 后端添加图片私信支持后对接
+          wrapper.style.opacity = '1';
+          wrapper.querySelector('.chat-time').textContent = timeStr + ' · 已发送';
+        };
+        reader.readAsDataURL(file);
+        this.value = '';
+        return;
+      }
+
+      // 本地回退
+      const reader = new FileReader();
+      reader.onload = function(e){
+        const dataUrl = e.target.result;
+        activeChat.messages = activeChat.messages || [];
+        activeChat.messages.push({sent:true,text:'[图片]',time:timeStr,seen:true,isImage:true,imageData:dataUrl});
+        LS.save();
+        const wrapper = document.createElement('div');
+        wrapper.style.cssText = 'display:flex;flex-direction:column;align-items:flex-end;margin-bottom:12px';
+        wrapper.innerHTML = `
+          <img src="${dataUrl}" style="max-width:200px;max-height:200px;border-radius:16px;object-fit:cover;cursor:pointer" onclick="this.style.maxWidth=this.style.maxWidth==='100%'?'200px':'100%'" />
+          <div class="chat-time seen" style="margin-top:4px">${timeStr} · 已读</div>
+        `;
+        cb.appendChild(wrapper);
+        cb.scrollTop = cb.scrollHeight;
       };
       reader.readAsDataURL(file);
       this.value = '';
@@ -4979,21 +5246,34 @@ function renderMsgListItems(list){
   if(!list || list.length === 0){
     return '<div class="empty-state" style="padding:40px"><h3>暂无新消息</h3><p>向感兴趣的人发送私信消息吧</p></div>';
   }
-  return list.map(m=>`
+  return list.map(m=>{
+    const other = m.other_user || {};
+    const lastMsg = m.last_message || {};
+    const avatar = other.avatar
+      ? `<img src="${other.avatar}" style="width:100%;height:100%;border-radius:50%;object-fit:cover" onerror="this.style.display='none'">`
+      : (other.username||'?')[0].toUpperCase();
+    const avatarBg = other.avatar ? 'transparent' : 'linear-gradient(135deg,#667eea,#764ba2)';
+    const preview = lastMsg.content || m.preview || '';
+    const time = m.updated_at ? formatTime(m.updated_at) : (m.time || '');
+    return `
     <div class="msg-item" id="msg-${m.id}" onclick="openChat(${m.id})">
-      <div class="msg-av ${m.online?'online':''}" style="background:${m.avatarBg}">${m.avatar}</div>
+      <div class="msg-av" style="background:${avatarBg}">${avatar}</div>
       <div class="msg-info">
-        <div class="msg-name">${m.name} <span class="msg-time">${m.time}</span></div>
-        <div class="msg-preview">${m.unread?'<span style="color:var(--text);font-weight:700">'+m.preview+'</span>':m.preview}</div>
+        <div class="msg-name">${other.username||'未知'} <span class="msg-time">${time}</span></div>
+        <div class="msg-preview">${m.unread_count>0?'<span style="color:var(--text);font-weight:700">'+escapeHtml(preview)+'</span>':escapeHtml(preview)}</div>
       </div>
-      ${m.unread>0?'<div class="msg-unread"></div>':''}
-    </div>
-  `).join('');
+      ${m.unread_count>0?'<div class="msg-unread"></div>':''}
+    </div>`;
+  }).join('');
 }
 function filterMsgList(q){
   const area = document.getElementById('msgListItems');
   if(!area) return;
-  const filtered = q.trim() ? DB.messages.filter(m=>m.name.includes(q)||m.handle.includes(q)||(m.preview&&m.preview.includes(q))) : DB.messages;
+  const filtered = q.trim() ? _conversations.filter(m=>{
+    const name = (m.other_user?.username||'').toLowerCase();
+    const preview = (m.last_message?.content||'').toLowerCase();
+    return name.includes(q.toLowerCase()) || preview.includes(q.toLowerCase());
+  }) : _conversations;
   area.innerHTML = renderMsgListItems(filtered);
 }
 
@@ -5130,26 +5410,10 @@ function clearComposeMedia(){
 }
 
 // ===== @提及自动补全 =====
-const MENTION_USERS = [
-  {name:'林小雨',handle:'linxiaoyu',avatar:'林',avatarBg:'linear-gradient(135deg,#667eea,#764ba2)',verified:true},
-  {name:'科技日报',handle:'techdaily',avatar:'科',avatarBg:'linear-gradient(135deg,#f093fb,#f5576c)',verified:true},
-  {name:'张伟',handle:'zhangwei',avatar:'张',avatarBg:'linear-gradient(135deg,#4facfe,#00f2fe)',verified:false},
-  {name:'李娜',handle:'lina_tech',avatar:'李',avatarBg:'linear-gradient(135deg,#43e97b,#38f9d7)',verified:false},
-  {name:'前端开发者社区',handle:'fe_community',avatar:'前',avatarBg:'linear-gradient(135deg,#fa709a,#fee140)',verified:true},
-  {name:'陈明',handle:'chenming_ai',avatar:'陈',avatarBg:'linear-gradient(135deg,#43e97b,#38f9d7)',verified:true},
-  {name:'产品猎人',handle:'producthunt_cn',avatar:'产',avatarBg:'linear-gradient(135deg,#f093fb,#f5576c)',verified:false},
-  {name:'阿里云',handle:'aliyun',avatar:'阿',avatarBg:'linear-gradient(135deg,#f6d365,#fda085)',verified:true},
-  {name:'GitHub',handle:'github',avatar:'G',avatarBg:'linear-gradient(135deg,#333,#555)',verified:true},
-  {name:'Vue.js',handle:'vuejs',avatar:'V',avatarBg:'linear-gradient(135deg,#42b883,#35495e)',verified:true},
-  {name:'王珊珊',handle:'wangshanshan',avatar:'王',avatarBg:'linear-gradient(135deg,#fa709a,#fee140)',verified:false},
-  {name:'刘宇航',handle:'liuyuhang',avatar:'刘',avatarBg:'linear-gradient(135deg,#a18cd1,#fbc2eb)',verified:false},
-  {name:'赵晓梅',handle:'zhaoxiaomei',avatar:'赵',avatarBg:'linear-gradient(135deg,#ffecd2,#fcb69f)',verified:false},
-  {name:'周杰',handle:'zhoujie',avatar:'周',avatarBg:'linear-gradient(135deg,#a1c4fd,#c2e9fb)',verified:false},
-  {name:'林小雨工作室',handle:'linxiaoyu_studio',avatar:'林',avatarBg:'linear-gradient(135deg,#667eea,#764ba2)',verified:false},
-  {name:'言支持',handle:'yan_support',avatar:'言',avatarBg:'linear-gradient(135deg,#1d9bf0,#1a8cd8)',verified:true}
-];
 let mentionQuery = '';
 let mentionActiveIdx = -1;
+let _mentionTimer = null;
+
 function handleMentionInput(el){
   const val = el.value;
   const pos = el.selectionStart;
@@ -5160,44 +5424,52 @@ function handleMentionInput(el){
     if(existing) existing.remove();
     mentionQuery = '';
     mentionActiveIdx = -1;
+    clearTimeout(_mentionTimer);
     return;
   }
   mentionQuery = atMatch[1].toLowerCase();
-  const filtered = MENTION_USERS.filter(u =>
-    u.handle.toLowerCase().includes(mentionQuery) ||
-    u.name.toLowerCase().includes(mentionQuery)
-  ).slice(0, 6);
-  if(filtered.length === 0){
-    if(existing) existing.remove();
-    mentionActiveIdx = -1;
-    return;
-  }
-  // 计算位置
   const rect = el.getBoundingClientRect();
-  let dropdown = existing;
-  if(!dropdown){
-    dropdown = document.createElement('div');
-    dropdown.id = 'mentionDropdown';
-    dropdown.style.cssText = 'position:fixed;background:var(--bg3);border:1px solid var(--border);border-radius:12px;overflow:hidden;z-index:9999;min-width:240px;box-shadow:0 8px 32px rgba(0,0,0,.5);max-height:280px;overflow-y:auto';
-    document.body.appendChild(dropdown);
-  }
-  dropdown.style.top = (rect.top - dropdown.offsetHeight - 8) + 'px';
-  dropdown.style.left = rect.left + 'px';
-  mentionActiveIdx = -1;
-  dropdown.innerHTML = filtered.map((u,i)=>`
-    <div class="mention-item" data-idx="${i}" onclick="insertMention('${u.handle}',document.activeElement)" style="display:flex;align-items:center;gap:10px;padding:10px 14px;cursor:pointer;transition:background .15s;font-size:14px" onmouseenter="this.style.background='var(--bg2)';mentionActiveIdx=${i}" onmouseleave="this.style.background='';mentionActiveIdx=-1">
-      <div style="width:36px;height:36px;border-radius:50%;background:${u.avatarBg};display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;flex-shrink:0;color:#fff">${u.avatar}</div>
-      <div style="flex:1;min-width:0">
-        <div style="font-weight:700">${u.name}${u.verified?'<span class="vb" style="display:inline-flex;transform:scale(.75);vertical-align:middle;margin-left:2px"><svg viewBox="0 0 24 24" width="18" height="18"><path fill="var(--accent)" d="M20.396 11c-.018-.646-.215-1.275-.57-1.816-.354-.54-.852-.972-1.438-1.246.223-.607.27-1.264.14-1.897-.131-.634-.437-1.218-.882-1.687-.47-.445-1.053-.75-1.687-.882-.633-.13-1.29-.083-1.897.14-.273-.587-.704-1.086-1.245-1.44S11.647 1.62 11 1.604c-.646.017-1.273.213-1.813.568s-.969.854-1.24 1.441c-.608-.223-1.267-.272-1.902-.14-.635.13-1.22.436-1.69.882-.445.47-.749 1.055-.878 1.688-.13.633-.08 1.29.144 1.896-.587.274-1.087.705-1.443 1.245-.356.54-.555 1.17-.574 1.817.02.647.218 1.276.574 1.817.356.54.856.972 1.443 1.245-.224.606-.274 1.263-.144 1.896.13.634.433 1.218.877 1.688.47.443 1.054.747 1.687.878.633.132 1.29.084 1.897-.136.274.586.705 1.084 1.246 1.439.54.354 1.17.551 1.816.569.647-.016 1.276-.213 1.817-.567s.972-.854 1.245-1.44c.604.239 1.266.296 1.903.164.636-.132 1.22-.447 1.68-.907.46-.46.776-1.044.908-1.681s.075-1.299-.165-1.903c.586-.274 1.084-.705 1.439-1.246.354-.54.551-1.17.569-1.816z"/></svg></span>':''}</div>
-        <div style="color:var(--text2);font-size:13px">@${u.handle}</div>
-      </div>
-    </div>
-  `).join('');
-  // Reposition after content is set
-  setTimeout(()=>{
-    const h = Math.min(dropdown.scrollHeight, 280);
-    dropdown.style.top = Math.max(10, rect.top - h - 8) + 'px';
-  }, 10);
+  // 防抖 250ms 调接口
+  clearTimeout(_mentionTimer);
+  _mentionTimer = setTimeout(function(){
+    if(!mentionQuery){ if(existing) existing.remove(); return; }
+    UsersAPI.search(mentionQuery).then(function(users){
+      var filtered = (users || []).slice(0, 6);
+      if(filtered.length === 0){
+        var d = document.getElementById('mentionDropdown');
+        if(d) d.remove();
+        mentionActiveIdx = -1;
+        return;
+      }
+      var dropdown = document.getElementById('mentionDropdown');
+      if(!dropdown){
+        dropdown = document.createElement('div');
+        dropdown.id = 'mentionDropdown';
+        dropdown.style.cssText = 'position:fixed;background:var(--bg3);border:1px solid var(--border);border-radius:12px;overflow:hidden;z-index:9999;min-width:240px;box-shadow:0 8px 32px rgba(0,0,0,.5);max-height:280px;overflow-y:auto';
+        document.body.appendChild(dropdown);
+      }
+      dropdown.style.top = (rect.top - 8) + 'px';
+      dropdown.style.left = rect.left + 'px';
+      mentionActiveIdx = -1;
+      dropdown.innerHTML = filtered.map(function(u, i){
+        var avatarHtml = u.avatarUrl
+          ? `<img src="${u.avatarUrl}" style="width:36px;height:36px;border-radius:50%;object-fit:cover;flex-shrink:0" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"><div style="width:36px;height:36px;border-radius:50%;background:${u.avatarBg};display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;flex-shrink:0;color:#fff;display:none">${u.avatar}</div>`
+          : `<div style="width:36px;height:36px;border-radius:50%;background:${u.avatarBg};display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;flex-shrink:0;color:#fff">${u.avatar}</div>`;
+        var cleanHandle = (u.handle||'').replace('@','');
+        return `<div class="mention-item" data-idx="${i}" onclick="insertMention('${cleanHandle}',document.activeElement)" style="display:flex;align-items:center;gap:10px;padding:10px 14px;cursor:pointer;transition:background .15s;font-size:14px" onmouseenter="this.style.background='var(--bg2)';mentionActiveIdx=${i}" onmouseleave="this.style.background='';mentionActiveIdx=-1">
+          ${avatarHtml}
+          <div style="flex:1;min-width:0">
+            <div style="font-weight:700">${escapeHtml(u.name)}</div>
+            <div style="color:var(--text2);font-size:13px">@${escapeHtml(cleanHandle)}</div>
+          </div>
+        </div>`;
+      }).join('');
+      setTimeout(function(){
+        var h = Math.min(dropdown.scrollHeight, 280);
+        dropdown.style.top = Math.max(10, rect.top - h - 8) + 'px';
+      }, 10);
+    }).catch(function(){ /* 搜索失败静默处理 */ });
+  }, 250);
 }
 function insertMention(handle, el){
   const dropdown = document.getElementById('mentionDropdown');
@@ -5309,51 +5581,49 @@ if(typeof loadFollowStates === 'function') loadFollowStates();
 function refreshWhoToFollow(){
   const widget = document.querySelector('.sidebar-right-inner .widget:nth-child(3)');
   if(!widget) return;
-  const me = isLoggedIn() ? (currentUser().handle||'') : '';
-  // 收集推荐用户：注册用户 + mock 补充
-  const candidates = [];
-  try{
-    const allUsers = JSON.parse(localStorage.getItem('yan_auth_users')||'{}');
-    Object.values(allUsers).forEach(u=>{
-      const handle = '@'+(u.handle||'');
-      if(handle===me || handle===('@'+me.replace('@',''))) return;
-      candidates.push({name:u.name||u.handle, handle:'@'+(u.handle||''), avatar:(u.name||u.handle||'用').slice(0,1), avatarBg:u.avatarBg||'linear-gradient(135deg,#667eea,#764ba2)', bio:u.bio||'', verified:u.verified||false, isReal:true});
+  // 调后端获取用户列表，过滤自己 + 已关注
+  UsersAPI.list().then(function(users){
+    var me = isLoggedIn() ? (currentUser().handle||'').replace('@','') : '';
+    // 过滤掉自己，未关注的放前面
+    var candidates = (users || []).filter(function(u){
+      return (u.handle||'').replace('@','') !== me;
     });
-  } catch(e){}
-  // 补充 mock 用户（排除已有）
-  if(candidates.length < 3){
-    const mocks = [
-      {name:'stevenmarkryan',handle:'@stevenmarkryan',avatar:'S',avatarBg:'linear-gradient(135deg,#1d9bf0,#0d8ecf)',bio:'',verified:true},
-      {name:'KSI',handle:'@KSI',avatar:'K',avatarBg:'linear-gradient(135deg,#f093fb,#f5576c)',bio:'',verified:true},
-      {name:'AI Hub',handle:'@ai_hub',avatar:'A',avatarBg:'linear-gradient(135deg,#43e97b,#38f9d7)',bio:'',verified:false},
-    ];
-    mocks.forEach(m=>{ if(!candidates.find(c=>c.handle===m.handle)) candidates.push(m); });
-  }
-  // 显示最多 3 位，已关注的排后面
-  const followingH = DB.following||[];
-  candidates.sort((a,b)=>{
-    const af = followingH.includes(a.handle)?1:0;
-    const bf = followingH.includes(b.handle)?1:0;
-    return af-bf;
+    // 按关注状态排序（未关注优先）
+    var followingH = DB.following || [];
+    candidates.sort(function(a,b){
+      var af = followingH.includes(a.handle) ? 1 : 0;
+      var bf = followingH.includes(b.handle) ? 1 : 0;
+      return af - bf;
+    });
+    var toShow = candidates.slice(0, 3);
+    if(toShow.length === 0){
+      widget.innerHTML = '<div class="wt">你可能会喜欢</div><div style="padding:16px;color:var(--text2);font-size:14px">暂无推荐</div>';
+      return;
+    }
+    var html = toShow.map(function(u){
+      var handle = (u.handle||'').replace('@','');
+      var isFollowing = followingH.includes('@'+handle) || followingH.includes(handle);
+      var followBtn = isFollowing
+        ? `<button class="following" style="background:transparent;color:var(--text);border:1px solid var(--border);border-radius:9999px;padding:7px 18px;font-size:14px;font-weight:700;cursor:pointer" onclick="event.stopPropagation();toggleFollow(this)">正在关注</button>`
+        : `<button class="fbtn" onclick="event.stopPropagation();toggleFollow(this)">关注</button>`;
+      var avatarHtml = u.avatarUrl
+        ? `<img src="${u.avatarUrl}" style="width:40px;height:40px;border-radius:50%;object-fit:cover;flex-shrink:0" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"><div class="fa" style="background:${u.avatarBg};display:none">${u.avatar}</div>`
+        : `<div class="fa" style="background:${u.avatarBg}">${u.avatar}</div>`;
+      return `<div class="fi" onclick="navigate('user','${handle}')">
+        ${avatarHtml}
+        <div class="fi-info">
+          <div class="fi-name">${escapeHtml(u.name)}</div>
+          <div class="fi-handle">@${escapeHtml(handle)}</div>
+          ${u.bio ? `<div class="fi-meta" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:120px">${escapeHtml(u.bio.slice(0,30))}</div>` : ''}
+        </div>
+        ${followBtn}
+      </div>`;
+    }).join('');
+    widget.innerHTML = `<div class="wt">你可能会喜欢</div>${html}<a class="show-more" onclick="navigate('explore')">显示更多</a>`;
+  }).catch(function(){
+    // API 失败降级：不显示推荐
+    widget.innerHTML = '<div class="wt">你可能会喜欢</div><div style="padding:16px;color:var(--text2);font-size:14px">暂无推荐</div>';
   });
-  const toShow = candidates.slice(0,3);
-  const html = toShow.map(u=>{
-    const isFollowing = followingH.includes(u.handle);
-    const followBtn = isFollowing
-      ? `<button class="following" style="background:transparent;color:var(--text);border:1px solid var(--border);border-radius:9999px;padding:7px 18px;font-size:14px;font-weight:700;cursor:pointer" onclick="event.stopPropagation();toggleFollow(this)">正在关注</button>`
-      : `<button class="fbtn" onclick="event.stopPropagation();toggleFollow(this)">关注</button>`;
-    return `<div class="fi" onclick="navigate('user','${u.handle}')">
-      <div class="fa" style="background:${u.avatarBg}">${u.avatar}</div>
-      <div class="fi-info">
-        <div class="fi-name">${escapeHtml(u.name)} ${u.verified?'<span style="color:var(--accent);display:inline-flex"><svg width="14" height="14" viewBox="0 0 24 24"><path fill="var(--accent)" d="M20.396 11c-.018-.646-.215-1.275-.57-1.816-.354-.54-.852-.972-1.438-1.246.223-.607.27-1.264.14-1.897-.131-.634-.437-1.218-.882-1.687-.47-.445-1.053-.75-1.687-.882-.633-.13-1.29-.083-1.897.14-.273-.587-.704-1.086-1.245-1.44S11.647 1.62 11 1.604c-.646.017-1.273.213-1.813.568s-.969.854-1.24 1.441c-.608-.223-1.267-.272-1.902-.14-.635.13-1.22.436-1.69.882-.445.47-.749 1.055-.878 1.688-.13.633-.08 1.29.144 1.896-.587.274-1.087.705-1.443 1.245-.356.54-.555 1.17-.574 1.817.02.647.218 1.276.574 1.817.356.54.856.972 1.443 1.245-.224.606-.274 1.263-.144 1.896.13.634.433 1.218.877 1.688.47.443 1.054.747 1.687.878.633.132 1.29.084 1.897-.136.274.586.705 1.084 1.246 1.439.54.354 1.17.551 1.816.569.647-.016 1.276-.213 1.817-.567s.972-.854 1.245-1.44c.604.239 1.266.296 1.903.164.636-.132 1.22-.447 1.68-.907.46-.46.776-1.044.908-1.681s.075-1.299-.165-1.903c.586-.274 1.084-.705 1.439-1.246.354-.54.551-1.17.569-1.816z"/></svg></span>':''}</div>
-        <div class="fi-handle">${escapeHtml(u.handle)}</div>
-        ${u.bio?`<div class="fi-meta" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:120px">${escapeHtml(u.bio.slice(0,30))}</div>`:''}
-      </div>
-      ${followBtn}
-    </div>`;
-  }).join('');
-  // 替换推荐列表（保留 header 和 show-more）
-  widget.innerHTML = `<div class="wt">你可能会喜欢</div>${html}<a class="show-more" onclick="navigate('explore')">显示更多</a>`;
 }
 setTimeout(refreshWhoToFollow, 500);
 
@@ -5649,20 +5919,135 @@ window.debugYan = function(){
   console.log('=================');
 };
 // ===== MAP VIEW (Leaflet + OpenStreetMap - 完全免费) =====
-// 中国主要城市经纬度坐标映射
-const CITY_COORDS = {
-  '北京':[39.9042,116.4074],'上海':[31.2304,121.4737],'广州':[23.1291,113.2644],
-  '深圳':[22.5431,114.0579],'武汉':[30.5928,114.3055],'杭州':[30.2741,120.1551],
-  '成都':[30.5728,104.0668],'重庆':[29.4316,106.9123],'西安':[34.3416,108.9398],
-  '南京':[32.0603,118.7969],'天津':[39.0842,117.2009],'苏州':[31.2990,120.5853],
-  '长沙':[28.2282,112.9388],'郑州':[34.7466,113.6253],'济南':[36.6512,116.9946],
-  '青岛':[36.0671,120.3826],'大连':[38.9140,121.6147],'厦门':[24.4798,118.0894],
-  '昆明':[25.0389,102.7183],'哈尔滨':[45.8038,126.5350],'沈阳':[41.8057,123.4315],
-  '福州':[26.0745,119.2965],'合肥':[31.8206,117.2272],'南昌':[28.6820,115.8580],
-  '贵阳':[26.6470,106.6302],'兰州':[36.0611,103.8343],'乌鲁木齐':[43.8256,87.6168],
-  '拉萨':[29.6500,91.1000],'南宁':[22.8170,108.3665],'海口':[20.0440,110.1999],
-  '香港':[22.3193,114.1694],'澳门':[22.1987,113.5439],'台北':[25.0330,121.5654]
-};
+// 浏览器定位 + Nominatim 免费反向地理编码
+async function getCurrentLocation(){
+  return new Promise(function(resolve){
+    if(!navigator.geolocation){
+      resolve(null);
+      return;
+    }
+    navigator.geolocation.getCurrentPosition(
+      function(pos){
+        resolve({lat: pos.coords.latitude, lng: pos.coords.longitude});
+      },
+      function(err){
+        console.warn('[言] 定位失败:', err.message);
+        resolve(null);
+      },
+      {enableHighAccuracy: false, timeout: 8000, maximumAge: 300000}
+    );
+  });
+}
+
+// Nominatim (OpenStreetMap) 免费反向地理编码 — 1次/秒限制
+async function reverseGeocode(lat, lng){
+  try {
+    var url = 'https://nominatim.openstreetmap.org/reverse?format=json&lat=' + lat + '&lon=' + lng + '&accept-language=zh&zoom=10';
+    var res = await fetch(url, {headers: {'User-Agent': 'YanApp/1.0'}});
+    var data = await res.json();
+    // 优先返回城市/省份
+    var addr = data.address || {};
+    return addr.city || addr.town || addr.county || addr.state || data.display_name || (lat.toFixed(2) + ', ' + lng.toFixed(2));
+  } catch(e){
+    console.warn('[言] 反向地理编码失败:', e);
+    return lat.toFixed(2) + ', ' + lng.toFixed(2);
+  }
+}
+
+// 缓存已知坐标（避免重复请求）
+const _geoCache = {};
+
+async function getCoordsForLocation(locationName){
+  if(_geoCache[locationName]) return _geoCache[locationName];
+  // 先尝试 Nominatim 正向地理编码
+  try {
+    var url = 'https://nominatim.openstreetmap.org/search?format=json&q=' + encodeURIComponent(locationName) + '&accept-language=zh&limit=1';
+    var res = await fetch(url, {headers: {'User-Agent': 'YanApp/1.0'}});
+    var data = await res.json();
+    if(data && data.length > 0){
+      var coords = [parseFloat(data[0].lat), parseFloat(data[0].lon)];
+      _geoCache[locationName] = coords;
+      return coords;
+    }
+  } catch(e){
+    console.warn('[言] 正向地理编码失败:', e);
+  }
+  return null;
+}
+
+// 发帖时选择位置 — 真实定位
+async function openLocationPicker(){
+  if(!requireLogin()) return;
+  var existing = document.getElementById('locationPickerModal');
+  if(existing) existing.remove();
+
+  var modal = document.createElement('div');
+  modal.id = 'locationPickerModal';
+  modal.className = 'modal-overlay active';
+  modal.innerHTML = '<div class="modal-box" style="max-width:400px"><div class="modal-header"><h3>选择位置</h3><button onclick="document.getElementById(\'locationPickerModal\').remove()" style="background:none;border:none;color:var(--text);font-size:20px;cursor:pointer">✕</button></div><div style="padding:16px"><button id="gpsLocBtn" class="abtn" style="width:100%;padding:12px;margin-bottom:12px" onclick="useGPSLocation()">📍 使用当前位置</button><div style="position:relative"><input id="locationSearchInput" class="sin" style="width:100%;padding:10px 12px;box-sizing:border-box" placeholder="搜索城市或地点..." oninput="searchLocationSuggestions(this.value)"><div id="locationSuggestions" style="position:absolute;top:100%;left:0;right:0;background:var(--bg2);border:1px solid var(--border);border-radius:8px;max-height:200px;overflow-y:auto;display:none;z-index:10"></div></div></div></div>';
+  document.body.appendChild(modal);
+}
+
+async function useGPSLocation(){
+  var btn = document.getElementById('gpsLocBtn');
+  if(btn){ btn.disabled = true; btn.textContent = '定位中...'; }
+  var coords = await getCurrentLocation();
+  if(!coords){
+    if(btn){ btn.disabled = false; btn.textContent = '📍 使用当前位置'; }
+    showToast('定位失败，请检查浏览器定位权限', 'error');
+    return;
+  }
+  var name = await reverseGeocode(coords.lat, coords.lng);
+  selectPostLocation(name, coords.lat + ',' + coords.lng);
+}
+
+async function searchLocationSuggestions(query){
+  var container = document.getElementById('locationSuggestions');
+  if(!container) return;
+  if(query.length < 2){ container.style.display = 'none'; return; }
+  try {
+    var url = 'https://nominatim.openstreetmap.org/search?format=json&q=' + encodeURIComponent(query) + '&accept-language=zh&limit=5&countrycodes=cn';
+    var res = await fetch(url, {headers: {'User-Agent': 'YanApp/1.0'}});
+    var data = await res.json();
+    if(data && data.length > 0){
+      container.innerHTML = data.map(function(r){
+        var shortName = r.display_name.split(',')[0];
+        return '<div style="padding:10px 12px;cursor:pointer;border-bottom:1px solid var(--border);font-size:14px" onclick="selectPostLocation(\'' + shortName.replace(/'/g,"\\'") + '\',\'' + r.lat + ',' + r.lon + '\')">' + shortName + '<div style="font-size:12px;color:var(--text2)">' + r.display_name.split(',').slice(0,3).join(',') + '</div></div>';
+      }).join('');
+      container.style.display = 'block';
+    } else {
+      container.style.display = 'none';
+    }
+  } catch(e){
+    container.style.display = 'none';
+  }
+}
+
+function selectPostLocation(name, coords){
+  state.selectedLocation = name;
+  // 移除之前的位置标签
+  var old = document.getElementById('selectedLocationTag');
+  if(old) old.remove();
+  // 添加位置标签到发帖框
+  var textarea = document.getElementById('modalText');
+  if(textarea){
+    var tag = document.createElement('div');
+    tag.id = 'selectedLocationTag';
+    tag.style.cssText = 'display:inline-flex;align-items:center;gap:4px;background:var(--accent);color:#fff;padding:2px 8px;border-radius:12px;font-size:12px;margin-top:4px;cursor:pointer';
+    tag.innerHTML = '📍 ' + escapeHtml(name) + ' <span onclick="removePostLocation(event)" style="margin-left:4px;opacity:0.7">✕</span>';
+    textarea.parentNode.insertBefore(tag, textarea.nextSibling);
+  }
+  // 关闭位置选择弹窗
+  var modal = document.getElementById('locationPickerModal');
+  if(modal) modal.remove();
+}
+
+function removePostLocation(e){
+  if(e) e.stopPropagation();
+  state.selectedLocation = null;
+  var tag = document.getElementById('selectedLocationTag');
+  if(tag) tag.remove();
+}
 
 function renderMap(){
   const main = document.getElementById('mainContent');
@@ -5721,53 +6106,47 @@ function renderMap(){
         maxZoom: 18
       }).addTo(map);
 
-      // 为每个带位置的推文添加标记
+      // 为每个带位置的推文添加标记（异步获取坐标）
       const markers = [];
-      tweetsWithLocation.forEach(t => {
-        let coords = CITY_COORDS[t.location];
-        if(!coords){
-          // 尝试匹配地理位置格式 "纬度, 经度"
-          const geoMatch = t.location.match(/([-\d.]+),\s*([-\d.]+)/);
-          if(geoMatch) coords = [parseFloat(geoMatch[1]), parseFloat(geoMatch[2])];
+      var geoPromises = tweetsWithLocation.map(function(t) {
+        var geoMatch = t.location.match(/([-\d.]+),\s*([-\d.]+)/);
+        if(geoMatch){
+          return Promise.resolve([parseFloat(geoMatch[1]), parseFloat(geoMatch[2]), t]);
         }
-        if(coords){
-          const marker = L.marker(coords).addTo(map);
-          marker.bindPopup(`
-            <div style="min-width:200px;max-width:300px">
-              <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
-                <div style="width:32px;height:32px;border-radius:50%;background:${t.avatarBg};display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:14px">${t.avatar}</div>
-                <div><b>${t.name}</b><br><span style="font-size:12px;color:#888">${t.handle}</span></div>
-              </div>
-              <div style="font-size:13px;margin-bottom:8px;line-height:1.5">${escapeHtml(t.text).slice(0,100)}${t.text.length>100?'...':''}</div>
-              <div style="font-size:11px;color:#888">📍 ${t.location} · ${formatTime(t.createdAt)}</div>
-              <a href="#" onclick="window._yanMapNav=${t.id};return false" style="display:inline-block;margin-top:6px;color:#1d9bf0;font-size:12px">查看详情 →</a>
-            </div>
-          `);
-          marker.on('popupopen', function(){
-            // popup 中的链接点击后导航
-            setTimeout(() => {
-              const links = document.querySelectorAll('.leaflet-popup-content a');
-              links.forEach(link => {
-                link.onclick = function(e){
-                  e.preventDefault();
-                  const id = window._yanMapNav;
-                  if(id) navigate('post', id);
-                };
-              });
-            }, 50);
-          });
-          markers.push(coords);
-        }
+        // 用 Nominatim 搜索坐标
+        return getCoordsForLocation(t.location).then(function(coords){
+          return coords ? [coords[0], coords[1], t] : null;
+        });
       });
 
-      // 自适应视图到所有标记
-      if(markers.length > 0){
-        const bounds = L.latLngBounds(markers);
-        map.fitBounds(bounds, {padding:[30,30]});
-      }
+      Promise.all(geoPromises).then(function(results){
+        results.forEach(function(item){
+          if(!item) return;
+          var lat = item[0], lng = item[1], t = item[2];
+          var coords = [lat, lng];
+          var marker = L.marker(coords).addTo(map);
+          marker.bindPopup(
+            '<div style="min-width:200px;max-width:300px">' +
+            '<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">' +
+            '<div style="width:32px;height:32px;border-radius:50%;background:' + t.avatarBg + ';display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:14px">' + t.avatar + '</div>' +
+            '<div><b>' + escapeHtml(t.name) + '</b><br><span style="font-size:12px;color:#888">' + t.handle + '</span></div>' +
+            '</div>' +
+            '<div style="font-size:13px;margin-bottom:8px;line-height:1.5">' + escapeHtml(t.text).slice(0,100) + (t.text.length>100?'...':'') + '</div>' +
+            '<div style="font-size:11px;color:#888">📍 ' + escapeHtml(t.location) + ' · ' + formatTime(t.createdAt) + '</div>' +
+            '</div>'
+          );
+          markers.push(coords);
+        });
 
-      // 延迟触发 resize 确保地图正常渲染
-      setTimeout(() => map.invalidateSize(), 300);
+        // 自适应视图到所有标记
+        if(markers.length > 0){
+          var bounds = L.latLngBounds(markers);
+          map.fitBounds(bounds, {padding:[30,30]});
+        }
+
+        // 延迟触发 resize 确保地图正常渲染
+        setTimeout(function(){ map.invalidateSize(); }, 300);
+      });
     }, 200);
   }
 }
